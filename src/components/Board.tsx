@@ -18,6 +18,9 @@ export default function Board() {
   const light = properties.styles[boardColor].light;
   const dark = properties.styles[boardColor].dark;
 
+  const [score, setScore] = useState(0);
+  const MAX_SCORE = 20; // Max before the eval bar is full
+
   // Elements
   const squareElements = [];
   for (let i = 0; i < 8; i++) {
@@ -43,6 +46,7 @@ export default function Board() {
     setChangingSettings(false);
   };
 
+  const [b, a] = useState(10);
   // Render
   return (
     <div
@@ -56,14 +60,17 @@ export default function Board() {
         style={{
           width: "min(10vw, 100px, 10vh)",
           height: "min(80vw, 800px, 80vh)",
-          display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
+          display: "flex",
           alignItems: "end",
         }}
       >
-        <div style={{ backgroundColor: "black", height: "50%", border: "1px solid black", width: "25%" }}></div>
-        <div style={{ backgroundColor: "white", height: "50%", border: "1px solid black", width: "25%" }}></div>
+        <div style={{ backgroundColor: "ddd", height: "100%", border: "1px solid black", width: "25%" }}>
+          <div
+            style={{ backgroundColor: "#444", height: score + "%", width: "100%", transition: "0.5s" }}
+            onClick={() => a(50)}
+          ></div>
+        </div>
       </div>
       <div
         id="board"
@@ -80,7 +87,7 @@ export default function Board() {
       <div style={{ width: "min(10vw, 100px, 10vh)", height: "min(80vw, 800px, 80vh)" }}>
         <svg
           onClick={() => setChangingSettings(true)}
-          style={{ padding: "1.5rem", cursor: "pointer" }}
+          style={{ padding: "1rem", cursor: "pointer" }}
           xmlns="http://www.w3.org/2000/svg"
           fill="currentColor"
           viewBox="0 0 16 16"

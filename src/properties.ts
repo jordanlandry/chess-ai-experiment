@@ -1,8 +1,8 @@
-interface Properties {
+export interface KeyStringObject {
   [key: string]: any;
 }
 
-const properties: Properties = {
+const properties: KeyStringObject = {
   styles: {
     brown: {
       light: "#f0d9b5",
@@ -15,8 +15,8 @@ const properties: Properties = {
     },
 
     grey: {
-      light: "#ddd",
-      dark: "#212121",
+      light: "#ababab",
+      dark: "#dcdcdc",
     },
 
     red: {
