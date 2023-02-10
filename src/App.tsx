@@ -20,9 +20,9 @@ function App() {
         <SetBoardColorContext.Provider value={setBoardColor}>
           <PieceStyleContext.Provider value={pieceStyle}>
             <SetPieceStyleContext.Provider value={setPieceStyle}>
-              <Board />
-              <Game />
-              <Pieces />
+                <Board />
+                <Game />
+                <Pieces />
             </SetPieceStyleContext.Provider>
           </PieceStyleContext.Provider>
         </SetBoardColorContext.Provider>

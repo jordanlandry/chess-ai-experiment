@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import getBestMove from "../ai/minimax";
+import { useContext, useEffect, useRef, useState } from "react";
+import getBestMove, { checks, elapsedTime } from "../ai/minimax";
 import playAudio from "../helpers/audioPlayer";
 import getAvailableMoves from "../helpers/getAvailableMoves";
 import getPiecePosition from "../helpers/getPiecePosition";
@@ -18,18 +18,22 @@ export default function Game() {
   const width = useWidth();
 
   const [whiteTurn, setWhiteTurn] = useState(true);
+  const aiIsWhite = properties.aiIsWhite;
+
+  const [loaded, setLoaded] = useState(false);
+
   const whiteTurnRef = useRef(whiteTurn);
   whiteTurnRef.current = whiteTurn;
 
   const [selectedPiece, setSelectedPiece] = useState(-1);
-  const [availableMoves, setAvailableMoves] = useState<{ x: number; y: number }[]>([]);
+  const [availableMoves, setAvailableMoves] = useState<{ x: number; y: number, castle?: boolean }[]>([]);
   const availableMovesRef = useRef(availableMoves);
   availableMovesRef.current = availableMoves;
 
   const history = [];
 
   let mouseDown = false;    // Used to prevent dragging the pieces when your mouse is not down
-  let draggable = false;    // Used to prevent dragging pieces when you are not dragging them, but the mouse is down
+  // let draggable = false;    // Used to prevent dragging pieces when you are not dragging them, but the mouse is down
 
   // See properties.ts for the meaning of these numbers
   const [board, setBoard] = useState([
@@ -52,16 +56,6 @@ export default function Game() {
     return spot;
   };
 
-  // const makeMove = (from: { x: number; y: number }, to: { x: number; y: number }) => {
-  //   setBoard((prev) => {
-  //     const newBoard = [...board];
-  //     newBoard[to.y][to.x] = newBoard[from.y][from.x];
-  //     newBoard[from.y][from.x] = -1;
-
-  //     return newBoard
-  //   })
-  // };
-
   // ~~~ MOUSE FUNCTIONS ~~~ \\
   const handleMouseDown = (e: MouseEvent) => {
     mouseDown = true;
@@ -70,26 +64,30 @@ export default function Game() {
     if (x < 0 || x > 7 || y < 0 || y > 7) return;
 
     // Don't select the piece if it's not the player's turn
-    if (!whiteTurnRef.current && board[y][x] > 47) return;
-    if (whiteTurnRef.current && board[y][x] < 16) return;
+    if (!aiIsWhite) {
+      if (!whiteTurnRef.current && board[y][x] > 47) return;
+      if (whiteTurnRef.current && board[y][x] < 16) return;
+    }
+
+    if (aiIsWhite) {
+      if (!whiteTurnRef.current && board[y][x] < 16) return;
+      if (whiteTurnRef.current && board[y][x] > 47) return;
+    }
 
     setSelectedPiece((prevPiece) => {
-      // If no piece is selected, select the piece that was clicked (for clicking on a possible move)
+    //   // If no piece is selected, select the piece that was clicked (for clicking on a possible move)
       if (prevPiece === -1) {
-        if (board[y][x] !== -1) draggable = true;
         return board[y][x];
       }
 
       // If you click on the same spot return
       if (prevPiece === board[y][x]) {
-        draggable = true;
+        // draggable = true;
         return prevPiece;
       }
 
       // If you click on a spot with a piece that is the same color as the selected piece, select the new piece
       if (sameTeam(board[y][x], prevPiece)) return board[y][x];
-
-      draggable = false;
 
       // Deselect the piece
       return prevPiece;
@@ -112,20 +110,29 @@ export default function Game() {
 
   // ---------------------------- \\
   const handleMouseUp = async (e: MouseEvent) => {
-    centerPieces(0);
+    // centerPieces(0);
     mouseDown = false;
-    draggable = false;
+    // draggable = false;
 
     const { x, y } = getSpot(e);
-    if (x < 0 || x > 7 || y < 0 || y > 7) return;
+    if (x < 0 || x > 7 || y < 0 || y > 7) {
+      centerPieces(0);
+      return;
+    }
     
     setSelectedPiece((prevPiece) => {
       if (prevPiece === -1) return -1; // If no piece is selected, return
 
       // If it's not your turn return
-      // console.log(whiteTurn, prevPiece, 63);
-      if (!whiteTurnRef.current && sameTeam(prevPiece, 63)) return - 1;
-      if (whiteTurnRef.current && sameTeam(prevPiece, 0)) return - 1;
+      if (!aiIsWhite) {
+        if (!whiteTurnRef.current && sameTeam(prevPiece, 63)) return - 1;
+        if (whiteTurnRef.current && sameTeam(prevPiece,  0)) return - 1;
+      }
+
+      if (aiIsWhite) {
+        if (!whiteTurnRef.current && sameTeam(prevPiece,  0)) return - 1;
+        if (whiteTurnRef.current && sameTeam(prevPiece, 63)) return - 1;
+      }
 
       const piece = document.getElementById(prevPiece + "")!;
       piece.style.zIndex = "0";
@@ -142,17 +149,43 @@ export default function Game() {
         // Update the board
         setBoard((prevBoard) => {
           const { x: prevX, y: prevY } = getPiecePosition(prevPiece, prevBoard);
-          if (board[y][x] !== -1) playAudio("../assets/sounds/capture.mp3", () => {
-            setWhiteTurn((prev) => !prev);
-          });
-          else playAudio("../assets/sounds/move-self.mp3", () => {
-            setWhiteTurn((prev) => !prev);
-          });
+          if (board[y][x] !== -1) playAudio("../assets/sounds/capture.mp3", () => setWhiteTurn((prev) => !prev));
+          else if (availableMovesRef.current[i].castle) playAudio("../assets/sounds/castle.mp3", () => setWhiteTurn((prev) => !prev));
+          else playAudio("../assets/sounds/move-self.mp3", () =>  setWhiteTurn((prev) => !prev));
 
           const newBoard = [...prevBoard];
 
           newBoard[y][x] = prevPiece;
           newBoard[prevY][prevX] = -1;
+
+          if (availableMovesRef.current[i].castle && !aiIsWhite) {
+            if (x === 6) {
+              const rook = newBoard[prevY][prevX + 3];
+              newBoard[prevY][prevX + 3] = -1;
+              newBoard[prevY][prevX + 1] = rook;
+            }
+
+            else if (x === 2) {
+              const rook = newBoard[prevY][prevX - 4];
+              newBoard[prevY][prevX - 4] = -1;
+              newBoard[prevY][prevX - 1] = rook;
+            }
+          }
+
+          if (availableMovesRef.current[i].castle && aiIsWhite) {
+            if (x === 5) {
+              console.log(prevX);
+              const rook = newBoard[prevY][prevX + 4];
+              newBoard[prevY][prevX + 4] = -1;
+              newBoard[prevY][prevX + 1] = rook;
+            }
+
+            else if (x === 1) {
+              const rook = newBoard[prevY][prevX - 3];
+              newBoard[prevY][prevX - 3] = -1;
+              newBoard[prevY][prevX - 1] = rook;
+            }
+          }
 
           return newBoard;
         });
@@ -172,7 +205,7 @@ export default function Game() {
     // const remainingPieces = board.flat().filter((piece) => piece !== -1);
     const removedPieces: number[] = [];
 
-    Object.keys(properties.numToPiece as any).forEach((piece) => {
+    Object.keys(properties.numPairBlack).forEach((piece) => {
       if (!board.flat().includes(parseInt(piece))) removedPieces.push(parseInt(piece));
     });
 
@@ -184,7 +217,7 @@ export default function Game() {
 
   // ---------------------------- \\
   const handleMouseMove = (e: MouseEvent) => {
-    if (!draggable || !selectedPiece || !mouseDown) return;
+    if (!selectedPiece || !mouseDown) return;
     setSelectedPiece((prev) => {
       // Set the position of the selected piece to the mouse position
       const piece = document.getElementById(prev + "");
@@ -225,6 +258,8 @@ export default function Game() {
       return;
     }
 
+    // console.log(selectedPiece);
+    
     const { x, y } = getPiecePosition(selectedPiece, board);
     setAvailableMoves(getAvailableMoves(board, x, y));
   }, [selectedPiece]);
@@ -251,26 +286,24 @@ export default function Game() {
   };
 
   useEffect(() => {
-    if (whiteTurnRef.current) return;
-
-
+    if (!loaded) return;
+    if (whiteTurnRef.current !== aiIsWhite) return;
+    
     const move = getBestMove(board, true, 3);
-      
+    
     if (!move) return;
-
     
     let playingAudio = false;
-
+    
     // Update the board
     setBoard((prevBoard) => {
       const newBoard = [...prevBoard];
-
       if (!playingAudio) {
         playingAudio = true;
         if (prevBoard[move.to.y][move.to.x] === -1) playAudio("../assets/sounds/move-self.mp3", () => playingAudio = false)
         else playAudio("../assets/sounds/capture.mp3", () => playingAudio = false);
       }
-
+      
       newBoard[move.to.y][move.to.x] = move.piece;
       newBoard[move.from.y][move.from.x] = -1;
       return newBoard;
@@ -279,11 +312,28 @@ export default function Game() {
     setWhiteTurn((prev) => !prev);
     whiteTurnRef.current = !whiteTurnRef.current;
 
-  }, [whiteTurn]);
+  }, [whiteTurn, loaded]);
+
+  // Check if the game has loaded
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Check if the first and last piece have loaded
+      if (document.getElementById("0") && document.getElementById("63")) {
+        setLoaded(true);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [])
 
   return (
     <div>
-      <button onClick={reset}>Reset</button>
+      <div style={{display: "flex", flexDirection: "column", width: '25%', margin: "auto"}}>
+
+      {/* <button onClick={reset}>Reset</button> */}
+      <span style={{textAlign: "center", fontSize: '2rem'}}>{checks.toLocaleString()} Runs</span>
+      <span style={{textAlign: "center", fontSize: '2rem'}}>{elapsedTime.toLocaleString()}ms</span>
+      </div>
       <div
         style={{
           position: "absolute",
@@ -309,19 +359,19 @@ export default function Game() {
               justifyContent: "center",
               alignItems: "center",
             }}
-          >
+            >
             {board[move.y][move.x] !== -1 ? (
               <div
-                style={{
-                  width: "75%",
-                  height: "75%",
-                  borderRadius: "50%",
-                  outline: board[move.y][move.x] !== -1 ? "0.5rem solid rgba(255, 0, 0, 0.25)" : "none",
-                  zIndex: 101,
-                }}
+              style={{
+                width: "75%",
+                height: "75%",
+                borderRadius: "50%",
+                outline: board[move.y][move.x] !== -1 ? "0.5rem solid rgba(255, 0, 0, 0.25)" : "none",
+                zIndex: 101,
+              }}
               />
-            ) : (
-              <div
+              ) : (
+                <div
                 style={{
                   width: "25%",
                   height: "25%",
@@ -329,8 +379,8 @@ export default function Game() {
                   backgroundColor: `rgba(50, 50, 50, ${move.x === -1 ? 0 : 0.15})`,
                   zIndex: 99,
                 }}
-              />
-            )}
+                />
+                )}
           </div>
         );
       })}

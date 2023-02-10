@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { BoardColorContext, PieceStyleContext } from "../App";
+import { PieceStyleContext } from "../App";
 import useWidth from "../hooks/useWidth";
 import properties from "../properties";
 
@@ -9,13 +9,14 @@ type Props = {
 
 export default function Piece({ idx }: Props) {
   const pieceStyle = useContext(PieceStyleContext);
+  const aiIsWhite = properties.aiIsWhite;
 
-  const pieceType = properties.numToPiece[idx];
+  const pieceType = aiIsWhite ? properties.numPairWhite[idx] : properties.numPairBlack[idx];
+  
   const color = pieceType.toLowerCase() === pieceType ? 1 : 0;
   const src = "./assets/images/styles/" + pieceStyle + "/" + pieceType.toLowerCase() + color + ".png";
 
   const width = useWidth();
-
   const [w, setW] = useState(0);
 
   useEffect(() => {

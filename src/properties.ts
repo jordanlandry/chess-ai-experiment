@@ -2,7 +2,7 @@ export interface KeyStringObject {
   [key: string]: any;
 }
 
-const properties: KeyStringObject = {
+const properties = {
   styles: {
     brown: {
       light: "#f0d9b5",
@@ -23,11 +23,12 @@ const properties: KeyStringObject = {
       light: "#ffdddd",
       dark: "#bb4444",
     },
-  },
+  } as KeyStringObject,
 
-  pieceStyles: ["cartoon", "wood"],
+  pieceStyles: ["cartoon", "wood", "jannin"],
 
-  numToPiece: {
+  // When AI is black
+  numPairBlack:  {
     0: "r",
     1: "n",
     2: "b",
@@ -44,6 +45,7 @@ const properties: KeyStringObject = {
     13: "p",
     14: "p",
     15: "p",
+
     48: "P",
     49: "P",
     50: "P",
@@ -60,7 +62,48 @@ const properties: KeyStringObject = {
     61: "B",
     62: "N",
     63: "R",
-  },
+  } as KeyStringObject,
+
+  // When AI is white
+  numPairWhite: {
+    0: "R",
+    1: "N",
+    2: "B",
+    3: "K",
+    4: "Q",
+    5: "B",
+    6: "N",
+    7: "R",
+    8: "P",
+    9: "P",
+    10: "P",
+    11: "P",
+    12: "P",
+    13: "P",
+    14: "P",
+    15: "P",
+
+    48: "p",
+    49: "p",
+    50: "p",
+    51: "p",
+    52: "p",
+    53: "p",
+    54: "p",
+    55: "p",
+    56: "r",
+    57: "n",
+    58: "b",
+    59: "k",
+    60: "q",
+    61: "b",
+    62: "n",
+    63: "r",
+  } as KeyStringObject,
+  
+  aiIsWhite: Math.random() < 0.5,
+  // aiIsWhite: true,
+  // aiIsWhite: false,
 };
 
 export default properties;

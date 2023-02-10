@@ -6,14 +6,19 @@ let lastMove = "";
 
 const empty = -1;
 
+export let whiteRookMoved = false;
+export let whiteKingMoved = false;
+export let blackRookMoved = false;
+export let blackKingMoved = false;
+
 // Returns an array of board indexes that are available to move to
 export default function getAvailableMoves(board: number[][], x: number, y: number) {
-  let moves = [];
-  const type = properties.numToPiece[board[y][x]];
+  const moves = [];
+  const numToPiece = properties.aiIsWhite ? properties.numPairWhite : properties.numPairBlack;
+  const type = numToPiece[board[y][x]];
 
   // ~~~ WHITE PAWN ~~ \\
-
-  if (type === "P") {
+  if ((type === "P" && !properties.aiIsWhite) || (type === "p" && properties.aiIsWhite)) {
     // If the pawn hasn't moved yet, it can move 2 spaces
     if (y === 6 && board[y - 1][x] === empty && board[y - 2][x] === empty) {
       moves.push({ x, y: y - 2 });
@@ -29,7 +34,8 @@ export default function getAvailableMoves(board: number[][], x: number, y: numbe
     // If the pawn can capture en passant TODO
   }
 
-  if (type === "p") {
+  // ~~~ BLACK PAWN ~~ \\
+  if ((type === "P" && properties.aiIsWhite) || (type === "p" && !properties.aiIsWhite)) {
     // If the pawn hasn't moved yet, it can move 2 spaces
     if (y === 1 && board[y + 1][x] === empty && board[y + 2][x] === empty) {
       moves.push({ x, y: y + 2 });
@@ -44,6 +50,7 @@ export default function getAvailableMoves(board: number[][], x: number, y: numbe
 
     // If the pawn can capture en passant TODO
   }
+
 
   // Knight moves
   if (type === "N" || type === "n") {
@@ -161,6 +168,31 @@ export default function getAvailableMoves(board: number[][], x: number, y: numbe
     if (y < 7 && x > 0 && !sameTeam(board[y + 1][x - 1], board[y][x])) moves.push({ x: x - 1, y: y + 1 });
     if (y < 7 && !sameTeam(board[y + 1][x], board[y][x])) moves.push({ x, y: y + 1 });
     if (y < 7 && x < 7 && !sameTeam(board[y + 1][x + 1], board[y][x])) moves.push({ x: x + 1, y: y + 1 });
+
+    // Castling
+    if (!properties.aiIsWhite) {
+      if (type === "K" && !whiteKingMoved) {
+        if (!whiteRookMoved && board[7][1] === empty && board[7][2] === empty && board[7][3] === empty) moves.push({ x: 2, y: 7, castle: true });
+        if (!whiteRookMoved && board[7][5] === empty && board[7][6] === empty) moves.push({ x: 6, y: 7, castle: true });
+      }
+      
+      if (type === "k" && !blackKingMoved) {
+        if (!blackRookMoved && board[0][1] === empty && board[0][2] === empty && board[0][3] === empty) moves.push({ x: 2, y: 0, castle: true });
+        if (!blackRookMoved && board[0][5] === empty && board[0][6] === empty) moves.push({ x: 6, y: 0, castle: true });
+      }
+    }
+
+    if (properties.aiIsWhite) {
+      if (type === "k" && !blackKingMoved) {
+        if (!blackRookMoved && board[7][1] === empty && board[7][2] === empty) moves.push({ x: 1, y: 7, castle: true });
+        if (!blackRookMoved && board[7][4] === empty && board[7][5] === empty && board[7][6] === empty) moves.push({ x: 5, y: 7, castle: true });
+      }
+
+      if (type === "K" && !whiteKingMoved) {
+        if (!whiteRookMoved && board[0][1] === empty && board[0][2] === empty) moves.push({ x: 1, y: 0, castle: true });
+        if (!whiteRookMoved && board[0][4] === empty && board[0][5] === empty && board[0][6] === empty) moves.push({ x: 5, y: 0, castle: true });
+      }
+    }
   }
 
   // Remove moves that will put the king in check

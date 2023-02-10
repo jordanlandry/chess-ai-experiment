@@ -1,4 +1,5 @@
 import { useContext, useState } from "react";
+import nextId from "react-id-generator";
 import { SetBoardColorContext, BoardColorContext, PieceStyleContext, SetPieceStyleContext } from "../App";
 
 import properties from "../properties";
@@ -28,10 +29,10 @@ export default function Board() {
       squareElements.push(
         <div
           id={"square" + (i * 8 + j)}
-          key={i * 8 + j}
+          key={nextId()}
           className="square"
           style={{
-            backgroundColor: (i + j) % 2 === 0 ? dark : light,
+            backgroundColor: (i + j) % 2 === 0 ? light : dark,
             width: "100%",
             height: "100%",
           }}
