@@ -48,6 +48,8 @@ export default function Board() {
   };
 
   const [b, a] = useState(10);
+
+  
   // Render
   return (
     <div

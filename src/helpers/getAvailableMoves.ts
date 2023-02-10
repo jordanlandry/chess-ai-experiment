@@ -196,12 +196,53 @@ export default function getAvailableMoves(board: number[][], x: number, y: numbe
   }
 
   // Remove moves that will put the king in check
-  // moves = moves.filter((move) => {
-  //   const newBoard = board.map((row) => row.slice());
-  //   newBoard[move.y][move.x] = newBoard[y][x];
-  //   newBoard[y][x] = empty;
-  //   return !isInCheck(newBoard, team);
-  // });
+  // Get whos turn it is
+  let team;
+  if (numToPiece[board[y][x]].toLowerCase() === numToPiece[board[y][x]]) team = "black"
+  else team = "white";
+
+  // Find the king
+  let kingX = 0;
+  let kingY = 0;
+
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++) {
+      if (team === "white" && board[i][j] === numToPiece["K"]) {
+        kingX = j;
+        kingY = i;
+      }
+
+      if (team === "black" && board[i][j] === numToPiece["k"]) {
+        kingX = j;
+        kingY = i;
+      }
+    }
+  }
+
+  // Check if any of the moves will put the king in check
+  for (let i = 0; i < moves.length; i++) {
+    let newBoard = board.map((row => [...row]));
+
+    // Make the move
+    newBoard[moves[i].y][moves[i].x] = newBoard[y][x];
+    newBoard[y][x] = empty;
+
+  
+    // Look for check
+    let check = false;
+    for (let j = 0; j < 8; j++) {
+      // Look on same row for rook or queen 
+      let lookY = kingY;
+      if (kingX - j >= 0) {
+        if (board[lookY][j] === numToPiece["r"] || board[lookY][j] === numToPiece["q"]) {
+          check = true;
+
+
+        }
+      }
+    }
+  }
+  
 
   return moves;
 }

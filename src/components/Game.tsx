@@ -8,14 +8,23 @@ import useWidth from "../hooks/useWidth";
 import properties from "../properties";
 
 export default function Game() {
+  const width = useWidth();
   // Using window.innerWidth and window.innerHeight I can calculate the exact position of each piece
+  
   const BOARD_TOP_MARGIN = 16; // 1rem = 16px
   const BOARD_WIDTH = Math.min(window.innerWidth, window.innerHeight, 1000) * 0.8; // 80% of the smaller screen dimension ~ 800px is the max
   const BOARD_LEFT_OFFSET = (window.innerWidth - BOARD_WIDTH) / 2;
 
-  const PIECE_ANIMATION_DURATION = 0.2; // seconds
+  const boardTopRef = useRef(BOARD_TOP_MARGIN);
+  boardTopRef.current = BOARD_TOP_MARGIN;
 
-  const width = useWidth();
+  const boardWidthRef = useRef(BOARD_WIDTH);
+  boardWidthRef.current = BOARD_WIDTH;
+
+  const boardLeftRef = useRef(BOARD_LEFT_OFFSET);
+  boardLeftRef.current = BOARD_LEFT_OFFSET;
+
+  const PIECE_ANIMATION_DURATION = 0.2; // seconds
 
   const [whiteTurn, setWhiteTurn] = useState(true);
   const aiIsWhite = properties.aiIsWhite;
@@ -49,8 +58,8 @@ export default function Game() {
 
   const getSpot = ({ x, y }: MouseEvent) => {
     const spot = {
-      x: Math.floor((x - BOARD_LEFT_OFFSET) / (BOARD_WIDTH / 8)),
-      y: Math.floor((y - BOARD_TOP_MARGIN) / (BOARD_WIDTH / 8)),
+      x: Math.floor((x - boardLeftRef.current) / (boardWidthRef.current / 8)),
+      y: Math.floor((y - BOARD_TOP_MARGIN) / (boardWidthRef.current / 8)),
     };
 
     return spot;
@@ -102,15 +111,14 @@ export default function Game() {
 
         piece.style.transition = transition + "s";
 
-        piece.style.top = BOARD_TOP_MARGIN + i * (BOARD_WIDTH / 8) + "px";
-        piece.style.left = j * (BOARD_WIDTH / 8) + BOARD_LEFT_OFFSET + "px";
+        piece.style.top = BOARD_TOP_MARGIN + i * (boardWidthRef.current / 8) + "px";
+        piece.style.left = j * (boardWidthRef.current / 8) + boardLeftRef.current + "px";
       }
     }
   };
 
   // ---------------------------- \\
   const handleMouseUp = async (e: MouseEvent) => {
-    // centerPieces(0);
     mouseDown = false;
     // draggable = false;
 
@@ -174,7 +182,6 @@ export default function Game() {
 
           if (availableMovesRef.current[i].castle && aiIsWhite) {
             if (x === 5) {
-              console.log(prevX);
               const rook = newBoard[prevY][prevX + 4];
               newBoard[prevY][prevX + 4] = -1;
               newBoard[prevY][prevX + 1] = rook;
@@ -226,9 +233,8 @@ export default function Game() {
       piece.style.transition = "none";
       piece.style.zIndex = "100";
 
-      piece.style.top = e.clientY - width / 32 + "px";
-      piece.style.left = e.clientX - width / 32 + "px";
-
+      piece.style.top = e.clientY - (boardWidthRef.current / 8) + boardWidthRef.current / 16  + "px";
+      piece.style.left = e.clientX - (boardWidthRef.current / 8 / 2)+ "px";
       return prev;
     });
   };
@@ -289,7 +295,7 @@ export default function Game() {
     if (!loaded) return;
     if (whiteTurnRef.current !== aiIsWhite) return;
     
-    const move = getBestMove(board, true, 3);
+    const move = getBestMove(board, 3);
     
     if (!move) return;
     
@@ -337,11 +343,11 @@ export default function Game() {
       <div
         style={{
           position: "absolute",
-          width: BOARD_WIDTH / 8,
-          height: BOARD_WIDTH / 8,
+          width: boardWidthRef.current / 8,
+          height: boardWidthRef.current / 8,
           backgroundColor: `rgba(255, 255, 0, ${selectedPiece === -1 ? 0 : 0.5})`,
-          top: Math.ceil(BOARD_TOP_MARGIN + getPiecePosition(selectedPiece, board).y * (BOARD_WIDTH / 8)),
-          left: Math.ceil(getPiecePosition(selectedPiece, board).x * (BOARD_WIDTH / 8) + BOARD_LEFT_OFFSET),
+          top: Math.ceil(BOARD_TOP_MARGIN + getPiecePosition(selectedPiece, board).y * (boardWidthRef.current / 8)),
+          left: Math.ceil(getPiecePosition(selectedPiece, board).x * (boardWidthRef.current / 8) + boardLeftRef.current),
         }}
       />
 
@@ -351,10 +357,10 @@ export default function Game() {
             key={move.x + "" + move.y}
             style={{
               position: "absolute",
-              width: BOARD_WIDTH / 8,
-              height: BOARD_WIDTH / 8,
-              top: Math.ceil(BOARD_TOP_MARGIN + move.y * (BOARD_WIDTH / 8)),
-              left: Math.ceil(move.x * (BOARD_WIDTH / 8) + BOARD_LEFT_OFFSET),
+              width: boardWidthRef.current / 8,
+              height: boardWidthRef.current / 8,
+              top: Math.ceil(BOARD_TOP_MARGIN + move.y * (boardWidthRef.current / 8)),
+              left: Math.ceil(move.x * (boardWidthRef.current / 8) + boardLeftRef.current),
               display: "flex",
               justifyContent: "center",
               alignItems: "center",

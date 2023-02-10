@@ -3,7 +3,6 @@ import sameTeam from "../helpers/sameTeam";
 import properties, { KeyStringObject } from "../properties";
 import orderMoves from "./orderMoves";
 
-
 export let checks = 0;
 export let elapsedTime = 0;
 
@@ -66,44 +65,99 @@ function updateCount(piece: number, undo = false) {
 
 let startTime = 0;
 let maxTime = 0;
-export default function getBestMove(board: number[][], aiMax: boolean, setMaxTimeS: number) {
-  maxTime = setMaxTimeS * 1000;
+
+let currentDepth = 1;
+
+const numberOfBestMovesToLookAt = 5;
+export default function getBestMove(board: number[][], setMaxTimeS: number) {
   updateAllCounts(board);
   const start = Date.now();
   startTime = start;
+  
+  const timeToLookThroughTopMoves = 1000;
+  maxTime = setMaxTimeS * 1000 - timeToLookThroughTopMoves;
 
   checks = 0;
   let depth = 1;
   let bestMove: any = null;
+
   while (Date.now() - start < maxTime) {
     checks++;
+    currentDepth = depth;
     transpositionTable = {};
+    
     const currentBestMove = minimax(board, depth, -Infinity, Infinity, true);
-
+  
     if (currentBestMove) bestMove = currentBestMove;
     depth++;
   }
 
+  // Give 1s to look through the top 5 moves
+  // depth = 1;
+
+  // startTime = Date.now()
+  // maxTime = timeToLookThroughTopMoves;
+  // while (Date.now() - startTime < maxTime) {
+  //   checks++;
+  //   currentDepth = depth;
+  //   transpositionTable = {};
+
+  //   const currentBestMove = minimax(board, depth, -Infinity, Infinity, true, true);
+    
+  //   if (currentBestMove && currentBestMove.from.x !== -1) bestMove = currentBestMove;
+  //   depth++;
+  // }
+
   console.log("Depth: " + (depth - 1));
+  console.log("Score: " + bestMove.score);
+
+  elapsedTime = Date.now() - start;
   return bestMove;
+}
+
+const values:KeyStringObject = {
+  'r': -5,
+  'n': -3,
+  'b': -3,
+  'q': -9,
+  'k': -100,
+  'p': -1,
+
+  'R': 5,
+  'N': 3,
+  'B': 3,
+  'Q': 9,
+  'K': 100,
+  'P': 1,
 }
 
 function evaluateBoard(board: number[][]) {
   let score = 0;
 
-  score += whitePawnCount;
-  score += whiteRookCount * 5;
-  score += whiteBishopCount * 3;
-  score += whiteKnightCount * 3;
-  score += whiteQueenCount * 9;
-  score += whiteKingCount * 100;
+  // score += whitePawnCount;
+  // score += whiteRookCount * 5;
+  // score += whiteBishopCount * 3;
+  // score += whiteKnightCount * 3;
+  // score += whiteQueenCount * 9;
+  // score += whiteKingCount * 100;
 
-  score -= blackPawnCount;
-  score -= blackRookCount * 5;
-  score -= blackBishopCount * 3;
-  score -= blackKnightCount * 3;
-  score -= blackQueenCount * 9;
-  score -= blackKingCount * 100;
+  // score -= blackPawnCount;
+  // score -= blackRookCount * 5;
+  // score -= blackBishopCount * 3;
+  // score -= blackKnightCount * 3;
+  // score -= blackQueenCount * 9;
+  // score -= blackKingCount * 100;
+
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++) {
+      if (board[i][j] === -1) continue;
+
+      if (properties.aiIsWhite) score += values[properties.numPairWhite[board[i][j]]];
+      else score -= values[properties.numPairBlack[board[i][j]]];
+    //  score += values[properties.numPairWhite[board[i][j]]];
+    
+    }
+  }
   
   return score;
 }
@@ -111,9 +165,12 @@ function evaluateBoard(board: number[][]) {
 const MAX_TRANSPOSITION_TABLE_SIZE = 128_000;
 let transpositionTable: KeyStringObject = {};
 
+let prevBestMove:any = null;
 let currentTime = 0;
-function minimax(board: number[][], depth: number, alpha: number, beta: number, isMaximizing: boolean) {
-  // if (Object.keys(transpositionTable).length > MAX_TRANSPOSITION_TABLE_SIZE) transpositionTable = {}
+let currentTranspositionSize = 0;
+
+function minimax(board: number[][], depth: number, alpha: number, beta: number, isMaximizing: boolean, topMoves = false) {
+  if (currentTranspositionSize > MAX_TRANSPOSITION_TABLE_SIZE) transpositionTable = {};
 
   currentTime = Date.now() - startTime;
   
@@ -125,14 +182,15 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
     score: 0,
   };
 
-  // if (transpositionTable[board.toString()] && transpositionTable[board.toString()].isMaximizing === isMaximizing) {
-  //   return transpositionTable[board.toString()];
-  // }
+  if (transpositionTable[board.toString()] && transpositionTable[board.toString()].isMaximizing === isMaximizing) {
+    return transpositionTable[board.toString()];
+  }
 
   // End of search
   if (depth === 0) {
     bestMove.score = evaluateBoard(board);
     transpositionTable[board.toString()] = {...bestMove, isMaximizing};
+    currentTranspositionSize++;
     return bestMove;
   }
 
@@ -144,11 +202,13 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
 
   if (isMaximizing) {
     let bestScore = -Infinity;
-
+    
     // Go through all available moves
-    const moves = orderMoves(board, getAllMoves(board, false));
-
-    for (let i = 0; i < moves.length; i++)  {
+    const moves = orderMoves(board, getAllMoves(board, false), prevBestMove);
+    const max = topMoves ? Math.min(numberOfBestMovesToLookAt, moves.length) : moves.length;
+    
+    // Search the rest of the moves
+    for (let i = 0; i < max; i++)  {
       const move = moves[i];
       
       // Copy the board
@@ -162,7 +222,7 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
       newBoard[move.from.y][move.from.x] = -1;
 
       // Get the score
-      const score = minimax(newBoard, depth - 1, alpha, beta, false);
+      const score = minimax(newBoard, depth - 1, alpha, beta, false, topMoves);
 
       // Undo the move
       newBoard[move.from.y][move.from.x] = newBoard[move.to.y][move.to.x];
@@ -175,6 +235,8 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
       if (score.score > bestScore) {
         bestScore = score.score;
         bestMove = {...move, score: bestScore};
+
+        if (depth === 1) prevBestMove = bestMove;
       }
 
       // Update alpha
@@ -189,9 +251,10 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
     let bestScore = Infinity;
 
     // Go through all available moves
-    const moves = orderMoves(board, getAllMoves(board, true));
+    const moves = orderMoves(board, getAllMoves(board, true), prevBestMove);
+    const max = topMoves ? Math.min(numberOfBestMovesToLookAt, moves.length) : moves.length;
 
-    for (let i = 0; i < moves.length; i++) {
+    for (let i = 0; i < max; i++) {
       const move = moves[i];
       
       // Copy the board
@@ -205,7 +268,7 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
       newBoard[move.from.y][move.from.x] = -1;
 
       // Get the score
-      const score = minimax(newBoard, depth - 1, alpha, beta, true);
+      const score = minimax(newBoard, depth - 1, alpha, beta, true, topMoves);
 
       // Undo the move
       newBoard[move.from.y][move.from.x] = newBoard[move.to.y][move.to.x];
@@ -218,6 +281,8 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
       if (score.score < bestScore) {
         bestScore = score.score;
         bestMove = {...move, score: bestScore};
+
+        if (depth === 1) prevBestMove = bestMove; 
       }
 
       // Update beta

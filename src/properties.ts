@@ -101,9 +101,9 @@ const properties = {
     63: "r",
   } as KeyStringObject,
   
-  aiIsWhite: Math.random() < 0.5,
+  // aiIsWhite: Math.random() < 0.5,
   // aiIsWhite: true,
-  // aiIsWhite: false,
+  aiIsWhite: true,
 };
 
 export default properties;
