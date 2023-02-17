@@ -28,7 +28,7 @@ const properties = {
   pieceStyles: ["cartoon", "wood", "jannin"],
 
   // When AI is black
-  numPairBlack:  {
+  numPairBlack: {
     0: "r",
     1: "n",
     2: "b",
@@ -100,10 +100,10 @@ const properties = {
     62: "n",
     63: "r",
   } as KeyStringObject,
-  
+
   // aiIsWhite: Math.random() < 0.5,
   // aiIsWhite: true,
-  aiIsWhite: true,
+  aiIsWhite: false,
 };
 
 export default properties;

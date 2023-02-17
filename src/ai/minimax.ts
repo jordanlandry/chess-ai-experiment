@@ -1,4 +1,4 @@
-import getAvailableMoves from "../helpers/getAvailableMoves";
+import getAvailableMoves, { getAllMoves } from "../helpers/getAvailableMoves";
 import sameTeam from "../helpers/sameTeam";
 import properties, { KeyStringObject } from "../properties";
 import orderMoves from "./orderMoves";
@@ -54,7 +54,6 @@ function updateCount(piece: number, undo = false) {
   else if (piece === 3) blackQueenCount += value;
   else if (piece === 4) blackKingCount += value;
   else if (piece >= 8 && piece <= 15) blackPawnCount += value;
-
   else if (piece === 56 || piece === 63) whiteRookCount += value;
   else if (piece === 57 || piece === 61) whiteKnightCount += value;
   else if (piece === 58 || piece === 62) whiteBishopCount += value;
@@ -73,7 +72,7 @@ export default function getBestMove(board: number[][], setMaxTimeS: number) {
   updateAllCounts(board);
   const start = Date.now();
   startTime = start;
-  
+
   const timeToLookThroughTopMoves = 1000;
   maxTime = setMaxTimeS * 1000 - timeToLookThroughTopMoves;
 
@@ -85,28 +84,12 @@ export default function getBestMove(board: number[][], setMaxTimeS: number) {
     checks++;
     currentDepth = depth;
     transpositionTable = {};
-    
+
     const currentBestMove = minimax(board, depth, -Infinity, Infinity, true);
-  
+
     if (currentBestMove) bestMove = currentBestMove;
     depth++;
   }
-
-  // Give 1s to look through the top 5 moves
-  // depth = 1;
-
-  // startTime = Date.now()
-  // maxTime = timeToLookThroughTopMoves;
-  // while (Date.now() - startTime < maxTime) {
-  //   checks++;
-  //   currentDepth = depth;
-  //   transpositionTable = {};
-
-  //   const currentBestMove = minimax(board, depth, -Infinity, Infinity, true, true);
-    
-  //   if (currentBestMove && currentBestMove.from.x !== -1) bestMove = currentBestMove;
-  //   depth++;
-  // }
 
   console.log("Depth: " + (depth - 1));
   console.log("Score: " + bestMove.score);
@@ -115,21 +98,21 @@ export default function getBestMove(board: number[][], setMaxTimeS: number) {
   return bestMove;
 }
 
-const values:KeyStringObject = {
-  'r': -5,
-  'n': -3,
-  'b': -3,
-  'q': -9,
-  'k': -100,
-  'p': -1,
+const values: KeyStringObject = {
+  r: -5,
+  n: -3,
+  b: -3,
+  q: -9,
+  k: -100,
+  p: -1,
 
-  'R': 5,
-  'N': 3,
-  'B': 3,
-  'Q': 9,
-  'K': 100,
-  'P': 1,
-}
+  R: 5,
+  N: 3,
+  B: 3,
+  Q: 9,
+  K: 100,
+  P: 1,
+};
 
 function evaluateBoard(board: number[][]) {
   let score = 0;
@@ -154,26 +137,31 @@ function evaluateBoard(board: number[][]) {
 
       if (properties.aiIsWhite) score += values[properties.numPairWhite[board[i][j]]];
       else score -= values[properties.numPairBlack[board[i][j]]];
-    //  score += values[properties.numPairWhite[board[i][j]]];
-    
     }
   }
-  
+
   return score;
 }
 
 const MAX_TRANSPOSITION_TABLE_SIZE = 128_000;
 let transpositionTable: KeyStringObject = {};
 
-let prevBestMove:any = null;
+let prevBestMove: any = null;
 let currentTime = 0;
 let currentTranspositionSize = 0;
 
-function minimax(board: number[][], depth: number, alpha: number, beta: number, isMaximizing: boolean, topMoves = false) {
+interface MinimaxMove {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  piece: number;
+  score: number;
+}
+
+function minimax(board: number[][], depth: number, alpha: number, beta: number, isMaximizing: boolean) {
   if (currentTranspositionSize > MAX_TRANSPOSITION_TABLE_SIZE) transpositionTable = {};
 
   currentTime = Date.now() - startTime;
-  
+
   checks++;
   let bestMove = {
     from: { x: -1, y: -1 },
@@ -189,7 +177,7 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
   // End of search
   if (depth === 0) {
     bestMove.score = evaluateBoard(board);
-    transpositionTable[board.toString()] = {...bestMove, isMaximizing};
+    transpositionTable[board.toString()] = { ...bestMove, isMaximizing };
     currentTranspositionSize++;
     return bestMove;
   }
@@ -202,27 +190,50 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
 
   if (isMaximizing) {
     let bestScore = -Infinity;
-    
+
     // Go through all available moves
     const moves = orderMoves(board, getAllMoves(board, false), prevBestMove);
-    const max = topMoves ? Math.min(numberOfBestMovesToLookAt, moves.length) : moves.length;
-    
+
     // Search the rest of the moves
-    for (let i = 0; i < max; i++)  {
+    for (let i = 0; i < moves.length; i++) {
       const move = moves[i];
-      
+
       // Copy the board
       const newBoard = board.map((row) => [...row]);
 
       // Update the counts
       updateCount(newBoard[move.to.y][move.to.x]);
 
+      // Quiscence search
+      let score: MinimaxMove = {
+        from: { x: -1, y: -1 },
+        to: { x: -1, y: -1 },
+        piece: -1,
+        score: 0,
+      };
+
+      // if (depth === 1 && board[move.from.y][move.from.x] !== -1) {
+      //   const s = quiescenceSearch(newBoard, alpha, beta, false);
+      //   if (s !== null) {
+      //     score = s;
+      //     bestMove = move;
+      //     bestMove.score = score.score;
+
+      //     // Undo the move
+      //     newBoard[move.to.y][move.to.x] = move.piece;
+      //     newBoard[move.from.y][move.from.x] = -1;
+      //     updateCount(move.piece);
+
+      //     continue;
+      //   }
+      // }
+
       // Make the move
       newBoard[move.to.y][move.to.x] = newBoard[move.from.y][move.from.x];
       newBoard[move.from.y][move.from.x] = -1;
 
       // Get the score
-      const score = minimax(newBoard, depth - 1, alpha, beta, false, topMoves);
+      score = minimax(newBoard, depth - 1, alpha, beta, false);
 
       // Undo the move
       newBoard[move.from.y][move.from.x] = newBoard[move.to.y][move.to.x];
@@ -234,7 +245,7 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
       // Update the best move
       if (score.score > bestScore) {
         bestScore = score.score;
-        bestMove = {...move, score: bestScore};
+        bestMove = { ...move, score: bestScore };
 
         if (depth === 1) prevBestMove = bestMove;
       }
@@ -244,7 +255,7 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
 
       // If beta is less than alpha, we can prune
       if (beta <= alpha) return bestMove;
-    };
+    }
   }
 
   if (!isMaximizing) {
@@ -252,23 +263,46 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
 
     // Go through all available moves
     const moves = orderMoves(board, getAllMoves(board, true), prevBestMove);
-    const max = topMoves ? Math.min(numberOfBestMovesToLookAt, moves.length) : moves.length;
 
-    for (let i = 0; i < max; i++) {
+    for (let i = 0; i < moves.length; i++) {
       const move = moves[i];
-      
+
       // Copy the board
       const newBoard = board.map((row) => [...row]);
 
       // Update the counts
       updateCount(newBoard[move.to.y][move.to.x]);
 
+      // Quiscence search
+      let score: MinimaxMove = {
+        from: { x: -1, y: -1 },
+        to: { x: -1, y: -1 },
+        piece: -1,
+        score: 0,
+      };
+
+      // if (depth === 1 && board[move.from.y][move.from.x] !== -1) {
+      //   const s = quiescenceSearch(newBoard, alpha, beta, true);
+      //   if (s !== null) {
+      //     score = s;
+      //     bestMove = move;
+      //     bestMove.score = score.score;
+
+      //     // Undo the move
+      //     newBoard[move.to.y][move.to.x] = move.piece;
+      //     newBoard[move.from.y][move.from.x] = -1;
+      //     updateCount(move.piece);
+
+      //     continue;
+      //   }
+      // }
+
       // Make the move
       newBoard[move.to.y][move.to.x] = newBoard[move.from.y][move.from.x];
       newBoard[move.from.y][move.from.x] = -1;
 
       // Get the score
-      const score = minimax(newBoard, depth - 1, alpha, beta, true, topMoves);
+      score = minimax(newBoard, depth - 1, alpha, beta, true);
 
       // Undo the move
       newBoard[move.from.y][move.from.x] = newBoard[move.to.y][move.to.x];
@@ -276,13 +310,13 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
 
       // Undo the score
       updateCount(newBoard[move.to.y][move.to.x], true);
-      
+
       // Update the best move
       if (score.score < bestScore) {
         bestScore = score.score;
-        bestMove = {...move, score: bestScore};
+        bestMove = { ...move, score: bestScore };
 
-        if (depth === 1) prevBestMove = bestMove; 
+        if (depth === 1) prevBestMove = bestMove;
       }
 
       // Update beta
@@ -290,34 +324,49 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
 
       // If beta is less than alpha, we can prune
       if (beta <= alpha) return bestMove;
-    };
+    }
   }
 
   return bestMove;
 }
 
-function getAllMoves(board: number[][], isMax: boolean) {
-  let moves: any= [];
-  for (let i = 0; i < 8; i++) {
-    for (let j = 0; j < 8; j++) {
+export function getAllCaptures(board: number[][], isWhite: boolean) {
+  const moves = getAllMoves(board, isWhite);
+  const captures = moves.filter((move: any) => board[move.to.y][move.to.x] !== -1);
+  return captures;
+}
 
-      if (board[i][j] === -1) continue;
+function quiescenceSearch(board: number[][], alpha: number, beta: number, isMaximizing: boolean) {
+  const captures = getAllCaptures(board, isMaximizing);
+  let bestMove = null;
+  let bestScore = isMaximizing ? -Infinity : Infinity;
 
-      // If the piece is not the same color as the chosen player skip it
-      if (sameTeam(board[i][j], isMax ? 0 : 63)) continue;
+  for (let i = 0; i < captures.length; i++) {
+    const move = captures[i];
 
-      let availableMoves = getAvailableMoves(board, j, i);
+    const newBoard = board.map((row) => [...row]);
 
-      availableMoves.forEach((move) => {
-        moves.push({
-          from: { x: j, y: i },
-          to: move,
-          piece: board[i][j],
-        });
-      });
+    // Update the counts
+    updateCount(newBoard[move.to.y][move.to.x]);
+
+    // Make the move
+    newBoard[move.to.y][move.to.x] = newBoard[move.from.y][move.from.x];
+    newBoard[move.from.y][move.from.x] = -1;
+
+    const score = evaluateBoard(newBoard);
+
+    // Undo the move
+    newBoard[move.from.y][move.from.x] = newBoard[move.to.y][move.to.x];
+    newBoard[move.to.y][move.to.x] = board[move.to.y][move.to.x];
+
+    // Undo the score
+    updateCount(newBoard[move.to.y][move.to.x], true);
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = move;
     }
   }
 
-  return moves;
+  return bestMove;
 }
-
