@@ -4,18 +4,22 @@ import getBestMove, { checks, elapsedTime } from "../ai/minimax";
 import playAudio from "../helpers/audioPlayer";
 import getAvailableMoves, { castleData } from "../helpers/getAvailableMoves";
 import getPiecePosition from "../helpers/getPiecePosition";
-import getTeam from "../helpers/getTeam";
 import sameTeam from "../helpers/sameTeam";
 import useWidth from "../hooks/useWidth";
-import properties from "../properties";
+import properties, { boardHistory } from "../properties";
 
+// export let moveCount = 0;
+
+let hasMoved = false;
 export default function Game() {
   const width = useWidth();
-  // Using window.innerWidth and window.innerHeight I can calculate the exact position of each piece
 
+  // Using window.innerWidth and window.innerHeight I can calculate the exact position of each piece
   const BOARD_TOP_MARGIN = 16; // 1rem = 16px
   const BOARD_WIDTH = Math.min(window.innerWidth, window.innerHeight, 1000) * 0.8; // 80% of the smaller screen dimension ~ 800px is the max
   const BOARD_LEFT_OFFSET = (window.innerWidth - BOARD_WIDTH) / 2;
+
+  const [playingAgainstAI, setPlayingAgainstAI] = useState(false);
 
   const boardTopRef = useRef(BOARD_TOP_MARGIN);
   boardTopRef.current = BOARD_TOP_MARGIN;
@@ -37,11 +41,11 @@ export default function Game() {
   whiteTurnRef.current = whiteTurn;
 
   const [selectedPiece, setSelectedPiece] = useState(-1);
-  const [availableMoves, setAvailableMoves] = useState<{ x: number; y: number; castle?: boolean }[]>([]);
+  const [availableMoves, setAvailableMoves] = useState<
+    { x: number; y: number; castle?: boolean; enPassant?: boolean }[]
+  >([]);
   const availableMovesRef = useRef(availableMoves);
   availableMovesRef.current = availableMoves;
-
-  const history = [];
 
   let mouseDown = false; // Used to prevent dragging the pieces when your mouse is not down
   // let draggable = false;    // Used to prevent dragging pieces when you are not dragging them, but the mouse is down
@@ -96,16 +100,11 @@ export default function Game() {
     }
 
     setSelectedPiece((prevPiece) => {
-      //   // If no piece is selected, select the piece that was clicked (for clicking on a possible move)
-      if (prevPiece === -1) {
-        return board[y][x];
-      }
+      // If no piece is selected, select the piece that was clicked (for clicking on a possible move)
+      if (prevPiece === -1) return board[y][x];
 
       // If you click on the same spot return
-      if (prevPiece === board[y][x]) {
-        // draggable = true;
-        return prevPiece;
-      }
+      if (prevPiece === board[y][x]) return prevPiece;
 
       // If you click on a spot with a piece that is the same color as the selected piece, select the new piece
       if (sameTeam(board[y][x], prevPiece)) return board[y][x];
@@ -170,8 +169,10 @@ export default function Game() {
 
         // Update the board
         setBoard((prevBoard) => {
+          hasMoved = true;
           const { x: prevX, y: prevY } = getPiecePosition(prevPiece, prevBoard);
-          if (board[y][x] !== -1) playAudio("../assets/sounds/capture.mp3", () => setWhiteTurn((prev) => !prev));
+          if (board[y][x] !== -1 || move.enPassant)
+            playAudio("../assets/sounds/capture.mp3", () => setWhiteTurn((prev) => !prev));
           else if (move.castle) playAudio("../assets/sounds/castle.mp3", () => setWhiteTurn((prev) => !prev));
           else playAudio("../assets/sounds/move-self.mp3", () => setWhiteTurn((prev) => !prev));
 
@@ -226,6 +227,9 @@ export default function Game() {
             }
           }
 
+          // En passant
+          if (move.enPassant) newBoard[prevY][x] = -1;
+
           return newBoard;
         });
       }
@@ -251,6 +255,9 @@ export default function Game() {
       const pieceElement = document.getElementById(piece + "");
       if (pieceElement) pieceElement.style.display = "none";
     });
+
+    // Add to board history, hasMoved is to prevent the board from being added to the history when the board is first rendered
+    if (hasMoved) boardHistory.push(board.map((row) => [...row]));
   }, [board]);
 
   // ---------------------------- \\
@@ -301,8 +308,6 @@ export default function Game() {
 
   useEffect(() => {
     availableMovesRef.current = availableMoves;
-
-    // Show available moves
   }, [availableMoves]);
 
   const reset = () => {
@@ -321,6 +326,7 @@ export default function Game() {
   };
 
   useEffect(() => {
+    if (!playingAgainstAI) return;
     if (!loaded) return;
     if (whiteTurnRef.current !== aiIsWhite) return;
 
@@ -396,13 +402,13 @@ export default function Game() {
               alignItems: "center",
             }}
           >
-            {board[move.y][move.x] !== -1 ? (
+            {board[move.y][move.x] !== -1 || move.enPassant ? (
               <div
                 style={{
                   width: "75%",
                   height: "75%",
                   borderRadius: "50%",
-                  outline: board[move.y][move.x] !== -1 ? "0.5rem solid rgba(255, 0, 0, 0.25)" : "none",
+                  outline: "0.5rem solid rgba(255, 0, 0, 0.25)",
                   zIndex: 101,
                 }}
               />

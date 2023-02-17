@@ -1,4 +1,4 @@
-import properties from "../properties";
+import properties, { boardHistory } from "../properties";
 import getTeam from "./getTeam";
 import sameTeam from "./sameTeam";
 
@@ -50,7 +50,34 @@ export default function getAvailableMoves(board: number[][], x: number, y: numbe
     if (y > 0 && x < 7 && board[y - 1][x + 1] !== -1 && !sameTeam(board[y - 1][x + 1], board[y][x]))
       moves.push({ x: x + 1, y: y - 1 });
 
-    // If the pawn can capture en passant TODO
+    // En passant
+    // y has to be 3 and the last move was a pawn moving 2 spaces
+    // I want to look left and right, if there is a pawn there, look at the previous board and see if it was 2 spaces behind before
+    if (y === 3 && boardHistory.length > 1) {
+      const lastBoard = boardHistory[boardHistory.length - 2];
+
+      const enemyPawn = properties.aiIsWhite ? "P" : "p";
+
+      // Look left
+      if (
+        numToPiece[board[3][x - 1]] === enemyPawn &&
+        board[1][x - 1] === empty &&
+        lastBoard[3][x - 1] === empty &&
+        lastBoard[2][x - 1] === empty &&
+        numToPiece[lastBoard[1][x - 1]] === enemyPawn
+      )
+        moves.push({ x: x - 1, y: 2, enPassant: true });
+
+      // Look right
+      if (
+        numToPiece[board[3][x + 1]] === enemyPawn &&
+        board[1][x + 1] === empty &&
+        lastBoard[3][x + 1] === empty &&
+        lastBoard[2][x + 1] === empty &&
+        numToPiece[lastBoard[1][x + 1]] === enemyPawn
+      )
+        moves.push({ x: x + 1, y: 2, enPassant: true });
+    }
   }
 
   // ~~~ BLACK PAWN ~~ \\
@@ -69,7 +96,32 @@ export default function getAvailableMoves(board: number[][], x: number, y: numbe
     if (y < 7 && x < 7 && board[y + 1][x + 1] !== -1 && !sameTeam(board[y + 1][x + 1], board[y][x]))
       moves.push({ x: x + 1, y: y + 1 });
 
-    // If the pawn can capture en passant TODO
+    // En passant same as white, different positions
+    if (y === 4 && boardHistory.length > 1) {
+      const lastBoard = boardHistory[boardHistory.length - 2];
+
+      const enemyPawn = properties.aiIsWhite ? "p" : "P";
+
+      // Look left
+      if (
+        numToPiece[board[4][x - 1]] === enemyPawn &&
+        board[6][x - 1] === empty &&
+        lastBoard[4][x - 1] === empty &&
+        lastBoard[5][x - 1] === empty &&
+        numToPiece[lastBoard[6][x - 1]] === enemyPawn
+      )
+        moves.push({ x: x - 1, y: 5, enPassant: true });
+
+      // Look right
+      if (
+        numToPiece[board[4][x + 1]] === enemyPawn &&
+        board[6][x + 1] === empty &&
+        lastBoard[4][x + 1] === empty &&
+        lastBoard[5][x + 1] === empty &&
+        numToPiece[lastBoard[6][x + 1]] === enemyPawn
+      )
+        moves.push({ x: x + 1, y: 5, enPassant: true });
+    }
   }
 
   // Knight moves
@@ -474,7 +526,8 @@ export function squareUnderAttackDoesntWork(
   board: number[][],
   move: { to: { x: number; y: number }; from: { x: number; y: number } },
   isWhite: boolean,
-  castle?: boolean
+  castle?: boolean,
+  enPassant?: boolean
 ) {
   // return false;
   if (checking) return false;
