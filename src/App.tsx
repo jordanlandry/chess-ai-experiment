@@ -1,7 +1,7 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext } from "react";
 import Board from "./components/Board";
-import Game from "./components/Game";
 import Pieces from "./components/Pieces";
+import Game from "./game/Game";
 import useLocalStorage from "./hooks/useLocalStorage";
 
 export const BoardColorContext = createContext<string | null>(null);
@@ -21,7 +21,6 @@ function App() {
             <SetPieceStyleContext.Provider value={setPieceStyle}>
               <Board />
               <Game />
-              {/* <Test /> */}
               <Pieces />
             </SetPieceStyleContext.Provider>
           </PieceStyleContext.Provider>

@@ -1,4 +1,4 @@
-import getAvailableMoves, { getAllMoves } from "../helpers/getAvailableMoves";
+import getAvailableMoves, { getAllMoves } from "../game/getAvailableMoves1";
 import sameTeam from "../helpers/sameTeam";
 import properties, { KeyStringObject } from "../properties";
 import orderMoves from "./orderMoves";
@@ -211,22 +211,6 @@ function minimax(board: number[][], depth: number, alpha: number, beta: number, 
         piece: -1,
         score: 0,
       };
-
-      // if (depth === 1 && board[move.from.y][move.from.x] !== -1) {
-      //   const s = quiescenceSearch(newBoard, alpha, beta, false);
-      //   if (s !== null) {
-      //     score = s;
-      //     bestMove = move;
-      //     bestMove.score = score.score;
-
-      //     // Undo the move
-      //     newBoard[move.to.y][move.to.x] = move.piece;
-      //     newBoard[move.from.y][move.from.x] = -1;
-      //     updateCount(move.piece);
-
-      //     continue;
-      //   }
-      // }
 
       // Make the move
       newBoard[move.to.y][move.to.x] = newBoard[move.from.y][move.from.x];

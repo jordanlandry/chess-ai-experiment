@@ -27,96 +27,138 @@ const properties = {
 
   pieceStyles: ["cartoon", "wood", "jannin"],
 
-  // When AI is black
-  numPairBlack: {
-    0: "r",
-    1: "n",
-    2: "b",
-    3: "q",
-    4: "k",
-    5: "b",
-    6: "n",
-    7: "r",
-    8: "p",
-    9: "p",
-    10: "p",
-    11: "p",
-    12: "p",
-    13: "p",
-    14: "p",
-    15: "p",
-
-    48: "P",
-    49: "P",
-    50: "P",
-    51: "P",
-    52: "P",
-    53: "P",
-    54: "P",
-    55: "P",
-    56: "R",
-    57: "N",
-    58: "B",
-    59: "Q",
-    60: "K",
-    61: "B",
-    62: "N",
-    63: "R",
-  } as KeyStringObject,
-
-  // When AI is white
-  numPairWhite: {
-    0: "R",
-    1: "N",
-    2: "B",
-    3: "K",
-    4: "Q",
-    5: "B",
-    6: "N",
-    7: "R",
-    8: "P",
-    9: "P",
-    10: "P",
-    11: "P",
-    12: "P",
-    13: "P",
-    14: "P",
-    15: "P",
-
-    48: "p",
-    49: "p",
-    50: "p",
-    51: "p",
-    52: "p",
-    53: "p",
-    54: "p",
-    55: "p",
-    56: "r",
-    57: "n",
-    58: "b",
-    59: "k",
-    60: "q",
-    61: "b",
-    62: "n",
-    63: "r",
-  } as KeyStringObject,
-
-  // aiIsWhite: Math.random() < 0.5,
-  // aiIsWhite: true,
   aiIsWhite: false,
+
+  selectedPieceColor: "rgba(255, 255, 0, 0.5)",
+  availableMoveColor: "rgba(0, 0, 0, 0.1)",
+  availableCaptureColor: "rgba(255, 0, 0, 0.5)",
+
+  animationTimeMs: 150,
 };
 
-export const boardHistory: number[][][] = [
+export enum Teams {
+  White = "white",
+  Black = "black",
+  None = "",
+}
+
+export enum PiecesType {
+  Pawn = "p",
+  Rook = "r",
+  Knight = "n",
+  Bishop = "b",
+  Queen = "q",
+  King = "k",
+  None = "",
+}
+
+export const STARTING_BOARD: PieceType[][] = [
   [
-    [0, 1, 2, 3, 4, 5, 6, 7],
-    [8, 9, 10, 11, 12, 13, 14, 15],
-    [-1, -1, -1, -1, -1, -1, -1, -1],
-    [-1, -1, -1, -1, -1, -1, -1, -1],
-    [-1, -1, -1, -1, -1, -1, -1, -1],
-    [-1, -1, -1, -1, -1, -1, -1, -1],
-    [48, 49, 50, 51, 52, 53, 54, 55],
-    [56, 57, 58, 59, 60, 61, 62, 63],
+    { piece: PiecesType.Rook, color: Teams.Black, id: 0, hasMoved: false },
+    { piece: PiecesType.Knight, color: Teams.Black, id: 1, hasMoved: false },
+    { piece: PiecesType.Bishop, color: Teams.Black, id: 2, hasMoved: false },
+    { piece: PiecesType.Queen, color: Teams.Black, id: 3, hasMoved: false },
+    { piece: PiecesType.King, color: Teams.Black, id: 4, hasMoved: false },
+    { piece: PiecesType.Bishop, color: Teams.Black, id: 5, hasMoved: false },
+    { piece: PiecesType.Knight, color: Teams.Black, id: 6, hasMoved: false },
+    { piece: PiecesType.Rook, color: Teams.Black, id: 7, hasMoved: false },
+  ],
+  [
+    { piece: PiecesType.Pawn, color: Teams.Black, id: 8, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.Black, id: 9, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.Black, id: 10, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.Black, id: 11, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.Black, id: 12, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.Black, id: 13, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.Black, id: 14, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.Black, id: 15, hasMoved: false },
+  ],
+  [
+    { piece: PiecesType.None, color: Teams.None, id: 16, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 17, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 18, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 19, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 20, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 21, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 22, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 23, hasMoved: false },
+  ],
+  [
+    { piece: PiecesType.None, color: Teams.None, id: 24, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 25, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 26, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 27, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 28, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 29, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 30, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 31, hasMoved: false },
+  ],
+  [
+    { piece: PiecesType.None, color: Teams.None, id: 32, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 33, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 34, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 35, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 36, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 37, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 38, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 39, hasMoved: false },
+  ],
+  [
+    { piece: PiecesType.None, color: Teams.None, id: 40, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 41, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 42, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 43, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 44, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 45, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 46, hasMoved: false },
+    { piece: PiecesType.None, color: Teams.None, id: 47, hasMoved: false },
+  ],
+  [
+    { piece: PiecesType.Pawn, color: Teams.White, id: 48, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.White, id: 49, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.White, id: 50, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.White, id: 51, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.White, id: 52, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.White, id: 53, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.White, id: 54, hasMoved: false },
+    { piece: PiecesType.Pawn, color: Teams.White, id: 55, hasMoved: false },
+  ],
+  [
+    { piece: PiecesType.Rook, color: Teams.White, id: 56, hasMoved: false },
+    { piece: PiecesType.Knight, color: Teams.White, id: 57, hasMoved: false },
+    { piece: PiecesType.Bishop, color: Teams.White, id: 58, hasMoved: false },
+    { piece: PiecesType.Queen, color: Teams.White, id: 59, hasMoved: false },
+    { piece: PiecesType.King, color: Teams.White, id: 60, hasMoved: false },
+    { piece: PiecesType.Bishop, color: Teams.White, id: 61, hasMoved: false },
+    { piece: PiecesType.Knight, color: Teams.White, id: 62, hasMoved: false },
+    { piece: PiecesType.Rook, color: Teams.White, id: 63, hasMoved: false },
   ],
 ];
+
+export const audioSettings = {
+  isPlaying: false,
+};
+
+export const boardHistory = [STARTING_BOARD.map((row) => [...row])];
+
+// Interfaces
+export interface PieceType {
+  piece: PiecesType;
+  color: Teams;
+  id: number;
+  hasMoved?: boolean;
+}
+
+export interface Moves {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  piece: PieceType;
+  enPassant?: boolean;
+  castle?: {
+    rookFrom: { x: number; y: number };
+    rookTo: { x: number; y: number };
+  };
+  promotion?: boolean;
+}
 
 export default properties;

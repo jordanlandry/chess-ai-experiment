@@ -1,25 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import nextId from "react-id-generator";
-import getBestMove, { checks, elapsedTime } from "../ai/minimax";
-import playAudio from "../helpers/audioPlayer";
-import getAvailableMoves, { castleData } from "../helpers/getAvailableMoves";
-import getPiecePosition from "../helpers/getPiecePosition";
-import sameTeam from "../helpers/sameTeam";
-import useWidth from "../hooks/useWidth";
-import properties, { boardHistory } from "../properties";
+import { useContext, useEffect, useRef, useState } from "react";
+import getBestMove, { checks, elapsedTime, getAllCaptures } from "../../ai/minimax";
+import playAudio from "../../helpers/audioPlayer";
+import getAvailableMoves from "../../game/getAvailableMoves1";
+import getPiecePosition from "../../helpers/getPiecePosition";
+import sameTeam from "../../helpers/sameTeam";
+import useWidth from "../../hooks/useWidth";
+import properties, { KeyStringObject } from "../../properties";
 
-// export let moveCount = 0;
-
-let hasMoved = false;
 export default function Game() {
   const width = useWidth();
-
   // Using window.innerWidth and window.innerHeight I can calculate the exact position of each piece
+
   const BOARD_TOP_MARGIN = 16; // 1rem = 16px
   const BOARD_WIDTH = Math.min(window.innerWidth, window.innerHeight, 1000) * 0.8; // 80% of the smaller screen dimension ~ 800px is the max
   const BOARD_LEFT_OFFSET = (window.innerWidth - BOARD_WIDTH) / 2;
-
-  const [playingAgainstAI, setPlayingAgainstAI] = useState(false);
 
   const boardTopRef = useRef(BOARD_TOP_MARGIN);
   boardTopRef.current = BOARD_TOP_MARGIN;
@@ -41,11 +35,11 @@ export default function Game() {
   whiteTurnRef.current = whiteTurn;
 
   const [selectedPiece, setSelectedPiece] = useState(-1);
-  const [availableMoves, setAvailableMoves] = useState<
-    { x: number; y: number; castle?: boolean; enPassant?: boolean }[]
-  >([]);
+  const [availableMoves, setAvailableMoves] = useState<{ x: number; y: number; castle?: boolean }[]>([]);
   const availableMovesRef = useRef(availableMoves);
   availableMovesRef.current = availableMoves;
+
+  const history = [];
 
   let mouseDown = false; // Used to prevent dragging the pieces when your mouse is not down
   // let draggable = false;    // Used to prevent dragging pieces when you are not dragging them, but the mouse is down
@@ -61,15 +55,16 @@ export default function Game() {
     [48, 49, 50, 51, 52, 53, 54, 55],
     [56, 57, 58, 59, 60, 61, 62, 63],
   ]);
+
   // const [board, setBoard] = useState([
-  //   [-1, 1, -1, -1, 4, 5, 6, 7],
-  //   [8, 9, 10, 11, 12, 13, 14, 15],
-  //   [-1, -1, -1, 2, -1, -1, -1, -1],
   //   [-1, -1, -1, -1, -1, -1, -1, -1],
-  //   [-1, -1, 3, -1, -1, -1, -1, -1],
+  //   [-1, -1, -1, -1, -1, -1, -1, 2],
   //   [-1, -1, -1, -1, -1, -1, -1, -1],
-  //   [48, -1, -1, 51, 52, -1, -1, 55],
-  //   [56, -1, -1, 59, -1, -1, -1, 63],
+  //   [-1, -1, -1, 9, -1, -1, -1, -1],
+  //   [-1, -1, -1, -1, 8, -1, -1, -1],
+  //   [-1, -1, -1, 55, -1, 54, -1, -1],
+  //   [-1, -1, -1, -1, -1, -1, -1, -1],
+  //   [-1, -1, -1, -1, 63, -1, -1, -1],
   // ]);
 
   const getSpot = ({ x, y }: MouseEvent) => {
@@ -100,11 +95,16 @@ export default function Game() {
     }
 
     setSelectedPiece((prevPiece) => {
-      // If no piece is selected, select the piece that was clicked (for clicking on a possible move)
-      if (prevPiece === -1) return board[y][x];
+      //   // If no piece is selected, select the piece that was clicked (for clicking on a possible move)
+      if (prevPiece === -1) {
+        return board[y][x];
+      }
 
       // If you click on the same spot return
-      if (prevPiece === board[y][x]) return prevPiece;
+      if (prevPiece === board[y][x]) {
+        // draggable = true;
+        return prevPiece;
+      }
 
       // If you click on a spot with a piece that is the same color as the selected piece, select the new piece
       if (sameTeam(board[y][x], prevPiece)) return board[y][x];
@@ -165,42 +165,20 @@ export default function Game() {
       for (let i = 0; i < availableMovesRef.current.length; i++) {
         if (availableMovesRef.current[i].x !== x || availableMovesRef.current[i].y !== y) continue;
 
-        const move = availableMovesRef.current[i];
-
         // Update the board
         setBoard((prevBoard) => {
-          hasMoved = true;
           const { x: prevX, y: prevY } = getPiecePosition(prevPiece, prevBoard);
-          if (board[y][x] !== -1 || move.enPassant)
-            playAudio("../assets/sounds/capture.mp3", () => setWhiteTurn((prev) => !prev));
-          else if (move.castle) playAudio("../assets/sounds/castle.mp3", () => setWhiteTurn((prev) => !prev));
+          if (board[y][x] !== -1) playAudio("../assets/sounds/capture.mp3", () => setWhiteTurn((prev) => !prev));
+          else if (availableMovesRef.current[i].castle)
+            playAudio("../assets/sounds/castle.mp3", () => setWhiteTurn((prev) => !prev));
           else playAudio("../assets/sounds/move-self.mp3", () => setWhiteTurn((prev) => !prev));
-
-          if (properties.aiIsWhite) {
-            if (board[prevY][prevX] === 0) castleData.whiteLeftRookMoved = true;
-            if (board[prevY][prevX] === 7) castleData.whiteRightRookMoved = true;
-
-            if (board[prevY][prevX] === 56) castleData.blackLeftRookMoved = true;
-            if (board[prevY][prevX] === 63) castleData.blackRightRookMoved = true;
-          }
-
-          if (!properties.aiIsWhite) {
-            if (board[prevY][prevX] === 63) castleData.whiteLeftRookMoved = true;
-            if (board[prevY][prevX] === 56) castleData.whiteRightRookMoved = true;
-
-            if (board[prevY][prevX] === 0) castleData.blackLeftRookMoved = true;
-            if (board[prevY][prevX] === 7) castleData.blackRightRookMoved = true;
-          }
 
           const newBoard = [...prevBoard];
 
           newBoard[y][x] = prevPiece;
           newBoard[prevY][prevX] = -1;
 
-          if (move.castle && !aiIsWhite) {
-            if (y === 0) castleData.blackKingMoved = true;
-            if (y === 7) castleData.whiteKingMoved = true;
-
+          if (availableMovesRef.current[i].castle && !aiIsWhite) {
             if (x === 6) {
               const rook = newBoard[prevY][prevX + 3];
               newBoard[prevY][prevX + 3] = -1;
@@ -212,10 +190,7 @@ export default function Game() {
             }
           }
 
-          if (move.castle && aiIsWhite) {
-            if (y === 0) castleData.whiteKingMoved = true;
-            if (y === 7) castleData.blackKingMoved = true;
-
+          if (availableMovesRef.current[i].castle && aiIsWhite) {
             if (x === 5) {
               const rook = newBoard[prevY][prevX + 4];
               newBoard[prevY][prevX + 4] = -1;
@@ -227,14 +202,13 @@ export default function Game() {
             }
           }
 
-          // En passant
-          if (move.enPassant) newBoard[prevY][x] = -1;
-
           return newBoard;
         });
       }
 
       centerPieces(PIECE_ANIMATION_DURATION);
+      // setWhiteTurn((prev) => !prev);
+
       return -1;
     });
   };
@@ -243,21 +217,17 @@ export default function Game() {
     centerPieces(PIECE_ANIMATION_DURATION);
 
     // Remove pieces that are no longer on the board
+    // const remainingPieces = board.flat().filter((piece) => piece !== -1);
     const removedPieces: number[] = [];
 
-    // Find the pieces that are no longer on the board
     Object.keys(properties.numPairBlack).forEach((piece) => {
       if (!board.flat().includes(parseInt(piece))) removedPieces.push(parseInt(piece));
     });
 
-    // Display none the pieces that are no longer on the board
     removedPieces.forEach((piece) => {
       const pieceElement = document.getElementById(piece + "");
       if (pieceElement) pieceElement.style.display = "none";
     });
-
-    // Add to board history, hasMoved is to prevent the board from being added to the history when the board is first rendered
-    if (hasMoved) boardHistory.push(board.map((row) => [...row]));
   }, [board]);
 
   // ---------------------------- \\
@@ -308,6 +278,8 @@ export default function Game() {
 
   useEffect(() => {
     availableMovesRef.current = availableMoves;
+
+    // Show available moves
   }, [availableMoves]);
 
   const reset = () => {
@@ -325,34 +297,117 @@ export default function Game() {
     setSelectedPiece(-1);
   };
 
-  useEffect(() => {
-    if (!playingAgainstAI) return;
-    if (!loaded) return;
-    if (whiteTurnRef.current !== aiIsWhite) return;
+  const values: KeyStringObject = {
+    r: -5,
+    n: -3,
+    b: -3,
+    q: -9,
+    k: -100,
+    p: -1,
+    R: 5,
+    N: 3,
+    B: 3,
+    Q: 9,
+    K: 100,
+    P: 1,
+  };
 
-    const move = getBestMove(board, 3);
+  function evaluateBoard(board: number[][]) {
+    let score = 0;
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        if (board[i][j] === -1) continue;
 
-    if (!move) return;
+        if (properties.aiIsWhite) score += values[properties.numPairWhite[board[i][j]]];
+        else score -= values[properties.numPairBlack[board[i][j]]];
+      }
+    }
 
-    let playingAudio = false;
+    return score;
+  }
 
-    // Update the board
-    setBoard((prevBoard) => {
-      const newBoard = [...prevBoard];
-      if (!playingAudio) {
-        playingAudio = true;
-        if (prevBoard[move.to.y][move.to.x] === -1)
-          playAudio("../assets/sounds/move-self.mp3", () => (playingAudio = false));
-        else playAudio("../assets/sounds/capture.mp3", () => (playingAudio = false));
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  async function quiescenceSearch(board: number[][], alpha: number, beta: number, isMaximizing: boolean) {
+    const captures = getAllCaptures(board, isMaximizing);
+    let bestMove = null;
+    let bestScore = isMaximizing ? -Infinity : Infinity;
+
+    for (let i = 0; i < captures.length; i++) {
+      console.log(i);
+      const move = captures[i];
+
+      const newBoard = board.map((row) => [...row]);
+
+      // Make the move
+      // Remove display none from all pieces so they show back up
+      for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+          const piece = document.getElementById(board[i][j] + "");
+          if (piece) piece.style.display = "block";
+        }
       }
 
-      newBoard[move.to.y][move.to.x] = move.piece;
+      newBoard[move.to.y][move.to.x] = newBoard[move.from.y][move.from.x];
       newBoard[move.from.y][move.from.x] = -1;
-      return newBoard;
-    });
 
-    setWhiteTurn((prev) => !prev);
-    whiteTurnRef.current = !whiteTurnRef.current;
+      setBoard(newBoard.map((row) => [...row]));
+      await sleep(250);
+
+      const score = await quiescenceSearch(newBoard, alpha, beta, !isMaximizing);
+
+      // Undo the move
+      newBoard[move.from.y][move.from.x] = newBoard[move.to.y][move.to.x];
+      newBoard[move.to.y][move.to.x] = board[move.to.y][move.to.x];
+      await sleep(250);
+      setBoard(newBoard.map((row) => [...row]));
+
+      // Remove display none from all pieces so they show back up
+      for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+          const piece = document.getElementById(newBoard[i][j] + "");
+          if (piece) piece.style.display = "block";
+        }
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = move;
+      }
+    }
+
+    return bestMove;
+  }
+
+  useEffect(() => {
+    if (!loaded) return;
+    if (whiteTurnRef.current !== aiIsWhite) return;
+    async function run() {
+      const move = await quiescenceSearch(board, -Infinity, Infinity, aiIsWhite);
+
+      if (!move) return;
+
+      let playingAudio = false;
+
+      // Update the board
+      setBoard((prevBoard) => {
+        const newBoard = [...prevBoard];
+        if (!playingAudio) {
+          playingAudio = true;
+          if (prevBoard[move.to.y][move.to.x] === -1)
+            playAudio("../assets/sounds/move-self.mp3", () => (playingAudio = false));
+          else playAudio("../assets/sounds/capture.mp3", () => (playingAudio = false));
+        }
+
+        newBoard[move.to.y][move.to.x] = move.piece;
+        newBoard[move.from.y][move.from.x] = -1;
+        return newBoard;
+      });
+
+      setWhiteTurn((prev) => !prev);
+      whiteTurnRef.current = !whiteTurnRef.current;
+    }
+
+    run();
   }, [whiteTurn, loaded]);
 
   // Check if the game has loaded
@@ -390,7 +445,7 @@ export default function Game() {
       {availableMoves.map((move) => {
         return (
           <div
-            key={nextId()}
+            key={move.x + "" + move.y}
             style={{
               position: "absolute",
               width: boardWidthRef.current / 8,
@@ -402,13 +457,13 @@ export default function Game() {
               alignItems: "center",
             }}
           >
-            {board[move.y][move.x] !== -1 || move.enPassant ? (
+            {board[move.y][move.x] !== -1 ? (
               <div
                 style={{
                   width: "75%",
                   height: "75%",
                   borderRadius: "50%",
-                  outline: "0.5rem solid rgba(255, 0, 0, 0.25)",
+                  outline: board[move.y][move.x] !== -1 ? "0.5rem solid rgba(255, 0, 0, 0.25)" : "none",
                   zIndex: 101,
                 }}
               />

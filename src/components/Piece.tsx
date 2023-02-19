@@ -1,7 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import { PieceStyleContext } from "../App";
+import useBoardBound from "../hooks/useBoardBound";
 import useWidth from "../hooks/useWidth";
-import properties from "../properties";
+import properties, { PiecesType, STARTING_BOARD, Teams } from "../properties";
 
 type Props = {
   idx: number;
@@ -11,28 +12,22 @@ export default function Piece({ idx }: Props) {
   const pieceStyle = useContext(PieceStyleContext);
   const aiIsWhite = properties.aiIsWhite;
 
-  const pieceType = aiIsWhite ? properties.numPairWhite[idx] : properties.numPairBlack[idx];
-  
-  const color = pieceType.toLowerCase() === pieceType ? 1 : 0;
+  const piece = STARTING_BOARD.flat().find((piece) => piece.id === idx)!;
+
+  const pieceType = piece.piece;
+  const color = piece.color === Teams.White ? "0" : "1";
   const src = "./assets/images/styles/" + pieceStyle + "/" + pieceType.toLowerCase() + color + ".png";
 
-  const width = useWidth();
-  const [w, setW] = useState(0);
-
-  useEffect(() => {
-    const board = document.getElementById("board");
-
-    if (board) setW(board.clientWidth / 8);
-  }, [width]);
+  const { squareSize } = useBoardBound();
 
   return (
     <img
-      src={src}
+      src={pieceType ? src : ""}
       alt={pieceType}
-      width={w}
+      width={squareSize}
       id={idx + ""}
       draggable={false}
-      style={{ position: "absolute", fontSize: "2rem", cursor: "grab" }}
+      style={{ position: "absolute", fontSize: "2rem", cursor: "grab", display: "none" }}
     />
   );
 }
