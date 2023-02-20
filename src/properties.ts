@@ -158,14 +158,18 @@ export const audioSettings = {
   isPlaying: false,
 };
 
-// export const
-
 // Interfaces
 export interface PieceType {
   piece: PiecesType;
   color: Teams;
   id: number;
   hasMoved?: boolean;
+  promotionPiece?: boolean;
+}
+
+export interface PromotionPieceType extends PieceType {
+  x: number;
+  y: number;
 }
 
 export interface Moves {

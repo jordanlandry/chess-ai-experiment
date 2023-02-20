@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import getAvailableMoves from "../../game/getAvailableMoves";
 import { movePiece } from "../../game/movePiece";
 import getSpot from "../../helpers/getSpot";
-import { Moves, PiecesType, PieceType, Teams } from "../../properties";
+import { Moves, PiecesType, PieceType, PromotionPieceType, Teams } from "../../properties";
 
 export default function useMouseDown(
   board: PieceType[][],
   whosTurn: Teams,
+  isPromoting: boolean,
   props: {
     setBoard: React.Dispatch<React.SetStateAction<PieceType[][]>>;
     setTurn: React.Dispatch<React.SetStateAction<Teams>>;
@@ -14,15 +15,19 @@ export default function useMouseDown(
     setMouseDown: React.Dispatch<React.SetStateAction<boolean>>;
     setMoveHistory: React.Dispatch<React.SetStateAction<Moves[]>>;
     setBoardHistory: React.Dispatch<React.SetStateAction<PieceType[][][]>>;
+    setIsPromoting: React.Dispatch<React.SetStateAction<boolean>>;
+    setPromotedPieces: React.Dispatch<React.SetStateAction<PromotionPieceType[]>>;
   }
 ) {
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   const [selectedPiece, setSelectedPiece] = useState<PieceType>({ piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false });
-  const { setBoard, setTurn, setAvailableMoves, setMouseDown, setMoveHistory, setBoardHistory } = props;
+  const { setBoard, setTurn, setAvailableMoves, setMouseDown, setMoveHistory, setBoardHistory, setPromotedPieces } = props;
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   useEffect(() => {
     const handleDown = (e: MouseEvent) => {
+      if (isPromoting) return;
+
       const { x, y } = getSpot(e);
 
       // Invalid square
@@ -58,7 +63,7 @@ export default function useMouseDown(
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     document.addEventListener("mousedown", handleDown);
     return () => document.removeEventListener("mousedown", handleDown);
-  }, [board, whosTurn]);
+  }, [board, whosTurn, isPromoting]);
 
   return [selectedPiece, setSelectedPiece] as const;
 }

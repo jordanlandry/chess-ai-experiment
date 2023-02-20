@@ -27,8 +27,6 @@ function empty(board: PieceType[][], pos: { x: number; y: number }) {
 }
 
 function pawn(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[], color: Teams) {
-  if (pos.y === 0 || pos.y === 7) return; // TODO - Promote
-
   if (color === Teams.White) whitePawn(board, pos, availableMoves);
   else blackPawn(board, pos, availableMoves);
 }
@@ -36,25 +34,25 @@ function pawn(board: PieceType[][], pos: { x: number; y: number }, availableMove
 function whitePawn(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[]) {
   const { x, y } = pos;
 
+  const promotion = y === 1;
   // 1 Square Forward
-  if (empty(board, { x, y: y - 1 })) availableMoves.push({ from: { x, y }, to: { x, y: y - 1 }, piece: board[y][x] });
+  if (empty(board, { x, y: y - 1 })) availableMoves.push({ from: { x, y }, to: { x, y: y - 1 }, piece: board[y][x], promotion });
 
   // 2 Squares Forward
   if (y === 6 && empty(board, { x, y: y - 1 }) && empty(board, { x, y: y - 2 }))
-    availableMoves.push({ from: { x, y }, to: { x, y: y - 2 }, piece: board[y][x] });
+    availableMoves.push({ from: { x, y }, to: { x, y: y - 2 }, piece: board[y][x], promotion });
 
   // Capture Left
   if (x > 0 && !empty(board, { x: x - 1, y: y - 1 }) && board[y - 1][x - 1].color === Teams.Black)
-    availableMoves.push({ from: { x, y }, to: { x: x - 1, y: y - 1 }, piece: board[y][x] });
+    availableMoves.push({ from: { x, y }, to: { x: x - 1, y: y - 1 }, piece: board[y][x], promotion });
 
   // Capture Right
   if (x < 7 && !empty(board, { x: x + 1, y: y - 1 }) && board[y - 1][x + 1].color === Teams.Black)
-    availableMoves.push({ from: { x, y }, to: { x: x + 1, y: y - 1 }, piece: board[y][x] });
+    availableMoves.push({ from: { x, y }, to: { x: x + 1, y: y - 1 }, piece: board[y][x], promotion });
 
   const boardHistory = properties.boardHistory;
 
   // En Passant
-  console.log(boardHistory);
   if (y === 3 && boardHistory.length > 1) {
     const lastBoard = boardHistory[boardHistory.length - 2];
 
@@ -78,20 +76,21 @@ function whitePawn(board: PieceType[][], pos: { x: number; y: number }, availabl
 function blackPawn(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[]) {
   const { x, y } = pos;
 
+  const promotion = y === 6;
   // 1 Square Forward
-  if (empty(board, { x, y: y + 1 })) availableMoves.push({ from: { x, y }, to: { x, y: y + 1 }, piece: board[y][x] });
+  if (empty(board, { x, y: y + 1 })) availableMoves.push({ from: { x, y }, to: { x, y: y + 1 }, piece: board[y][x], promotion });
 
   // 2 Squares Forward
   if (y === 1 && empty(board, { x, y: y + 1 }) && empty(board, { x, y: y + 2 }))
-    availableMoves.push({ from: { x, y }, to: { x, y: y + 2 }, piece: board[y][x] });
+    availableMoves.push({ from: { x, y }, to: { x, y: y + 2 }, piece: board[y][x], promotion });
 
   // Capture Left
   if (x > 0 && !empty(board, { x: x - 1, y: y + 1 }) && board[y + 1][x - 1].color === Teams.White)
-    availableMoves.push({ from: { x, y }, to: { x: x - 1, y: y + 1 }, piece: board[y][x] });
+    availableMoves.push({ from: { x, y }, to: { x: x - 1, y: y + 1 }, piece: board[y][x], promotion });
 
   // Capture Right
   if (x < 7 && !empty(board, { x: x + 1, y: y + 1 }) && board[y + 1][x + 1].color === Teams.White)
-    availableMoves.push({ from: { x, y }, to: { x: x + 1, y: y + 1 }, piece: board[y][x] });
+    availableMoves.push({ from: { x, y }, to: { x: x + 1, y: y + 1 }, piece: board[y][x], promotion });
 
   // En Passant
   const boardHistory = properties.boardHistory;

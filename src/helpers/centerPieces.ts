@@ -13,6 +13,7 @@ export default function centerPieces(board: PieceType[][], animationTimeMs: numb
       const pieceElement = document.getElementById(piece.id.toString());
       if (!pieceElement) continue;
 
+      pieceElement.style.position = "absolute";
       pieceElement.style.display = "block";
       pieceElement.style.transition = `all ${animationTimeMs}ms ease-in-out`;
       pieceElement.style.left = `${boardLeft + j * squareSize + squareSize / 2 - pieceElement.clientWidth / 2}px`;

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import getSpot from "../../helpers/getSpot";
-import properties, { Moves, PiecesType, PieceType } from "../../properties";
+import properties, { Moves, PiecesType, PieceType, PromotionPieceType } from "../../properties";
 import useBoardBound from "../useBoardBound";
 
 import centerPieces from "../../helpers/centerPieces";
@@ -20,10 +20,13 @@ export default function useMouseUp(
     setMouseDown: React.Dispatch<React.SetStateAction<boolean>>;
     setMoveHistory: React.Dispatch<React.SetStateAction<Moves[]>>;
     setBoardHistory: React.Dispatch<React.SetStateAction<PieceType[][][]>>;
+    setIsPromoting: React.Dispatch<React.SetStateAction<boolean>>;
+    setPromotedPieces: React.Dispatch<React.SetStateAction<PromotionPieceType[]>>;
   }
 ) {
   const { boardLeft, boardTop, squareSize } = useBoardBound();
-  const { setBoard, setSelectedPiece, setTurn, setAvailableMoves, setMouseDown, setMoveHistory, setBoardHistory } = props;
+  const { setBoard, setSelectedPiece, setTurn, setAvailableMoves, setMouseDown, setMoveHistory, setBoardHistory, setIsPromoting, setPromotedPieces } =
+    props;
 
   // You can either select a piece or drag a piece
   // When you're not dragging a piece, letting go of the mouse should do nothing
@@ -58,7 +61,7 @@ export default function useMouseUp(
           return prev;
         }
 
-        movePiece(board, move, { setBoard, setAvailableMoves, setTurn, setMoveHistory, setBoardHistory });
+        movePiece(board, move, { setBoard, setAvailableMoves, setTurn, setMoveHistory, setBoardHistory, setIsPromoting, setPromotedPieces });
 
         return { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
       });
