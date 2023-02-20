@@ -10,16 +10,20 @@ import findPositionById from "../../helpers/findPositionById";
 
 export default function useMouseUp(
   board: PieceType[][],
-  setBoard: React.Dispatch<React.SetStateAction<PieceType[][]>>,
-  setSelectedPiece: React.Dispatch<React.SetStateAction<PieceType>>,
   whosTurn: Teams,
-  setTurn: React.Dispatch<React.SetStateAction<Teams>>,
   availableMoves: Moves[],
-  setAvailableMoves: React.Dispatch<React.SetStateAction<Moves[]>>,
-  setMouseDown: React.Dispatch<React.SetStateAction<boolean>>,
-  setMoveHistory: React.Dispatch<React.SetStateAction<Moves[]>>
+  props: {
+    setBoard: React.Dispatch<React.SetStateAction<PieceType[][]>>;
+    setSelectedPiece: React.Dispatch<React.SetStateAction<PieceType>>;
+    setTurn: React.Dispatch<React.SetStateAction<Teams>>;
+    setAvailableMoves: React.Dispatch<React.SetStateAction<Moves[]>>;
+    setMouseDown: React.Dispatch<React.SetStateAction<boolean>>;
+    setMoveHistory: React.Dispatch<React.SetStateAction<Moves[]>>;
+    setBoardHistory: React.Dispatch<React.SetStateAction<PieceType[][][]>>;
+  }
 ) {
   const { boardLeft, boardTop, squareSize } = useBoardBound();
+  const { setBoard, setSelectedPiece, setTurn, setAvailableMoves, setMouseDown, setMoveHistory, setBoardHistory } = props;
 
   // You can either select a piece or drag a piece
   // When you're not dragging a piece, letting go of the mouse should do nothing
@@ -54,7 +58,7 @@ export default function useMouseUp(
           return prev;
         }
 
-        movePiece(board, setBoard, move, setAvailableMoves, setTurn, setMoveHistory);
+        movePiece(board, move, { setBoard, setAvailableMoves, setTurn, setMoveHistory, setBoardHistory });
 
         return { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
       });

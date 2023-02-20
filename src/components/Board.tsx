@@ -49,7 +49,6 @@ export default function Board() {
 
   const [b, a] = useState(10);
 
-  
   // Render
   return (
     <div
@@ -69,10 +68,7 @@ export default function Board() {
         }}
       >
         <div style={{ backgroundColor: "ddd", height: "100%", border: "1px solid black", width: "25%" }}>
-          <div
-            style={{ backgroundColor: "#444", height: score + "%", width: "100%", transition: "0.5s" }}
-            onClick={() => a(50)}
-          ></div>
+          <div style={{ backgroundColor: "#444", height: score + "%", width: "100%", transition: "0.5s" }} onClick={() => a(50)}></div>
         </div>
       </div>
       <div
@@ -111,11 +107,7 @@ export default function Board() {
         </select>
 
         <div>Change Piece Style</div>
-        <select
-          value={pieceStyle}
-          onChange={(e) => setPieceStyle(e.target.value)}
-          style={{ textTransform: "capitalize" }}
-        >
+        <select value={pieceStyle} onChange={(e) => setPieceStyle(e.target.value)} style={{ textTransform: "capitalize" }}>
           {properties.pieceStyles.map((style: string) => (
             <option key={style} value={style}>
               {style}

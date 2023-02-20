@@ -6,15 +6,19 @@ import { Moves, PiecesType, PieceType, Teams } from "../../properties";
 
 export default function useMouseDown(
   board: PieceType[][],
-  setBoard: React.Dispatch<React.SetStateAction<PieceType[][]>>,
-  setAvailableMoves: React.Dispatch<React.SetStateAction<Moves[]>>,
-  setMouseDown: React.Dispatch<React.SetStateAction<boolean>>,
   whosTurn: Teams,
-  setTurn: React.Dispatch<React.SetStateAction<Teams>>,
-  setMoveHistory: React.Dispatch<React.SetStateAction<Moves[]>>
+  props: {
+    setBoard: React.Dispatch<React.SetStateAction<PieceType[][]>>;
+    setTurn: React.Dispatch<React.SetStateAction<Teams>>;
+    setAvailableMoves: React.Dispatch<React.SetStateAction<Moves[]>>;
+    setMouseDown: React.Dispatch<React.SetStateAction<boolean>>;
+    setMoveHistory: React.Dispatch<React.SetStateAction<Moves[]>>;
+    setBoardHistory: React.Dispatch<React.SetStateAction<PieceType[][][]>>;
+  }
 ) {
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   const [selectedPiece, setSelectedPiece] = useState<PieceType>({ piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false });
+  const { setBoard, setTurn, setAvailableMoves, setMouseDown, setMoveHistory, setBoardHistory } = props;
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   useEffect(() => {
@@ -40,7 +44,7 @@ export default function useMouseDown(
         setAvailableMoves((prevMove) => {
           for (let i = 0; i < prevMove.length; i++) {
             if (prevMove[i].to.x === x && prevMove[i].to.y === y) {
-              movePiece(board, setBoard, prevMove[i], setAvailableMoves, setTurn, setMoveHistory);
+              movePiece(board, prevMove[i], props);
             }
           }
 

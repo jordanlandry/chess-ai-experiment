@@ -5,8 +5,9 @@ import useMouseMove from "../hooks/mouse/useMouseMove";
 import useMouseUp from "../hooks/mouse/useMouseUp";
 import useLoad from "../hooks/useLoad";
 import useCenterPieces from "../hooks/usePieceCentering";
+import usePrevMove from "../hooks/usePrevMove";
 import { useSelectedpiecePosition } from "../hooks/useSelectedPiecePosition";
-import { Moves, PiecesType, STARTING_BOARD, Teams } from "../properties";
+import { Moves, PiecesType, PieceType, STARTING_BOARD, Teams } from "../properties";
 
 export default function Game1() {
   const loaded = useLoad();
@@ -16,14 +17,27 @@ export default function Game1() {
   const [board, setBoard] = useState(STARTING_BOARD.map((row) => [...row]));
   const [availableMoves, setAvailableMoves] = useState<Moves[]>([]);
   const [moveHistory, setMoveHistory] = useState<Moves[]>([]);
+  const [boardHistory, setBoardHistory] = useState<PieceType[][][]>([STARTING_BOARD]);
 
   const [mouseDown, setMouseDown] = useState(false);
 
-  const [selectedPiece, setSelectedPiece] = useMouseDown(board, setBoard, setAvailableMoves, setMouseDown, whosTurn, setTurn, setMoveHistory);
+  // Set state for mouse hooks
+  const setStateProps = {
+    setBoard,
+    setTurn,
+    setAvailableMoves,
+    setMouseDown,
+    setMoveHistory,
+    setBoardHistory,
+  };
 
-  useMouseUp(board, setBoard, setSelectedPiece, whosTurn, setTurn, availableMoves, setAvailableMoves, setMouseDown, setMoveHistory);
+  const [selectedPiece, setSelectedPiece] = useMouseDown(board, whosTurn, setStateProps);
+  useMouseUp(board, whosTurn, availableMoves, { ...setStateProps, setSelectedPiece });
+
   useMouseMove(mouseDown, selectedPiece);
   useCenterPieces(board);
+
+  const { from, to } = usePrevMove(moveHistory);
 
   const availableMoveOverlayElements = availableMoves.map((move, i) => {
     const { x, y } = move.to;
@@ -39,6 +53,8 @@ export default function Game1() {
   return (
     <div>
       <BoardOverlay x={selectedPieceX} y={selectedPieceY} style="selected" />
+      <BoardOverlay x={from.x} y={from.y} style="lastMove" />
+      <BoardOverlay x={to.x} y={to.y} style="lastMove" />
       {availableMoveOverlayElements}
     </div>
   );

@@ -1,4 +1,4 @@
-import { boardHistory, Moves, PiecesType, PieceType, Teams } from "../properties";
+import properties, { Moves, PiecesType, PieceType, Teams } from "../properties";
 
 export default function getAvailableMoves(board: PieceType[][], pos: { x: number; y: number }) {
   const availableMoves: Moves[] = [];
@@ -51,7 +51,10 @@ function whitePawn(board: PieceType[][], pos: { x: number; y: number }, availabl
   if (x < 7 && !empty(board, { x: x + 1, y: y - 1 }) && board[y - 1][x + 1].color === Teams.Black)
     availableMoves.push({ from: { x, y }, to: { x: x + 1, y: y - 1 }, piece: board[y][x] });
 
+  const boardHistory = properties.boardHistory;
+
   // En Passant
+  console.log(boardHistory);
   if (y === 3 && boardHistory.length > 1) {
     const lastBoard = boardHistory[boardHistory.length - 2];
 
@@ -91,6 +94,7 @@ function blackPawn(board: PieceType[][], pos: { x: number; y: number }, availabl
     availableMoves.push({ from: { x, y }, to: { x: x + 1, y: y + 1 }, piece: board[y][x] });
 
   // En Passant
+  const boardHistory = properties.boardHistory;
   if (y === 4 && boardHistory.length > 1) {
     const lastBoard = boardHistory[boardHistory.length - 2];
 
@@ -239,7 +243,12 @@ function king(board: PieceType[][], pos: { x: number; y: number }, availableMove
       });
     }
 
-    if (!board[7][7].hasMoved && board[7][5].piece === PiecesType.None && board[7][6].piece === PiecesType.None) {
+    if (
+      board[7][7].piece === PiecesType.Rook &&
+      board[7][5].piece === PiecesType.None &&
+      board[7][6].piece === PiecesType.None &&
+      !board[7][7].hasMoved
+    ) {
       availableMoves.push({
         from: { x, y },
         to: { x: 6, y: 7 },

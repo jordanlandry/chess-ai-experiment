@@ -29,11 +29,16 @@ const properties = {
 
   aiIsWhite: false,
 
-  selectedPieceColor: "rgba(255, 255, 0, 0.5)",
-  availableMoveColor: "rgba(0, 0, 0, 0.1)",
-  availableCaptureColor: "rgba(255, 0, 0, 0.5)",
+  overlayColors: {
+    selected: "rgba(255, 255, 0, 0.5)",
+    available: "rgba(0, 0, 0, 0.1)",
+    capture: "rgba(255, 0, 0, 0.5)",
+    lastMove: "rgba(255, 255, 0, 0.5)",
+  },
 
   animationTimeMs: 150,
+
+  boardHistory: [] as PieceType[][][],
 };
 
 export enum Teams {
@@ -135,11 +140,25 @@ export const STARTING_BOARD: PieceType[][] = [
   ],
 ];
 
+export const takenPiece = {
+  piece: PiecesType.None,
+  color: Teams.None,
+  id: -1,
+  hasMoved: true,
+};
+
+export const blankPiece = {
+  piece: PiecesType.None,
+  color: Teams.None,
+  id: -1,
+  hasMoved: false,
+};
+
 export const audioSettings = {
   isPlaying: false,
 };
 
-export const boardHistory = [STARTING_BOARD.map((row) => [...row])];
+// export const
 
 // Interfaces
 export interface PieceType {
