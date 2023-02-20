@@ -1,6 +1,7 @@
 import { createContext } from "react";
 import Board from "./components/Board";
 import Pieces from "./components/Pieces";
+import DebugGame from "./game/debug/DebugGame";
 import Game from "./game/Game";
 import useLocalStorage from "./hooks/useLocalStorage";
 
@@ -21,6 +22,7 @@ function App() {
             <SetPieceStyleContext.Provider value={setPieceStyle}>
               <Board />
               <Game />
+              {/* <DebugGame /> */}
               <Pieces />
             </SetPieceStyleContext.Provider>
           </PieceStyleContext.Provider>

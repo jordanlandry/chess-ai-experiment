@@ -2,25 +2,29 @@ import { useState } from "react";
 import BoardOverlay from "../components/BoardOverlay";
 import Piece from "../components/Piece";
 import Promotion from "../components/Promotion";
+import useAI from "../hooks/game/useAI";
+import usePromotePiece from "../hooks/game/usePromotePiece";
 import useMouseDown from "../hooks/mouse/useMouseDown";
 import useMouseMove from "../hooks/mouse/useMouseMove";
 import useMouseUp from "../hooks/mouse/useMouseUp";
+import useBoardBound from "../hooks/useBoardBound";
 import useLoad from "../hooks/useLoad";
 import useCenterPieces from "../hooks/usePieceCentering";
 import usePrevMove from "../hooks/usePrevMove";
-import usePromotePiece from "../hooks/usePromotePiece";
 import { useSelectedpiecePosition } from "../hooks/useSelectedPiecePosition";
-import { Moves, PiecesType, PieceType, PromotionPieceType, STARTING_BOARD, Teams } from "../properties";
+import { baseMinimaxResults, MinimaxReturn, Moves, PiecesType, PieceType, PromotionPieceType, STARTING_BOARD, Teams } from "../properties";
 
 export default function Game1() {
   const loaded = useLoad();
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   const [whosTurn, setTurn] = useState(Teams.White);
+  const [aiTeam, setAiTeam] = useState(Teams.Black);
   const [board, setBoard] = useState(STARTING_BOARD.map((row) => [...row]));
   const [availableMoves, setAvailableMoves] = useState<Moves[]>([]);
   const [moveHistory, setMoveHistory] = useState<Moves[]>([]);
   const [boardHistory, setBoardHistory] = useState<PieceType[][][]>([STARTING_BOARD]);
+  const [minimaxMove, setMinimaxMove] = useState<MinimaxReturn>(baseMinimaxResults);
 
   const [mouseDown, setMouseDown] = useState(false);
   const [isPromoting, setIsPromoting] = useState(false);
@@ -71,27 +75,57 @@ export default function Game1() {
     return <Piece key={i} piece={piece} id={id} color={color} />;
   });
 
+  useAI(board, whosTurn, aiTeam, { ...setStateProps, setMinimaxMove });
+
+  const { boardLeft } = useBoardBound();
+
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (!loaded) return null;
   return (
-    <div>
-      <BoardOverlay x={selectedPieceX} y={selectedPieceY} style="selected" />
-      <BoardOverlay x={from.x} y={from.y} style="lastMove" />
-      <BoardOverlay x={to.x} y={to.y} style="lastMove" />
-      {availableMoveOverlayElements}
+    <>
+      <div>
+        <BoardOverlay x={selectedPieceX} y={selectedPieceY} style="selected" />
+        <BoardOverlay x={from.x} y={from.y} style="lastMove" />
+        <BoardOverlay x={to.x} y={to.y} style="lastMove" />
+        {availableMoveOverlayElements}
 
-      {isPromoting ? (
-        <Promotion
-          team={whosTurn}
-          x={moveHistory[moveHistory.length - 1].to.x}
-          y={moveHistory[moveHistory.length - 1].to.y}
-          setIsPromoting={setIsPromoting}
-          setPromotionPiece={setPromotionPiece}
-          setPromotedPieces={setPromotedPieces}
-        />
-      ) : null}
+        {isPromoting ? (
+          <Promotion
+            team={whosTurn}
+            x={moveHistory[moveHistory.length - 1].to.x}
+            y={moveHistory[moveHistory.length - 1].to.y}
+            setIsPromoting={setIsPromoting}
+            setPromotionPiece={setPromotionPiece}
+            setPromotedPieces={setPromotedPieces}
+          />
+        ) : null}
 
-      {promotedPiecesElements}
-    </div>
+        {promotedPiecesElements}
+      </div>
+      <div style={{ fontSize: "1.25rem", textAlign: "center", position: "absolute", top: 100, left: boardLeft, transform: "translateX(-125%)" }}>
+        <div>Score: {minimaxMove?.score}</div>
+        <div>Calculations: {minimaxMove?.count.toLocaleString()}</div>
+        <div>Time: {minimaxMove?.time}ms</div>
+
+        <table style={{ margin: "auto" }}>
+          <tbody>
+            <tr>
+              <th>Function</th>
+              <th>Time</th>
+              <th>Percent</th>
+            </tr>
+            {Object.keys(minimaxMove?.times || {}).map((key) => {
+              return (
+                <tr key={key}>
+                  <td>{key}</td>
+                  <td>{minimaxMove?.times[key]}ms</td>
+                  <td>{((minimaxMove?.times[key] / minimaxMove?.time) * 100).toFixed(2)}%</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

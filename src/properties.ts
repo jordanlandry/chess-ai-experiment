@@ -184,4 +184,48 @@ export interface Moves {
   promotion?: boolean;
 }
 
+export interface MinimaxProps {
+  aiIsWhite: boolean;
+  difficulty: number;
+  maxTime: number;
+  maxDepth: number;
+  doAlphaBeta: boolean;
+  doMoveOrdering: boolean;
+  doTranspositionTable: boolean;
+  doQuiescence: boolean;
+}
+
+export interface MinimaxReturn {
+  score: number;
+  time: number;
+  count: number;
+  move: Moves;
+  times: { [key: string]: number };
+}
+
+export const times = {
+  gettingMoves: 0,
+  evaluatingBoard: 0,
+  orderingMoves: 0,
+  makingMove: 0,
+  undoingMove: 0,
+  boardCopy: 0,
+};
+
+export const baseMinimaxResults: MinimaxReturn = {
+  score: 0,
+  time: 0,
+  count: 0,
+  move: {
+    from: { y: -1, x: -1 },
+    to: { y: -1, x: -1 },
+    piece: {
+      piece: PiecesType.None,
+      color: Teams.None,
+      id: -1,
+    },
+  },
+  times: times,
+};
+
 export default properties;

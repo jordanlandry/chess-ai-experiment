@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { PiecesType, PieceType, PromotionPieceType, Teams } from "../properties";
+import { PiecesType, PieceType, PromotionPieceType, Teams } from "../../properties";
 
 export default function usePromotePiece(
   promotionPiece: PromotionPieceType,
