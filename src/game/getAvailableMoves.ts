@@ -1,6 +1,6 @@
 import properties, { Moves, PiecesType, PieceType, Teams } from "../properties";
 
-export default function getAvailableMoves(board: PieceType[][], pos: { x: number; y: number }) {
+export default function getAvailableMoves(board: PieceType[][], pos: { x: number; y: number }, team: Teams) {
   const availableMoves: Moves[] = [];
 
   const moveFunctions = {
@@ -14,7 +14,7 @@ export default function getAvailableMoves(board: PieceType[][], pos: { x: number
 
   const { x, y } = pos;
   const { piece, color } = board[y][x];
-  if (piece === PiecesType.None) return availableMoves;
+  if (piece === PiecesType.None || color !== team) return availableMoves;
 
   moveFunctions[piece](board, { x, y }, availableMoves, color);
 
@@ -30,6 +30,7 @@ function pawn(board: PieceType[][], pos: { x: number; y: number }, availableMove
   if (color === Teams.White) whitePawn(board, pos, availableMoves);
   else blackPawn(board, pos, availableMoves);
 }
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function whitePawn(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[]) {
   const { x, y } = pos;

@@ -23,7 +23,7 @@ export default function useAI(
     aiIsWhite: aiTeam === Teams.White,
     difficulty: 3,
     maxTime: 2500,
-    maxDepth: 6,
+    maxDepth: 7,
     doAlphaBeta: true,
     doMoveOrdering: true,
     doTranspositionTable: false,

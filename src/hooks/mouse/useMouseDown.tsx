@@ -39,7 +39,7 @@ export default function useMouseDown(
       // Valid square - if you clicked on your own piece, select it and show available moves
       if (board[y][x].piece !== PiecesType.None && board[y][x].color === whosTurn) {
         setSelectedPiece(board[y][x]);
-        setAvailableMoves(getAvailableMoves(board, { x, y }));
+        setAvailableMoves(getAvailableMoves(board, { x, y }, whosTurn));
       }
 
       // If you selecting a square that's not a piece, deselect the piece, and move the piece if it's a valid move

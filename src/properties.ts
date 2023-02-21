@@ -210,7 +210,7 @@ export const times = {
   makingMove: 0,
   undoingMove: 0,
   boardCopy: 0,
-};
+} as { [key: string]: number };
 
 export const baseMinimaxResults: MinimaxReturn = {
   score: 0,

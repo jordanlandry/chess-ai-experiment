@@ -1,4 +1,4 @@
-import { baseMinimaxResults, MinimaxProps, MinimaxReturn, PiecesType, PieceType, Teams, times } from "../../properties";
+import { baseMinimaxResults, MinimaxProps, MinimaxReturn, Moves, PiecesType, PieceType, Teams, times } from "../../properties";
 import getAvailableMoves from "../getAvailableMoves";
 import orderMoves from "./orderMoves";
 
@@ -17,26 +17,68 @@ let calculations = 0;
 let transpositionTable: { [key: string]: MinimaxReturn } = {};
 const MAX_TRANSPOSITION_TABLE_SIZE = 256_000;
 
+const piecesCount = {
+  minimizingPlayer: {
+    [PiecesType.Pawn]: 8,
+    [PiecesType.Knight]: 2,
+    [PiecesType.Bishop]: 2,
+    [PiecesType.Rook]: 2,
+    [PiecesType.Queen]: 1,
+    [PiecesType.King]: 1,
+  } as { [key: string]: number },
+
+  maximizingPlayer: {
+    [PiecesType.Pawn]: 8,
+    [PiecesType.Knight]: 2,
+    [PiecesType.Bishop]: 2,
+    [PiecesType.Rook]: 2,
+    [PiecesType.Queen]: 1,
+    [PiecesType.King]: 1,
+  } as { [key: string]: number },
+};
+
+function getPieceCounts(board: PieceType[][]) {
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++) {
+      if (board[i][j].piece === PiecesType.None) continue;
+
+      if (board[i][j].color === Teams.White) piecesCount.maximizingPlayer[board[i][j].piece]--;
+      else piecesCount.minimizingPlayer[board[i][j].piece]--;
+    }
+  }
+}
+
 // This so we can have a constant update so we don't have to do .length as it would be slow
 let transpositionTableSize = 0;
 
-function reset() {
+function reset(board: PieceType[][]) {
   calculations = 0;
   minimaxResults = { ...baseMinimaxResults };
-  times.evaluatingBoard = 0;
-  times.gettingMoves = 0;
-  times.boardCopy = 0;
-  times.makingMove = 0;
-  times.undoingMove = 0;
+
+  // Reset the times
+  Object.keys(times).forEach((key) => {
+    times[key] = 0;
+  });
+
+  // Object.keys(times, ((key) => {
+  //   times[key] = 0;
+  // }));
+
+  // times.evaluatingBoard = 0;
+  // times.gettingMoves = 0;
+  // times.boardCopy = 0;
+  // times.makingMove = 0;
+  // times.undoingMove = 0;
 
   transpositionTable = {};
   transpositionTableSize = 0;
+
+  getPieceCounts(board);
 }
 
 // White is maximizing, black is minimizing
 export default function getBestMove(board: PieceType[][], props: MinimaxProps) {
-  reset();
-
+  reset(board);
   const initialTime = Date.now();
   const bestMove = minimax(board, props.maxDepth, false, -Infinity, Infinity, props);
   const endTime = Date.now();
@@ -50,14 +92,22 @@ function evaluateBoard(board: PieceType[][]) {
 
   const initialTime = Date.now();
 
-  for (let i = 0; i < 8; i++) {
-    for (let j = 0; j < 8; j++) {
-      if (board[i][j].piece === PiecesType.None) continue;
+  Object.keys(piecesCount.maximizingPlayer).forEach((piece) => {
+    score += piecesCount.maximizingPlayer[piece] * pieceValues[piece];
+  });
 
-      if (board[i][j].color === Teams.White) score += pieceValues[board[i][j].piece];
-      else score -= pieceValues[board[i][j].piece];
-    }
-  }
+  Object.keys(piecesCount.minimizingPlayer).forEach((piece) => {
+    score -= piecesCount.minimizingPlayer[piece] * pieceValues[piece];
+  });
+
+  // for (let i = 0; i < 8; i++) {
+  //   for (let j = 0; j < 8; j++) {
+  //     if (board[i][j].piece === PiecesType.None) continue;
+
+  //     if (board[i][j].color === Teams.White) score += pieceValues[board[i][j].piece];
+  //     else score -= pieceValues[board[i][j].piece];
+  //   }
+  // }
 
   const endTime = Date.now();
   times.evaluatingBoard += endTime - initialTime;
@@ -82,15 +132,11 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
     return transpositionTableResult;
   }
 
-  const getMovesTime = Date.now();
-  const allMoves = getAllMoves(board, isMaximizing);
-  times.gettingMoves += Date.now() - getMovesTime;
-
   const bestMove = { ...nullMove, score: isMaximizing ? -Infinity : Infinity };
 
   calculations++;
 
-  if (depth === 0 || allMoves.length === 0) {
+  if (depth === 0) {
     minimaxResults.count++;
     return {
       ...nullMove,
@@ -101,19 +147,26 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
   // Copy the board
   const boardCopyTime = Date.now();
   const newBoard = board.map((row) => row.slice());
-  if (depth === 0 || allMoves.length === 0) {
+  if (depth === 0) {
     return { ...bestMove, score: evaluateBoard(board) };
   }
+
+  const getMovesTime = Date.now();
+  const allMoves = getAllMoves(board, isMaximizing);
+  times.gettingMoves += Date.now() - getMovesTime;
 
   const orderingMoveTime = Date.now();
   const orderedMoves = props.doMoveOrdering ? orderMoves(newBoard, allMoves, isMaximizing) : allMoves;
   times.orderingMoves += Date.now() - orderingMoveTime;
 
-  times.boardCopy += Date.now() - boardCopyTime;
-
   // Maximizing player
   if (isMaximizing) {
+    times.boardCopy += Date.now() - boardCopyTime;
+
     for (const move of orderedMoves) {
+      // Update the count of each piece
+      makePieceCountUpdate(board, move);
+
       // Make the move
       const makeMoveTime = Date.now();
       makeMove(newBoard, move);
@@ -126,6 +179,8 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
       const undoMoveTime = Date.now();
       undoMove(board, newBoard, move);
       times.undoingMove += Date.now() - undoMoveTime;
+
+      undoPieceCountUpdate(newBoard, move);
 
       // Update best move
       if (score > bestMove.score) {
@@ -151,6 +206,9 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
   // Minimizing player
   else {
     for (const move of orderedMoves) {
+      // Update the count of each piece
+      makePieceCountUpdate(board, move);
+
       // Make the move
       const initialTime1 = Date.now();
       newBoard[move.to.y][move.to.x] = newBoard[move.from.y][move.from.x];
@@ -164,6 +222,8 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
       const initialTime2 = Date.now();
       undoMove(board, newBoard, move);
       times.undoingMove += Date.now() - initialTime2;
+
+      undoPieceCountUpdate(newBoard, move);
 
       if (score < bestMove.score) {
         bestMove.score = score;
@@ -188,18 +248,35 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 function getAllMoves(board: PieceType[][], isMaximizing: boolean) {
   const moves = [];
   for (let y = 0; y < 8; y++) {
     for (let x = 0; x < 8; x++) {
       if (board[y][x].piece === PiecesType.None) continue;
 
-      if (board[y][x].color === Teams.White && isMaximizing) moves.push(...getAvailableMoves(board, { y, x }));
-      if (board[y][x].color === Teams.Black && !isMaximizing) moves.push(...getAvailableMoves(board, { y, x }));
+      if (board[y][x].color === Teams.White && isMaximizing) moves.push(...getAvailableMoves(board, { y, x }, Teams.White));
+      if (board[y][x].color === Teams.Black && !isMaximizing) moves.push(...getAvailableMoves(board, { y, x }, Teams.Black));
     }
   }
 
   return moves;
+}
+
+function makePieceCountUpdate(board: PieceType[][], move: { from: { x: number; y: number }; to: { x: number; y: number } }) {
+  const { piece, color } = board[move.to.y][move.to.x];
+  if (piece === PiecesType.None) return;
+
+  if (color === Teams.White) piecesCount.maximizingPlayer[piece]--;
+  else if (color === Teams.Black) piecesCount.minimizingPlayer[piece]--;
+}
+
+function undoPieceCountUpdate(board: PieceType[][], move: { from: { x: number; y: number }; to: { x: number; y: number } }) {
+  const { piece, color } = board[move.to.y][move.to.x];
+  if (piece === PiecesType.None) return;
+
+  if (color === Teams.White) piecesCount.maximizingPlayer[piece]++;
+  else if (color === Teams.Black) piecesCount.minimizingPlayer[piece]++;
 }
 
 function makeMove(board: PieceType[][], move: { from: { y: number; x: number }; to: { y: number; x: number } }) {
