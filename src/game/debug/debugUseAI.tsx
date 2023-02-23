@@ -23,7 +23,7 @@ export default function debugUseAI(
     aiIsWhite: aiTeam === Teams.White,
     difficulty: 3,
     maxTime: 2500,
-    maxDepth: 6,
+    maxDepth: 5,
     doAlphaBeta: true,
     doMoveOrdering: true,
     doTranspositionTable: false,
@@ -39,6 +39,9 @@ export default function debugUseAI(
     minimaxProps.doQuiescence = false;
 
     setTimeout(() => {
+      const bestMove1 = getBestMove(board, minimaxProps);
+      setStateProps.setMinimaxMoves((prev) => [...prev, bestMove1]);
+
       minimaxProps.doAlphaBeta = true;
       const bestMove2 = getBestMove(board, minimaxProps);
       setStateProps.setMinimaxMoves((prev) => [...prev, bestMove2]);

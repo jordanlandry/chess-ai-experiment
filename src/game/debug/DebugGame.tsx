@@ -95,28 +95,28 @@ export default function Game1() {
             <th>Calculations</th>
             <th>Total time (ms)</th>
           </tr>
-          {/* <tr>
-            <td>None</td>
-            <td>{minimaxMoves[0]?.count.toLocaleString()}</td>
-            <td>{minimaxMoves[0]?.time}</td>
-          </tr> */}
-
           <tr>
-            <td>Alpha-beta pruning</td>
+            <td>None</td>
             <td>{minimaxMoves[0]?.count.toLocaleString()}</td>
             <td>{minimaxMoves[0]?.time}</td>
           </tr>
 
           <tr>
-            <td>Transposition table</td>
+            <td>Alpha-beta pruning</td>
             <td>{minimaxMoves[1]?.count.toLocaleString()}</td>
             <td>{minimaxMoves[1]?.time}</td>
           </tr>
 
           <tr>
-            <td>Move Ordering</td>
+            <td>Transposition table</td>
             <td>{minimaxMoves[2]?.count.toLocaleString()}</td>
             <td>{minimaxMoves[2]?.time}</td>
+          </tr>
+
+          <tr>
+            <td>Move Ordering</td>
+            <td>{minimaxMoves[3]?.count.toLocaleString()}</td>
+            <td>{minimaxMoves[3]?.time}</td>
           </tr>
         </tbody>
       </table>
