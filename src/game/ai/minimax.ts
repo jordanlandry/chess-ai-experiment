@@ -81,10 +81,10 @@ export default function getBestMove(board: PieceType[][], props: MinimaxProps) {
     const newBestMove = minimax(board, depth, false, -Infinity, Infinity, props);
 
     if (!newBestMove) break;
- 
+
     bestMove = newBestMove;
     prevBestMoves.push(bestMove.move);
-    
+
     depth++;
   }
 
@@ -136,7 +136,7 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
     transpositionTableSize = 0;
   }
 
-  // If the time limit has been reached, return a null move 
+  // If the time limit has been reached, return a null move
   if (Date.now() - initialTime > props.maxTime) {
     // console.log("Time limit reached")
     // return nullMove;
@@ -243,7 +243,7 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
       if (!nextMove) return null;
 
       const score = nextMove.score;
-    
+
       // Undo move
       const initialTime2 = Date.now();
       undoMove(board, newBoard, move);
@@ -274,6 +274,14 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function handleCastle(board: PieceType[][], move: Moves) {
+  const { rookFrom, rookTo } = move.castle!;
+  board[rookTo.y][rookTo.x] = board[rookFrom.y][rookFrom.x];
+  board[rookFrom.y][rookFrom.x] = { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
+
+  board[rookTo.y][rookTo.x].hasMoved = true;
+}
+
 function getAllMoves(board: PieceType[][], isMaximizing: boolean) {
   const moves = [];
   for (let y = 0; y < 8; y++) {
@@ -288,7 +296,7 @@ function getAllMoves(board: PieceType[][], isMaximizing: boolean) {
   return moves;
 }
 
-function makePieceCountUpdate(board: PieceType[][], move: { from: { x: number; y: number }; to: { x: number; y: number } }) {
+function makePieceCountUpdate(board: PieceType[][], move: Moves) {
   const { piece, color } = board[move.to.y][move.to.x];
   if (piece === PiecesType.None) return;
 
@@ -296,7 +304,7 @@ function makePieceCountUpdate(board: PieceType[][], move: { from: { x: number; y
   else if (color === Teams.Black) piecesCount.minimizingPlayer[piece]--;
 }
 
-function undoPieceCountUpdate(board: PieceType[][], move: { from: { x: number; y: number }; to: { x: number; y: number } }) {
+function undoPieceCountUpdate(board: PieceType[][], move: Moves) {
   const { piece, color } = board[move.to.y][move.to.x];
   if (piece === PiecesType.None) return;
 
@@ -304,9 +312,12 @@ function undoPieceCountUpdate(board: PieceType[][], move: { from: { x: number; y
   else if (color === Teams.Black) piecesCount.minimizingPlayer[piece]++;
 }
 
-function makeMove(board: PieceType[][], move: { from: { y: number; x: number }; to: { y: number; x: number } }) {
+function makeMove(board: PieceType[][], move: Moves) {
   board[move.to.y][move.to.x] = board[move.from.y][move.from.x];
   board[move.from.y][move.from.x] = { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
+
+  // Handle castling
+  if (move.castle) handleCastle(board, move);
 }
 
 function undoMove(board: PieceType[][], newBoard: PieceType[][], move: { from: { y: number; x: number }; to: { y: number; x: number } }) {
