@@ -1,5 +1,6 @@
-import { baseMinimaxResults, MinimaxProps, MinimaxReturn, Moves, PiecesType, PieceType, Teams, times } from "../../properties";
+import { baseMinimaxResults, boardToKey, map, MinimaxProps, MinimaxReturn, Moves, PiecesType, PieceType, Teams, times } from "../../properties";
 import getAvailableMoves from "../getAvailableMoves";
+import openings from "./db/openings";
 import orderMoves from "./orderMoves";
 
 const pieceValues = {
@@ -80,6 +81,9 @@ export default function getBestMove(board: PieceType[][], props: MinimaxProps) {
   while (Date.now() - initialTime < props.maxTime) {
     const newBestMove = minimax(board, depth, false, -Infinity, Infinity, props);
 
+    // Reset the transposition table every iteration
+    transpositionTable = {};
+
     if (!newBestMove) break;
 
     bestMove = newBestMove;
@@ -114,8 +118,29 @@ function evaluateBoard(board: PieceType[][]) {
     for (let j = 0; j < 8; j++) {
       if (board[i][j].piece === PiecesType.None) continue;
 
+      // ~~~ Piece values ~~~ \\
       if (board[i][j].color === Teams.White) score += pieceValues[board[i][j].piece];
       else score -= pieceValues[board[i][j].piece];
+
+      // ~~~ Positional scoring ~~~ \\
+      // Encourage pushing pawns forward
+      if (board[i][j].piece === PiecesType.Pawn) {
+        if (board[i][j].color === Teams.Black) score += i / 16;
+        else score -= (7 - i) / 16;
+      }
+
+      // Discourage doubled pawns
+      if (board[i][j].piece === PiecesType.Pawn) {
+        if (board[i][j].color === Teams.White) {
+          if (i < 7 && board[i + 1][j].piece === PiecesType.Pawn && board[i + 1][j].color === Teams.White) score -= 0.5;
+          if (i > 0 && board[i - 1][j].piece === PiecesType.Pawn && board[i - 1][j].color === Teams.White) score -= 0.5;
+        }
+        // Team is black
+        else {
+          if (i < 7 && board[i + 1][j].piece === PiecesType.Pawn && board[i + 1][j].color === Teams.Black) score += 0.5;
+          if (i > 0 && board[i - 1][j].piece === PiecesType.Pawn && board[i - 1][j].color === Teams.Black) score += 0.5;
+        }
+      }
     }
   }
 
@@ -143,16 +168,26 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
     return null;
   }
 
-  const boardKey = boardToKey(board, isMaximizing);
-  const transpositionTableResult = transpositionTable[boardKey];
+  const boardHash = boardToKey(board, isMaximizing);
+  const transpositionTableResult = transpositionTable[boardHash];
   if (transpositionTableResult) {
-    return transpositionTableResult;
+    return { ...transpositionTableResult, count: calculations };
   }
 
   const bestMove = { ...nullMove, score: isMaximizing ? -Infinity : Infinity };
 
   calculations++;
 
+  // If the king gets captured, return the previous move, this will make the AI's goal to capture the king instead of just capturing all the pieces
+  // if (piecesCount.minimizingPlayer[PiecesType.King] === 0) {
+  //   return { ...bestMove, score: -Infinity };
+  // }
+
+  // if (piecesCount.maximizingPlayer[PiecesType.King] === 0) {
+  //   return { ...bestMove, score: Infinity };
+  // }
+
+  // If we have reached the end of the search, return the evaluation of the board
   if (depth === 0) {
     minimaxResults.count++;
     return {
@@ -164,9 +199,9 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
   // Copy the board
   const boardCopyTime = Date.now();
   const newBoard = board.map((row) => row.slice());
-  if (depth === 0) {
-    return { ...bestMove, score: evaluateBoard(board) };
-  }
+  // if (depth === 0) {
+  //   return { ...bestMove, score: evaluateBoard(board) };
+  // }
 
   const getMovesTime = Date.now();
   const allMoves = getAllMoves(board, isMaximizing);
@@ -213,8 +248,8 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
       }
 
       // Add to transposition table if it's the last call
-      if (props.doTranspositionTable) {
-        transpositionTable[boardKey] = { ...bestMove };
+      if (props.doTranspositionTable && depth === 1) {
+        transpositionTable[boardHash] = { ...bestMove };
         transpositionTableSize++;
       }
 
@@ -258,8 +293,8 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
       }
 
       // Add to transposition table if it's the last call
-      if (props.doTranspositionTable) {
-        transpositionTable[boardKey] = { ...bestMove };
+      if (props.doTranspositionTable && depth === 1) {
+        transpositionTable[boardHash] = { ...bestMove };
         transpositionTableSize++;
       }
 
@@ -274,12 +309,22 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function handleCastle(board: PieceType[][], move: Moves) {
+function handleCastle(board: PieceType[][], move: Moves, undo: boolean) {
   const { rookFrom, rookTo } = move.castle!;
-  board[rookTo.y][rookTo.x] = board[rookFrom.y][rookFrom.x];
-  board[rookFrom.y][rookFrom.x] = { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
 
-  board[rookTo.y][rookTo.x].hasMoved = true;
+  // Uncastle
+  if (undo) {
+    board[rookFrom.y][rookFrom.x] = board[rookTo.y][rookTo.x];
+    board[rookTo.y][rookTo.x] = { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
+    // board[rookFrom.y][rookFrom.x].hasMoved = false;
+  }
+
+  // Castle
+  else {
+    board[rookTo.y][rookTo.x] = board[rookFrom.y][rookFrom.x];
+    board[rookFrom.y][rookFrom.x] = { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
+    // board[rookTo.y][rookTo.x].hasMoved = true;
+  }
 }
 
 function getAllMoves(board: PieceType[][], isMaximizing: boolean) {
@@ -317,42 +362,18 @@ function makeMove(board: PieceType[][], move: Moves) {
   board[move.from.y][move.from.x] = { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
 
   // Handle castling
-  if (move.castle) handleCastle(board, move);
+  if (move.castle) handleCastle(board, move, false);
 }
 
-function undoMove(board: PieceType[][], newBoard: PieceType[][], move: { from: { y: number; x: number }; to: { y: number; x: number } }) {
+function undoMove(board: PieceType[][], newBoard: PieceType[][], move: Moves) {
   newBoard[move.from.y][move.from.x] = newBoard[move.to.y][move.to.x];
   newBoard[move.to.y][move.to.x] = board[move.to.y][move.to.x];
+
+  // Handle castling
+  if (move.castle) handleCastle(newBoard, move, true);
 }
 
-// After lots of testing, I found that having a map of random is the fastest way of calculating the keys
-// This is to generate a unique key for each board so we can store it in the transposition table
-// This is much faster than converting the whole board array into a string and using that as the key
-// And faster than using 1-64 as the keys
-const map = [
-  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
-  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
-  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
-  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
-  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
-  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
-  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
-  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
-];
-
-function boardToKey(board: PieceType[][], isMaximizing: boolean) {
-  let key = 1;
-  for (let i = 0; i < 8; i++) {
-    for (let j = 0; j < 8; j++) {
-      key += (board[i][j].id + 1) * map[i][j];
-    }
-  }
-
-  key *= isMaximizing ? 1 : -1;
-
-  return key + "";
-}
-
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~33ms for 500,000 calculations (on my machine results may vary)
 function testBoardKeySpeeds(board: PieceType[][]) {
   const initialTime = Date.now();

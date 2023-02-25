@@ -5,6 +5,9 @@ import DebugGame from "./game/debug/DebugGame";
 import Game from "./game/Game";
 import useLocalStorage from "./hooks/useLocalStorage";
 
+import openings from "./database/openings";
+import { generateOpenings } from "./game/ai/db/openings";
+
 export const BoardColorContext = createContext<string | null>(null);
 export const SetBoardColorContext = createContext<any>(null);
 export const PieceStyleContext = createContext<string | null>(null);

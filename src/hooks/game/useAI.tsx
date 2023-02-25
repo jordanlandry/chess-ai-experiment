@@ -1,7 +1,9 @@
 import { useEffect } from "react";
+import openings from "../../database/openings";
+import { generateOpenings } from "../../game/ai/db/openings";
 import getBestMove from "../../game/ai/minimax";
 import { movePiece } from "../../game/movePiece";
-import { MinimaxProps, MinimaxReturn, Moves, PieceType, PromotionPieceType, Teams } from "../../properties";
+import { boardToKey, MinimaxProps, MinimaxReturn, Moves, PieceType, PromotionPieceType, Teams } from "../../properties";
 
 export default function useAI(
   board: PieceType[][],
@@ -26,7 +28,7 @@ export default function useAI(
     maxDepth: 7,
     doAlphaBeta: true,
     doMoveOrdering: true,
-    doTranspositionTable: false,
+    doTranspositionTable: true,
     doQuiescence: true,
   };
 
@@ -34,9 +36,28 @@ export default function useAI(
     if (whosTurn !== aiTeam) return;
 
     setTimeout(() => {
-      const bestMove = getBestMove(board, minimaxProps);
-      movePiece(board, bestMove.move, setStateProps);
-      setStateProps.setMinimaxMove(bestMove);
+      // Check if board is in database, if so, get best move from database
+      // If not, run minimax algorithm
+
+      // Openings
+      const boardHash = boardToKey(board, aiTeam === Teams.White);
+      const openings = generateOpenings();
+
+      if (openings[boardHash]) {
+        setTimeout(() => {
+          const bestMove = openings[boardHash];
+          console.log("Opening found!");
+
+          movePiece(board, bestMove, setStateProps);
+        }, minimaxProps.maxTime / 2);
+      }
+
+      // No openings (run minimax)
+      else {
+        const bestMove = getBestMove(board, minimaxProps);
+        movePiece(board, bestMove.move, setStateProps);
+        setStateProps.setMinimaxMove(bestMove);
+      }
     }, 500);
   }, [whosTurn, board]);
 }

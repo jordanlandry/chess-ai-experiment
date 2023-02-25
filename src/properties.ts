@@ -228,4 +228,32 @@ export const baseMinimaxResults: MinimaxReturn = {
   times: times,
 };
 
+// After lots of testing, I found that having a map of random is the fastest way of calculating the keys
+// This is to generate a unique key for each board so we can store it in the transposition table
+// This is much faster than converting the whole board array into a string and using that as the key
+// And faster than using 1-64 as the keys
+export const map = [
+  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
+  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
+  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
+  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
+  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
+  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
+  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
+  [Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()],
+];
+
+export function boardToKey(board: PieceType[][], isMaximizing: boolean) {
+  let key = 1;
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++) {
+      key += (board[i][j].id + 1) * map[i][j];
+    }
+  }
+
+  key *= isMaximizing ? 1 : -1;
+
+  return key + "";
+}
+
 export default properties;

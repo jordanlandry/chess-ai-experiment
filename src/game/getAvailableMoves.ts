@@ -23,6 +23,7 @@ export default function getAvailableMoves(board: PieceType[][], pos: { x: number
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function empty(board: PieceType[][], pos: { x: number; y: number }) {
+  if (pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7) return false;
   return board[pos.y][pos.x].piece === PiecesType.None;
 }
 
