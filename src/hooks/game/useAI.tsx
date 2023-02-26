@@ -25,7 +25,7 @@ export default function useAI(
     aiIsWhite: aiTeam === Teams.White,
     difficulty: 3,
     maxTime: 2500,
-    maxDepth: 7,
+    maxDepth: 0, // This does nothing when the time limit is being used
     doAlphaBeta: true,
     doMoveOrdering: true,
     doTranspositionTable: true,

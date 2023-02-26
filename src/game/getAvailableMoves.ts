@@ -22,8 +22,12 @@ export default function getAvailableMoves(board: PieceType[][], pos: { x: number
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function inBounds(pos: { x: number; y: number }) {
+  return pos.x >= 0 && pos.x <= 7 && pos.y >= 0 && pos.y <= 7;
+}
+
 function empty(board: PieceType[][], pos: { x: number; y: number }) {
-  if (pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7) return false;
+  if (!inBounds(pos)) return false;
   return board[pos.y][pos.x].piece === PiecesType.None;
 }
 
@@ -45,12 +49,14 @@ function whitePawn(board: PieceType[][], pos: { x: number; y: number }, availabl
     availableMoves.push({ from: { x, y }, to: { x, y: y - 2 }, piece: board[y][x], promotion });
 
   // Capture Left
-  if (x > 0 && !empty(board, { x: x - 1, y: y - 1 }) && board[y - 1][x - 1].color === Teams.Black)
-    availableMoves.push({ from: { x, y }, to: { x: x - 1, y: y - 1 }, piece: board[y][x], promotion });
+  const left = { x: x - 1, y: y - 1 };
+  if (inBounds(left) && !empty(board, left) && board[left.y][left.x].color === Teams.Black)
+    availableMoves.push({ from: { x, y }, to: left, piece: board[y][x], promotion });
 
   // Capture Right
-  if (x < 7 && !empty(board, { x: x + 1, y: y - 1 }) && board[y - 1][x + 1].color === Teams.Black)
-    availableMoves.push({ from: { x, y }, to: { x: x + 1, y: y - 1 }, piece: board[y][x], promotion });
+  const right = { x: x + 1, y: y - 1 };
+  if (inBounds(right) && !empty(board, right) && board[right.y][right.x].color === Teams.Black)
+    availableMoves.push({ from: { x, y }, to: right, piece: board[y][x], promotion });
 
   const boardHistory = properties.boardHistory;
 
@@ -87,12 +93,14 @@ function blackPawn(board: PieceType[][], pos: { x: number; y: number }, availabl
     availableMoves.push({ from: { x, y }, to: { x, y: y + 2 }, piece: board[y][x], promotion });
 
   // Capture Left
-  if (x > 0 && !empty(board, { x: x - 1, y: y + 1 }) && board[y + 1][x - 1].color === Teams.White)
-    availableMoves.push({ from: { x, y }, to: { x: x - 1, y: y + 1 }, piece: board[y][x], promotion });
+  const left = { x: x - 1, y: y + 1 };
+  if (inBounds(left) && !empty(board, left) && board[left.y][left.x].color === Teams.White)
+    availableMoves.push({ from: { x, y }, to: left, piece: board[y][x], promotion });
 
   // Capture Right
-  if (x < 7 && !empty(board, { x: x + 1, y: y + 1 }) && board[y + 1][x + 1].color === Teams.White)
-    availableMoves.push({ from: { x, y }, to: { x: x + 1, y: y + 1 }, piece: board[y][x], promotion });
+  const right = { x: x + 1, y: y + 1 };
+  if (inBounds(right) && !empty(board, right) && board[right.y][right.x].color === Teams.White)
+    availableMoves.push({ from: { x, y }, to: right, piece: board[y][x], promotion });
 
   // En Passant
   const boardHistory = properties.boardHistory;
