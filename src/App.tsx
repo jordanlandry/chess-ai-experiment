@@ -7,6 +7,7 @@ import useLocalStorage from "./hooks/useLocalStorage";
 
 import openings from "./database/openings";
 import { generateOpenings } from "./game/ai/db/openings";
+import GenerateEndings from "./components/db/GenerateEndings";
 
 export const BoardColorContext = createContext<string | null>(null);
 export const SetBoardColorContext = createContext<any>(null);
@@ -23,6 +24,7 @@ function App() {
         <SetBoardColorContext.Provider value={setBoardColor}>
           <PieceStyleContext.Provider value={pieceStyle}>
             <SetPieceStyleContext.Provider value={setPieceStyle}>
+              {/* <GenerateEndings /> */}
               <Board />
               <Game />
               {/* <DebugGame /> */}

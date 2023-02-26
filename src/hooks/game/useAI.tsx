@@ -1,9 +1,8 @@
 import { useEffect } from "react";
-import openings from "../../database/openings";
 import { generateOpenings } from "../../game/ai/db/openings";
 import getBestMove from "../../game/ai/minimax";
 import { movePiece } from "../../game/movePiece";
-import { boardToKey, MinimaxProps, MinimaxReturn, Moves, PieceType, PromotionPieceType, Teams } from "../../properties";
+import { boardToKey, MinimaxReturn, Moves, PieceType, PromotionPieceType, Teams } from "../../properties";
 
 export default function useAI(
   board: PieceType[][],
@@ -25,11 +24,13 @@ export default function useAI(
     aiIsWhite: aiTeam === Teams.White,
     difficulty: 3,
     maxTime: 2500,
-    maxDepth: 0, // This does nothing when the time limit is being used
+    maxDepth: 6,
+    useTimeLimit: true,
     doAlphaBeta: true,
     doMoveOrdering: true,
     doTranspositionTable: true,
     doQuiescence: true,
+    doNullMove: true,
   };
 
   useEffect(() => {
@@ -44,17 +45,21 @@ export default function useAI(
       const openings = generateOpenings();
 
       if (openings[boardHash]) {
-        setTimeout(() => {
-          const bestMove = openings[boardHash];
-          console.log("Opening found!");
+        setTimeout(
+          () => {
+            const bestMove = openings[boardHash];
+            console.log("Opening found!");
 
-          movePiece(board, bestMove, setStateProps);
-        }, minimaxProps.maxTime / 2);
+            movePiece(board, bestMove, setStateProps);
+          },
+          minimaxProps.useTimeLimit ? minimaxProps.maxTime / 2 : 1000
+        );
       }
 
       // No openings (run minimax)
       else {
         const bestMove = getBestMove(board, minimaxProps);
+        console.log(bestMove);
         movePiece(board, bestMove.move, setStateProps);
         setStateProps.setMinimaxMove(bestMove);
       }

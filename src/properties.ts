@@ -56,7 +56,6 @@ export enum PiecesType {
   King = "k",
   None = "",
 }
-
 export const STARTING_BOARD: PieceType[][] = [
   [
     { piece: PiecesType.Rook, color: Teams.Black, id: 0, hasMoved: false },
@@ -188,11 +187,13 @@ export interface MinimaxProps {
   aiIsWhite: boolean;
   difficulty: number;
   maxTime: number;
+  useTimeLimit: boolean;
   maxDepth: number;
   doAlphaBeta: boolean;
   doMoveOrdering: boolean;
   doTranspositionTable: boolean;
   doQuiescence: boolean;
+  doNullMove: boolean;
 }
 
 export interface MinimaxReturn {
@@ -255,5 +256,11 @@ export function boardToKey(board: PieceType[][], isMaximizing: boolean) {
 
   return key + "";
 }
+
+export const kingPositions = {
+  [Teams.White]: { x: 2, y: 3 },
+  // [Teams.White]: { x: 4, y: 7 },
+  [Teams.Black]: { x: 4, y: 0 },
+} as { [key: string]: { x: number; y: number } };
 
 export default properties;
