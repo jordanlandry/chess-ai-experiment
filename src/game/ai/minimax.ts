@@ -229,12 +229,12 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
   const orderedMoves = props.doMoveOrdering ? orderMoves(newBoard, allMoves, prevBestMoves, isMaximizing) : allMoves;
   times.orderingMoves += Date.now() - orderingMoveTime;
 
-  // If there are no moves, it means that the game is over
+  // Checkmate or stalemate
   if (orderedMoves.length === 0) {
-    if (inStaleMate(board, isMaximizing)) return { ...nullMove, score: 0 };
+    if (inStaleMate(board, isMaximizing)) return isMaximizing ? { ...currentBestMoveMax, score: 0 } : { ...currentBestMoveMin, score: 0 };
 
-    if (isMaximizing) return { ...currentBestMoveMin, score: -Infinity };
-    return { ...currentBestMoveMax, score: Infinity };
+    if (isMaximizing) return { ...currentBestMoveMax, score: -Infinity };
+    return { ...currentBestMoveMin, score: Infinity };
   }
 
   // Maximizing player
