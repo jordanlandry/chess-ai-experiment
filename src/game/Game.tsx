@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BoardOverlay from "../components/BoardOverlay";
 import Piece from "../components/Piece";
 import Promotion from "../components/Promotion";
@@ -12,7 +12,16 @@ import useLoad from "../hooks/useLoad";
 import useCenterPieces from "../hooks/usePieceCentering";
 import usePrevMove from "../hooks/usePrevMove";
 import { useSelectedpiecePosition } from "../hooks/useSelectedPiecePosition";
-import { baseMinimaxResults, MinimaxReturn, Moves, PiecesType, PieceType, PromotionPieceType, STARTING_BOARD, Teams } from "../properties";
+import properties, {
+  baseMinimaxResults,
+  MinimaxReturn,
+  Moves,
+  PiecesType,
+  PieceType,
+  PromotionPieceType,
+  STARTING_BOARD,
+  Teams,
+} from "../properties";
 
 export default function Game1() {
   const loaded = useLoad();
@@ -61,7 +70,7 @@ export default function Game1() {
   const availableMoveOverlayElements = availableMoves.map((move, i) => {
     const { x, y } = move.to;
     const { piece, color } = board[y][x];
-    if (piece === PiecesType.None) return <BoardOverlay key={i} x={x} y={y} style="available" />;
+    if (piece === PiecesType.None && !move.enPassant) return <BoardOverlay key={i} x={x} y={y} style="available" />;
     return <BoardOverlay key={i} x={move.to.x} y={move.to.y} style="capture" />;
   });
 
@@ -78,6 +87,11 @@ export default function Game1() {
   useAI(board, whosTurn, aiTeam, { ...setStateProps, setMinimaxMove });
 
   const { boardLeft } = useBoardBound();
+
+  // Update the global board history
+  useEffect(() => {
+    properties.boardHistory = boardHistory;
+  }, [boardHistory]);
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (!loaded) return null;

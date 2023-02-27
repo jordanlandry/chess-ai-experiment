@@ -1,4 +1,4 @@
-import properties, { blankPiece, kingPositions, Moves, PiecesType, PieceType, Teams } from "../properties";
+import properties, { blankPiece, Moves, PiecesType, PieceType, Teams } from "../properties";
 
 export default function getAvailableMoves(board: PieceType[][], pos: { x: number; y: number }, team: Teams) {
   const availableMoves: Moves[] = [];
@@ -33,9 +33,6 @@ function empty(board: PieceType[][], pos: { x: number; y: number }) {
 
 function addIfLegal(board: PieceType[][], move: Moves, availableMoves: Moves[]) {
   const color = move.piece.color;
-
-  // Update kings positions
-  if (board[move.from.y][move.from.x].piece === PiecesType.King) kingPositions[color] = move.to;
 
   // Make the move
   const testBoard = board.map((row) => row.slice());
@@ -95,17 +92,18 @@ function whitePawn(board: PieceType[][], pos: { x: number; y: number }, availabl
   // En Passant
   if (y === 3 && boardHistory.length > 1) {
     const lastBoard = boardHistory[boardHistory.length - 2];
-
     const xOffsets = [-1, 1];
+
     xOffsets.forEach((xOffset) => {
       if (
+        inBounds({ x: x + xOffset, y: 0 }) &&
         board[3][x + xOffset].piece === PiecesType.Pawn && // Pawn in correct spot
         board[3][x + xOffset].color === Teams.Black && // Pawn is opposite color
         board[1][x + xOffset].piece === PiecesType.None && // No pawn at the original spot (needs to have moved)
         lastBoard[3][x + xOffset].piece === PiecesType.None && // Last board has no pawn at target spot
         lastBoard[2][x + xOffset].piece === PiecesType.None && // No piece in front of the pawn last turn
         lastBoard[1][x + xOffset].piece === PiecesType.Pawn && // Pawn in original spot on last board
-        lastBoard[2][x + xOffset].color === Teams.Black // Pawn is opposite color
+        lastBoard[1][x + xOffset].color === Teams.Black // Pawn is opposite color
       ) {
         addIfLegal(board, { from: { x, y }, to: { x: x + xOffset, y: y - 1 }, piece: board[y][x], enPassant: true }, availableMoves);
       }
@@ -138,17 +136,18 @@ function blackPawn(board: PieceType[][], pos: { x: number; y: number }, availabl
   const boardHistory = properties.boardHistory;
   if (y === 4 && boardHistory.length > 1) {
     const lastBoard = boardHistory[boardHistory.length - 2];
-
     const xOffsets = [-1, 1]; // Left and Right
+
     xOffsets.forEach((xOffset) => {
       if (
+        inBounds({ x: x + xOffset, y: 0 }) &&
         board[4][x + xOffset].piece === PiecesType.Pawn && // Pawn in correct spot
         board[4][x + xOffset].color === Teams.White && // Pawn is opposite color
         board[6][x + xOffset].piece === PiecesType.None && // No pawn at the original spot (needs to have moved)
         lastBoard[4][x + xOffset].piece === PiecesType.None && // Last board has no pawn at target spot
         lastBoard[5][x + xOffset].piece === PiecesType.None && // No piece in front of the pawn last turn
         lastBoard[6][x + xOffset].piece === PiecesType.Pawn && // Pawn in original spot on last board
-        lastBoard[5][x + xOffset].color === Teams.White // Pawn is opposite color
+        lastBoard[6][x + xOffset].color === Teams.White // Pawn is opposite color
       ) {
         addIfLegal(board, { from: { x, y }, to: { x: x + xOffset, y: y + 1 }, piece: board[y][x], enPassant: true }, availableMoves);
       }
@@ -352,8 +351,10 @@ function king(board: PieceType[][], pos: { x: number; y: number }, availableMove
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function squareUnderAttack(board: PieceType[][], square: { x: number; y: number }, color?: Teams) {
+export function squareUnderAttack(board: PieceType[][], square: { x: number; y: number }, color?: Teams) {
   const { x, y } = square;
+  if (!inBounds(square)) return false;
+
   const team = color ?? board[y][x].color;
 
   // Pawn attacks

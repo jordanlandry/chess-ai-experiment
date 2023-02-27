@@ -40,7 +40,7 @@ export async function movePiece(
   }
 
   newBoard[from.y][from.x] = blankPiece;
-  newBoard[to.y][to.x] = piece;
+  newBoard[to.y][to.x] = { ...piece, hasMoved: true };
   setBoard(newBoard);
 
   // Look for special moves
@@ -60,9 +60,10 @@ export async function movePiece(
   }
 
   // Update
+
   setAvailableMoves([]);
   setMoveHistory((history) => [...history, move]);
-  setBoardHistory((history) => [...history, newBoard.map((row) => [...row])]);
+  setBoardHistory((history) => [...history, newBoard.map((row) => row.slice())]);
 
   // If it is a promotion, I want to wait for the user to select a promotion piece, before changing the turn
   // To give this effect, I will skip the turn change here, and do it in the promotion component

@@ -37,29 +37,24 @@ export default function useAI(
     if (whosTurn !== aiTeam) return;
 
     setTimeout(() => {
-      // Check if board is in database, if so, get best move from database
-      // If not, run minimax algorithm
+      // Check if board is in database, if so, get best move from database, if not, run minimax algorithm
 
       // Openings
       const boardHash = boardToKey(board, aiTeam === Teams.White);
       const openings = generateOpenings();
 
       if (openings[boardHash]) {
-        setTimeout(
-          () => {
-            const bestMove = openings[boardHash];
-            console.log("Opening found!");
-
-            movePiece(board, bestMove, setStateProps);
-          },
-          minimaxProps.useTimeLimit ? minimaxProps.maxTime / 2 : 1000
-        );
+        // prettier-ignore
+        setTimeout(() => {
+          const bestMove = openings[boardHash];
+          movePiece(board, bestMove, setStateProps);
+        }, minimaxProps.useTimeLimit ? minimaxProps.maxTime / 2 : 1000);
       }
 
       // No openings (run minimax)
       else {
         const bestMove = getBestMove(board, minimaxProps);
-        console.log(bestMove);
+        // console.log(bestMove);
         movePiece(board, bestMove.move, setStateProps);
         setStateProps.setMinimaxMove(bestMove);
       }

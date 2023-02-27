@@ -1,5 +1,17 @@
-import { baseMinimaxResults, boardToKey, map, MinimaxProps, MinimaxReturn, Moves, PiecesType, PieceType, Teams, times } from "../../properties";
-import getAvailableMoves from "../getAvailableMoves";
+import {
+  baseMinimaxResults,
+  blankPiece,
+  boardToKey,
+  map,
+  MinimaxProps,
+  MinimaxReturn,
+  Moves,
+  PiecesType,
+  PieceType,
+  Teams,
+  times,
+} from "../../properties";
+import getAvailableMoves, { squareUnderAttack } from "../getAvailableMoves";
 import openings from "./db/openings";
 import { earlyGamePositions } from "./db/piecePositionValues";
 import orderMoves from "./orderMoves";
@@ -177,8 +189,8 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
   }
 
   // If game is over
-  if (whiteKingCount === 0) return { ...nullMove, score: -Infinity };
-  if (blackKingCount === 0) return { ...nullMove, score: Infinity };
+  // if (whiteKingCount === 0) return { ...nullMove, score: -Infinity };
+  // if (blackKingCount === 0) return { ...nullMove, score: Infinity };
 
   // If board has been evaluated before
   const boardHash = boardToKey(board, isMaximizing);
@@ -220,6 +232,14 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
   const orderingMoveTime = Date.now();
   const orderedMoves = props.doMoveOrdering ? orderMoves(newBoard, allMoves, prevBestMoves, isMaximizing) : allMoves;
   times.orderingMoves += Date.now() - orderingMoveTime;
+
+  // If there are no moves, it means that the game is over
+  if (orderedMoves.length === 0) {
+    if (inStaleMate(board, isMaximizing)) return { ...nullMove, score: 0 };
+
+    if (isMaximizing) return { ...nullMove, score: -Infinity };
+    return { ...nullMove, score: Infinity };
+  }
 
   // Maximizing player
   if (isMaximizing) {
@@ -316,6 +336,46 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function inStaleMate(board: PieceType[][], isMaximizing: boolean) {
+  // Find the king
+  let kingX = -1;
+  let kingY = -1;
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      if (board[y][x].piece === PiecesType.King && board[y][x].color === (isMaximizing ? Teams.White : Teams.Black)) {
+        kingX = x;
+        kingY = y;
+        break;
+      }
+    }
+  }
+
+  // Check if the king is in check
+  if (squareUnderAttack(board, { x: kingX, y: kingY })) return false;
+
+  // Don't need to check if the king can move, cuz this will only get called if there are no legal moves
+  return true;
+}
+
+function handleEnPassant(board: PieceType[][], move: Moves, undo: boolean) {
+  // Re-put the pawn that was captured by en passant
+  if (undo) {
+    if (move.to.y === 5 && move.to.x !== move.from.x) {
+      board[move.to.y + 1][move.to.x] = { piece: PiecesType.Pawn, color: Teams.Black, id: -1, hasMoved: false };
+    }
+
+    if (move.to.y === 2 && move.to.x !== move.from.x) {
+      board[move.to.y - 1][move.to.x] = { piece: PiecesType.Pawn, color: Teams.White, id: -1, hasMoved: false };
+    }
+  }
+
+  // Do the En passant
+  else {
+    if (move.piece.color === Teams.White) board[move.to.y + 1][move.to.x] = { ...blankPiece }; // One square below (y + 1)
+    else board[move.to.y - 1][move.to.x] = { ...blankPiece }; // One square above (y - 1)
+  }
+}
+
 function handleCastle(board: PieceType[][], move: Moves, undo: boolean) {
   const { rookFrom, rookTo } = move.castle!;
 
@@ -370,11 +430,14 @@ function makeMove(board: PieceType[][], move: Moves) {
     else if (board[move.to.y][move.to.x].color === Teams.Black) blackKingCount = 0;
   }
 
-  board[move.to.y][move.to.x] = board[move.from.y][move.from.x];
+  board[move.to.y][move.to.x] = { ...board[move.from.y][move.from.x], hasMoved: true };
   board[move.from.y][move.from.x] = { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
 
   // Handle castling
   if (move.castle) handleCastle(board, move, false);
+
+  // Handle en passant
+  if (move.enPassant) handleEnPassant(board, move, false);
 }
 
 function undoMove(board: PieceType[][], newBoard: PieceType[][], move: Moves) {
@@ -388,6 +451,9 @@ function undoMove(board: PieceType[][], newBoard: PieceType[][], move: Moves) {
 
   // Handle castling
   if (move.castle) handleCastle(newBoard, move, true);
+
+  // Handle en passant
+  if (move.enPassant) handleEnPassant(newBoard, move, true);
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

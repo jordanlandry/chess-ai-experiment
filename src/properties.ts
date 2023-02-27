@@ -257,10 +257,4 @@ export function boardToKey(board: PieceType[][], isMaximizing: boolean) {
   return key + "";
 }
 
-export const kingPositions = {
-  [Teams.White]: { x: 2, y: 3 },
-  // [Teams.White]: { x: 4, y: 7 },
-  [Teams.Black]: { x: 4, y: 0 },
-} as { [key: string]: { x: number; y: number } };
-
 export default properties;
