@@ -12,7 +12,6 @@ import {
   times,
 } from "../../properties";
 import getAvailableMoves, { squareUnderAttack } from "../getAvailableMoves";
-import openings from "./db/openings";
 import { earlyGamePositions } from "./db/piecePositionValues";
 import orderMoves from "./orderMoves";
 
@@ -83,9 +82,6 @@ function reset(board: PieceType[][]) {
 // White is maximizing, black is minimizing
 let initialTime = 0;
 
-let whiteKingCount = 1;
-let blackKingCount = 1;
-
 const prevBestMoves: Moves[] = [];
 export default function getBestMove(board: PieceType[][], props: MinimaxProps) {
   reset(board);
@@ -101,7 +97,7 @@ export default function getBestMove(board: PieceType[][], props: MinimaxProps) {
       // Reset the transposition table every iteration
       transpositionTable = {};
 
-      if (!newBestMove) break;
+      if (!newBestMove || newBestMove.move.from.x === -1) break;
 
       bestMove = newBestMove;
       prevBestMoves.push(bestMove.move);
@@ -109,6 +105,7 @@ export default function getBestMove(board: PieceType[][], props: MinimaxProps) {
       depth++;
     }
   }
+
   // We don't use a time limit so we just use a set max depth
   else {
     props.maxTime = Infinity;
@@ -177,6 +174,9 @@ const nullMove = { ...baseMinimaxResults };
 // every time I evaluate the board, as it will slow it down a lot
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+let currentBestMoveMax = { ...nullMove };
+let currentBestMoveMin = { ...nullMove };
+
 function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alpha: number, beta: number, props: MinimaxProps): MinimaxReturn | null {
   if (transpositionTableSize > MAX_TRANSPOSITION_TABLE_SIZE) {
     transpositionTable = {};
@@ -187,10 +187,6 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
   if (Date.now() - initialTime > props.maxTime) {
     return null;
   }
-
-  // If game is over
-  // if (whiteKingCount === 0) return { ...nullMove, score: -Infinity };
-  // if (blackKingCount === 0) return { ...nullMove, score: Infinity };
 
   // If board has been evaluated before
   const boardHash = boardToKey(board, isMaximizing);
@@ -237,8 +233,8 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
   if (orderedMoves.length === 0) {
     if (inStaleMate(board, isMaximizing)) return { ...nullMove, score: 0 };
 
-    if (isMaximizing) return { ...nullMove, score: -Infinity };
-    return { ...nullMove, score: Infinity };
+    if (isMaximizing) return { ...currentBestMoveMin, score: -Infinity };
+    return { ...currentBestMoveMax, score: Infinity };
   }
 
   // Maximizing player
@@ -272,6 +268,8 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
         bestMove.score = score;
         bestMove.move = move;
         bestMove.count = calculations;
+
+        currentBestMoveMax = { ...bestMove };
       }
 
       // Add to transposition table if it's the last call
@@ -317,6 +315,8 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
         bestMove.score = score;
         bestMove.move = move;
         bestMove.count = calculations;
+
+        currentBestMoveMin = { ...bestMove };
       }
 
       // Add to transposition table if it's the last call
@@ -355,6 +355,13 @@ function inStaleMate(board: PieceType[][], isMaximizing: boolean) {
 
   // Don't need to check if the king can move, cuz this will only get called if there are no legal moves
   return true;
+}
+
+function handlePromote(newBoard: PieceType[][], oldBoard: PieceType[][], move: Moves, undo: boolean) {
+  if (undo) {
+    newBoard[move.from.y][move.from.x].piece = PiecesType.Pawn;
+    newBoard = oldBoard.map((row) => row.slice());
+  } else newBoard[move.to.y][move.to.x] = { ...move.piece, piece: move.promotionPiece! };
 }
 
 function handleEnPassant(board: PieceType[][], move: Moves, undo: boolean) {
@@ -425,11 +432,6 @@ function undoPieceCountUpdate(board: PieceType[][], move: Moves) {
 }
 
 function makeMove(board: PieceType[][], move: Moves) {
-  if (board[move.to.y][move.to.x].piece === PiecesType.King) {
-    if (board[move.to.y][move.to.x].color === Teams.White) whiteKingCount = 0;
-    else if (board[move.to.y][move.to.x].color === Teams.Black) blackKingCount = 0;
-  }
-
   board[move.to.y][move.to.x] = { ...board[move.from.y][move.from.x], hasMoved: true };
   board[move.from.y][move.from.x] = { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
 
@@ -438,22 +440,23 @@ function makeMove(board: PieceType[][], move: Moves) {
 
   // Handle en passant
   if (move.enPassant) handleEnPassant(board, move, false);
+
+  // Handle promotion
+  if (move.promotion) handlePromote(board, board, move, false);
 }
 
 function undoMove(board: PieceType[][], newBoard: PieceType[][], move: Moves) {
   newBoard[move.from.y][move.from.x] = newBoard[move.to.y][move.to.x];
   newBoard[move.to.y][move.to.x] = board[move.to.y][move.to.x];
 
-  if (newBoard[move.to.y][move.to.x].piece === PiecesType.King) {
-    if (newBoard[move.to.y][move.to.x].color === Teams.White) whiteKingCount = 1;
-    else if (newBoard[move.to.y][move.to.x].color === Teams.Black) blackKingCount = 1;
-  }
-
   // Handle castling
   if (move.castle) handleCastle(newBoard, move, true);
 
   // Handle en passant
   if (move.enPassant) handleEnPassant(newBoard, move, true);
+
+  // Handle promotion
+  if (move.promotion) handlePromote(newBoard, board, move, true);
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -18,6 +18,7 @@ export default function useAI(
     setIsPromoting: React.Dispatch<React.SetStateAction<boolean>>;
     setPromotedPieces: React.Dispatch<React.SetStateAction<PromotionPieceType[]>>;
     setMinimaxMove: React.Dispatch<React.SetStateAction<MinimaxReturn>>;
+    setPromotionPiece: React.Dispatch<React.SetStateAction<PromotionPieceType>>;
   }
 ) {
   const minimaxProps = {
@@ -47,15 +48,14 @@ export default function useAI(
         // prettier-ignore
         setTimeout(() => {
           const bestMove = openings[boardHash];
-          movePiece(board, bestMove, setStateProps);
+          movePiece(board, bestMove, aiTeam,setStateProps);
         }, minimaxProps.useTimeLimit ? minimaxProps.maxTime / 2 : 1000);
       }
 
       // No openings (run minimax)
       else {
         const bestMove = getBestMove(board, minimaxProps);
-        // console.log(bestMove);
-        movePiece(board, bestMove.move, setStateProps);
+        movePiece(board, bestMove.move, aiTeam, setStateProps);
         setStateProps.setMinimaxMove(bestMove);
       }
     }, 500);

@@ -11,6 +11,7 @@ import findPositionById from "../../helpers/findPositionById";
 export default function useMouseUp(
   board: PieceType[][],
   whosTurn: Teams,
+  aiTeam: Teams,
   availableMoves: Moves[],
   props: {
     setBoard: React.Dispatch<React.SetStateAction<PieceType[][]>>;
@@ -22,11 +23,22 @@ export default function useMouseUp(
     setBoardHistory: React.Dispatch<React.SetStateAction<PieceType[][][]>>;
     setIsPromoting: React.Dispatch<React.SetStateAction<boolean>>;
     setPromotedPieces: React.Dispatch<React.SetStateAction<PromotionPieceType[]>>;
+    setPromotionPiece: React.Dispatch<React.SetStateAction<PromotionPieceType>>;
   }
 ) {
   const { boardLeft, boardTop, squareSize } = useBoardBound();
-  const { setBoard, setSelectedPiece, setTurn, setAvailableMoves, setMouseDown, setMoveHistory, setBoardHistory, setIsPromoting, setPromotedPieces } =
-    props;
+  const {
+    setBoard,
+    setSelectedPiece,
+    setTurn,
+    setAvailableMoves,
+    setMouseDown,
+    setMoveHistory,
+    setBoardHistory,
+    setIsPromoting,
+    setPromotedPieces,
+    setPromotionPiece,
+  } = props;
 
   // You can either select a piece or drag a piece
   // When you're not dragging a piece, letting go of the mouse should do nothing
@@ -61,7 +73,16 @@ export default function useMouseUp(
           return prev;
         }
 
-        movePiece(board, move, { setBoard, setAvailableMoves, setTurn, setMoveHistory, setBoardHistory, setIsPromoting, setPromotedPieces });
+        movePiece(board, move, aiTeam, {
+          setBoard,
+          setAvailableMoves,
+          setTurn,
+          setMoveHistory,
+          setBoardHistory,
+          setIsPromoting,
+          setPromotedPieces,
+          setPromotionPiece,
+        });
 
         return { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
       });

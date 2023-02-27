@@ -7,6 +7,7 @@ import { Moves, PiecesType, PieceType, PromotionPieceType, Teams } from "../../p
 export default function useMouseDown(
   board: PieceType[][],
   whosTurn: Teams,
+  aiTeam: Teams,
   isPromoting: boolean,
   props: {
     setBoard: React.Dispatch<React.SetStateAction<PieceType[][]>>;
@@ -17,11 +18,12 @@ export default function useMouseDown(
     setBoardHistory: React.Dispatch<React.SetStateAction<PieceType[][][]>>;
     setIsPromoting: React.Dispatch<React.SetStateAction<boolean>>;
     setPromotedPieces: React.Dispatch<React.SetStateAction<PromotionPieceType[]>>;
+    setPromotionPiece: React.Dispatch<React.SetStateAction<PromotionPieceType>>;
   }
 ) {
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   const [selectedPiece, setSelectedPiece] = useState<PieceType>({ piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false });
-  const { setBoard, setTurn, setAvailableMoves, setMouseDown, setMoveHistory, setBoardHistory, setPromotedPieces } = props;
+  const { setBoard, setTurn, setAvailableMoves, setMouseDown, setMoveHistory, setBoardHistory, setPromotedPieces, setPromotionPiece } = props;
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function useMouseDown(
         setAvailableMoves((prevMove) => {
           for (let i = 0; i < prevMove.length; i++) {
             if (prevMove[i].to.x === x && prevMove[i].to.y === y) {
-              movePiece(board, prevMove[i], props);
+              movePiece(board, prevMove[i], aiTeam, props);
             }
           }
 

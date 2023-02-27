@@ -3,6 +3,7 @@ import properties, { audioSettings, blankPiece, Moves, PiecesType, PieceType, Pr
 export async function movePiece(
   board: PieceType[][],
   move: Moves,
+  aiTeam: Teams,
   props: {
     setBoard: React.Dispatch<React.SetStateAction<PieceType[][]>>;
     setAvailableMoves: React.Dispatch<React.SetStateAction<Moves[]>>;
@@ -11,12 +12,13 @@ export async function movePiece(
     setBoardHistory: React.Dispatch<React.SetStateAction<PieceType[][][]>>;
     setIsPromoting: React.Dispatch<React.SetStateAction<boolean>>;
     setPromotedPieces: React.Dispatch<React.SetStateAction<PromotionPieceType[]>>;
+    setPromotionPiece: React.Dispatch<React.SetStateAction<PromotionPieceType>>;
   }
 ) {
   const newBoard = board.map((row) => [...row]);
 
   const { from, to, piece, enPassant, castle, promotion } = move;
-  const { setBoard, setAvailableMoves, setTurn, setMoveHistory, setBoardHistory, setIsPromoting, setPromotedPieces } = props;
+  const { setBoard, setAvailableMoves, setTurn, setMoveHistory, setBoardHistory, setIsPromoting, setPromotedPieces, setPromotionPiece } = props;
 
   // Play audio
   // Pick an audio file based on the move mad
@@ -39,7 +41,7 @@ export async function movePiece(
     setPromotedPieces((prev) => prev.filter((p) => p.id !== board[to.y][to.x].id));
   }
 
-  newBoard[from.y][from.x] = blankPiece;
+  newBoard[from.y][from.x] = { ...blankPiece, hasMoved: true };
   newBoard[to.y][to.x] = { ...piece, hasMoved: true };
   setBoard(newBoard);
 
@@ -49,7 +51,7 @@ export async function movePiece(
     const rookTo = { x: castle.rookTo.x, y: castle.rookTo.y };
 
     newBoard[rookTo.y][rookTo.x] = newBoard[rookFrom.y][rookFrom.x];
-    newBoard[rookFrom.y][rookFrom.x] = blankPiece;
+    newBoard[rookFrom.y][rookFrom.x] = { ...blankPiece, hasMoved: true };
     setBoard(newBoard);
   }
 
@@ -60,13 +62,23 @@ export async function movePiece(
   }
 
   // Update
-
   setAvailableMoves([]);
   setMoveHistory((history) => [...history, move]);
   setBoardHistory((history) => [...history, newBoard.map((row) => row.slice())]);
 
   // If it is a promotion, I want to wait for the user to select a promotion piece, before changing the turn
   // To give this effect, I will skip the turn change here, and do it in the promotion component
-  if (promotion) setIsPromoting(true);
+
+  // If it is the AI making the promotion, I can skip this and just make the promotion
+  if (promotion && aiTeam === piece.color) {
+    const promotedPiece = { piece: move.promotionPiece!, color: piece.color, id: properties.currentId++, hasMoved: true, x: to.x, y: to.y };
+    setPromotionPiece(promotedPiece);
+    setPromotedPieces((prevPieces) => [...prevPieces, promotedPiece]);
+
+    setTurn((turn) => (turn === Teams.White ? Teams.Black : Teams.White));
+  }
+
+  // Not the AI turn
+  else if (promotion) setIsPromoting(true);
   else setTurn((turn) => (turn === Teams.White ? Teams.Black : Teams.White));
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import getBoardBound from "../helpers/getBoardBound";
-import { PiecesType, PieceType, PromotionPieceType, Teams } from "../properties";
+import properties, { PiecesType, PieceType, PromotionPieceType, Teams } from "../properties";
 import Piece from "./Piece";
 
 type Props = {
@@ -12,7 +12,6 @@ type Props = {
   setPromotedPieces: React.Dispatch<React.SetStateAction<PromotionPieceType[]>>;
 };
 
-let currentId = 64;
 export default function Promotion({ team, x, y, setIsPromoting, setPromotionPiece, setPromotedPieces }: Props) {
   const { boardLeft, boardTop, squareSize } = getBoardBound();
 
@@ -41,14 +40,18 @@ export default function Promotion({ team, x, y, setIsPromoting, setPromotionPiec
         piece={PiecesType.Queen}
         id="promotion-queen"
         display="block"
-        onClick={() => handleSelectPiece({ piece: PiecesType.Queen, color: team, id: currentId++, hasMoved: true, x: x, y: y, promotionPiece: true })}
+        onClick={() =>
+          handleSelectPiece({ piece: PiecesType.Queen, color: team, id: properties.currentId++, hasMoved: true, x: x, y: y, promotionPiece: true })
+        }
       />
       <Piece
         color={team}
         piece={PiecesType.Rook}
         id="promotion-rook"
         display="block"
-        onClick={() => handleSelectPiece({ piece: PiecesType.Rook, color: team, id: currentId++, hasMoved: true, x: x, y: y, promotionPiece: true })}
+        onClick={() =>
+          handleSelectPiece({ piece: PiecesType.Rook, color: team, id: properties.currentId++, hasMoved: true, x: x, y: y, promotionPiece: true })
+        }
       />
       <Piece
         color={team}
@@ -56,7 +59,7 @@ export default function Promotion({ team, x, y, setIsPromoting, setPromotionPiec
         id="promotion-bishop"
         display="block"
         onClick={() =>
-          handleSelectPiece({ piece: PiecesType.Bishop, color: team, id: currentId++, hasMoved: true, x: x, y: y, promotionPiece: true })
+          handleSelectPiece({ piece: PiecesType.Bishop, color: team, id: properties.currentId++, hasMoved: true, x: x, y: y, promotionPiece: true })
         }
       />
       <Piece
@@ -64,7 +67,7 @@ export default function Promotion({ team, x, y, setIsPromoting, setPromotionPiec
         piece={PiecesType.Knight}
         id="promotion-knight"
         display="block"
-        onClick={() => handleSelectPiece({ piece: PiecesType.Knight, color: team, id: currentId++, hasMoved: true, x: x, y: y })}
+        onClick={() => handleSelectPiece({ piece: PiecesType.Knight, color: team, id: properties.currentId++, hasMoved: true, x: x, y: y })}
       />
     </div>
   );

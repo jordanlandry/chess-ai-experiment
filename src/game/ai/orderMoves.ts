@@ -27,9 +27,11 @@ export default function orderMoves(board: PieceType[][], moves: Moves[], prevBes
 
     if (move.promotion) {
       confidence += 25;
-    }
 
-    movesWithConfidence.push({ move, confidence });
+      // AI will never promote to anything other than these two pieces
+      movesWithConfidence.push({ move: { ...move, promotionPiece: PiecesType.Knight }, confidence });
+      movesWithConfidence.push({ move: { ...move, promotionPiece: PiecesType.Queen }, confidence });
+    } else movesWithConfidence.push({ move, confidence });
   }
 
   // Sort the moves by confidence but ordered moves should just be an array of moves

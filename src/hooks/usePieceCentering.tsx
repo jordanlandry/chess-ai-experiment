@@ -50,7 +50,7 @@ export default function usePieceCentering(board: PieceType[][]) {
       }
     }
 
-    for (let i = 0; i < 64; i++) {
+    for (let i = 0; i < properties.currentId; i++) {
       if (ids.has(i)) continue;
 
       const piece = document.getElementById(`${i}`);

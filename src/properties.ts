@@ -39,6 +39,8 @@ const properties = {
   animationTimeMs: 150,
 
   boardHistory: [] as PieceType[][][],
+
+  currentId: 64,
 };
 
 export enum Teams {
@@ -56,6 +58,7 @@ export enum PiecesType {
   King = "k",
   None = "",
 }
+
 export const STARTING_BOARD: PieceType[][] = [
   [
     { piece: PiecesType.Rook, color: Teams.Black, id: 0, hasMoved: false },
@@ -181,6 +184,7 @@ export interface Moves {
     rookTo: { x: number; y: number };
   };
   promotion?: boolean;
+  promotionPiece?: PiecesType;
 }
 
 export interface MinimaxProps {

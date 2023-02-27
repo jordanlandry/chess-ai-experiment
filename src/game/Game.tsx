@@ -25,17 +25,22 @@ import properties, {
 
 export default function Game1() {
   const loaded = useLoad();
+  const { boardLeft } = useBoardBound();
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // AI
   const [whosTurn, setTurn] = useState(Teams.White);
-  const [aiTeam, setAiTeam] = useState(Teams.Black);
+  const [usingAi, setUsingAi] = useState(true);
+  const [aiTeam, setAiTeam] = useState(usingAi ? Teams.Black : Teams.None);
+  const [minimaxMove, setMinimaxMove] = useState<MinimaxReturn>(baseMinimaxResults);
+
+  // Game
   const [board, setBoard] = useState(STARTING_BOARD.map((row) => [...row]));
   const [availableMoves, setAvailableMoves] = useState<Moves[]>([]);
   const [moveHistory, setMoveHistory] = useState<Moves[]>([]);
   const [boardHistory, setBoardHistory] = useState<PieceType[][][]>([STARTING_BOARD]);
-  const [minimaxMove, setMinimaxMove] = useState<MinimaxReturn>(baseMinimaxResults);
 
-  const [mouseDown, setMouseDown] = useState(false);
+  // Promotion
   const [isPromoting, setIsPromoting] = useState(false);
   const [promotedPieces, setPromotedPieces] = useState<PromotionPieceType[]>([]);
   const [promotionPiece, setPromotionPiece] = useState<PromotionPieceType>({
@@ -47,7 +52,8 @@ export default function Game1() {
     y: -1,
   });
 
-  // Set state for mouse hooks
+  // Mouse hooks
+  const [mouseDown, setMouseDown] = useState(false);
   const setStateProps = {
     setBoard,
     setTurn,
@@ -57,12 +63,12 @@ export default function Game1() {
     setBoardHistory,
     setIsPromoting,
     setPromotedPieces,
+    setPromotionPiece,
   };
-
-  const [selectedPiece, setSelectedPiece] = useMouseDown(board, whosTurn, isPromoting, setStateProps);
-
-  useMouseUp(board, whosTurn, availableMoves, { ...setStateProps, setSelectedPiece });
+  const [selectedPiece, setSelectedPiece] = useMouseDown(board, whosTurn, aiTeam, isPromoting, setStateProps);
+  useMouseUp(board, whosTurn, aiTeam, availableMoves, { ...setStateProps, setSelectedPiece });
   useMouseMove(mouseDown, selectedPiece);
+
   useCenterPieces(board);
 
   const { from, to } = usePrevMove(moveHistory);
@@ -85,8 +91,6 @@ export default function Game1() {
   });
 
   useAI(board, whosTurn, aiTeam, { ...setStateProps, setMinimaxMove });
-
-  const { boardLeft } = useBoardBound();
 
   // Update the global board history
   useEffect(() => {
@@ -117,7 +121,7 @@ export default function Game1() {
         {promotedPiecesElements}
       </div>
       <div style={{ fontSize: "1.25rem", textAlign: "center", position: "absolute", top: 100, left: boardLeft, transform: "translateX(-125%)" }}>
-        <div>Score: {minimaxMove?.score}</div>
+        <div>Score: {minimaxMove?.score.toLocaleString()}</div>
         <div>Calculations: {minimaxMove?.count.toLocaleString()}</div>
         <div>Time: {minimaxMove?.time}ms</div>
 
