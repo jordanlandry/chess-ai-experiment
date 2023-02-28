@@ -1,4 +1,4 @@
-import properties, { blankPiece, Moves, PiecesType, PieceType, Teams } from "../properties";
+import properties, { blankPiece, kingPositions, Moves, PiecesType, PieceType, Teams } from "../properties";
 
 export default function getAvailableMoves(board: PieceType[][], pos: { x: number; y: number }, team: Teams) {
   const availableMoves: Moves[] = [];
@@ -36,11 +36,11 @@ function addIfLegal(board: PieceType[][], move: Moves, availableMoves: Moves[]) 
 
   // Make the move
   const testBoard = board.map((row) => row.slice());
+
+  // if (move.piece.piece === PiecesType.King) kingPositions[color] = move.to;
   testBoard[move.to.y][move.to.x] = testBoard[move.from.y][move.from.x];
   testBoard[move.from.y][move.from.x] = blankPiece;
 
-  // See if the king is in check
-  // Find the king
   let kingX = 0;
   let kingY = 0;
   for (let y = 0; y < 8; y++) {
@@ -53,8 +53,7 @@ function addIfLegal(board: PieceType[][], move: Moves, availableMoves: Moves[]) 
     }
   }
 
-  const kingPos = { x: kingX, y: kingY };
-  if (squareUnderAttack(testBoard, kingPos)) return;
+  if (squareUnderAttack(testBoard, { x: kingX, y: kingY })) return;
 
   // Add the move
   availableMoves.push(move);
@@ -115,6 +114,7 @@ function blackPawn(board: PieceType[][], pos: { x: number; y: number }, availabl
   const { x, y } = pos;
 
   const promotion = y === 6;
+
   // 1 Square Forward
   if (empty(board, { x, y: y + 1 })) addIfLegal(board, { from: { x, y }, to: { x, y: y + 1 }, piece: board[y][x], promotion }, availableMoves);
 
@@ -267,6 +267,7 @@ function king(board: PieceType[][], pos: { x: number; y: number }, availableMove
 
     if (
       !board[7][0].hasMoved &&
+      board[7][0].piece === PiecesType.Rook &&
       board[7][1].piece === PiecesType.None &&
       board[7][2].piece === PiecesType.None &&
       board[7][3].piece === PiecesType.None &&
@@ -399,12 +400,12 @@ export function squareUnderAttack(board: PieceType[][], square: { x: number; y: 
     { x: -1, y: -1 },
   ];
 
-  // for (let i = 0; i < kingOffsets.length; i++) {
-  //   const offset = kingOffsets[i];
-  //   if (inBounds({ x: x + offset.x, y: y + offset.y })) {
-  //     if (board[y + offset.y][x + offset.x].color !== team && board[y + offset.y][x + offset.x].piece === PiecesType.King) return true;
-  //   }
-  // }
+  for (let i = 0; i < kingOffsets.length; i++) {
+    const offset = kingOffsets[i];
+    if (inBounds({ x: x + offset.x, y: y + offset.y })) {
+      if (board[y + offset.y][x + offset.x].color !== team && board[y + offset.y][x + offset.x].piece === PiecesType.King) return true;
+    }
+  }
 
   // // Rook attacks
   const rookOffsets = [

@@ -49,11 +49,12 @@ export default function Game1() {
     setBoardHistory,
     setIsPromoting,
     setPromotedPieces,
+    setPromotionPiece,
   };
 
-  const [selectedPiece, setSelectedPiece] = useMouseDown(board, whosTurn, isPromoting, setStateProps);
+  const [selectedPiece, setSelectedPiece] = useMouseDown(board, whosTurn, aiTeam, isPromoting, setStateProps);
 
-  useMouseUp(board, whosTurn, availableMoves, { ...setStateProps, setSelectedPiece });
+  useMouseUp(board, whosTurn, aiTeam, availableMoves, { ...setStateProps, setSelectedPiece });
   useMouseMove(mouseDown, selectedPiece);
   useCenterPieces(board);
 
@@ -68,7 +69,7 @@ export default function Game1() {
 
   const { selectedPieceX, selectedPieceY } = useSelectedpiecePosition(board, selectedPiece);
 
-  usePromotePiece(promotionPiece, setPromotionPiece, setBoard, setIsPromoting, setTurn);
+  usePromotePiece(promotionPiece, isPromoting, setPromotionPiece, setBoard, setIsPromoting, setTurn);
 
   // Image elements for promoted pieces as they aren't initially on the board
   const promotedPiecesElements = promotedPieces.map((promotedPiece, i) => {
@@ -96,25 +97,25 @@ export default function Game1() {
             <th>Total time (ms)</th>
           </tr>
           <tr>
-            <td>None</td>
+            <td>Alpha-beta pruning</td>
             <td>{minimaxMoves[0]?.count.toLocaleString()}</td>
             <td>{minimaxMoves[0]?.time}</td>
           </tr>
 
           <tr>
-            <td>Alpha-beta pruning</td>
+            <td>Transposition table</td>
             <td>{minimaxMoves[1]?.count.toLocaleString()}</td>
             <td>{minimaxMoves[1]?.time}</td>
           </tr>
 
           <tr>
-            <td>Transposition table</td>
+            <td>Move Ordering</td>
             <td>{minimaxMoves[2]?.count.toLocaleString()}</td>
             <td>{minimaxMoves[2]?.time}</td>
           </tr>
 
           <tr>
-            <td>Move Ordering</td>
+            <td>Null Move Pruning</td>
             <td>{minimaxMoves[3]?.count.toLocaleString()}</td>
             <td>{minimaxMoves[3]?.time}</td>
           </tr>

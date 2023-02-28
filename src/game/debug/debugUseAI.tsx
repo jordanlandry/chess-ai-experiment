@@ -17,40 +17,44 @@ export default function debugUseAI(
     setIsPromoting: React.Dispatch<React.SetStateAction<boolean>>;
     setPromotedPieces: React.Dispatch<React.SetStateAction<PromotionPieceType[]>>;
     setMinimaxMoves: React.Dispatch<React.SetStateAction<MinimaxReturn[]>>;
+    setPromotionPiece: React.Dispatch<React.SetStateAction<PromotionPieceType>>;
   }
 ) {
   const minimaxProps = {
     aiIsWhite: aiTeam === Teams.White,
     difficulty: 3,
     maxTime: 2500,
-    maxDepth: 5,
+    maxDepth: 6,
+    useTimeLimit: false,
     doAlphaBeta: true,
     doMoveOrdering: true,
-    doTranspositionTable: false,
+    doTranspositionTable: true,
     doQuiescence: true,
+    doNullMove: true,
   };
 
   useEffect(() => {
     if (whosTurn !== aiTeam) return;
 
-    minimaxProps.doAlphaBeta = false;
+    minimaxProps.doAlphaBeta = true;
     minimaxProps.doTranspositionTable = false;
     minimaxProps.doMoveOrdering = false;
     minimaxProps.doQuiescence = false;
+    minimaxProps.doNullMove = false;
 
     setTimeout(() => {
-      const bestMove1 = getBestMove(board, minimaxProps);
-      setStateProps.setMinimaxMoves((prev) => [...prev, bestMove1]);
+      // const bestMove1 = getBestMove(board, minimaxProps);
+      // setStateProps.setMinimaxMoves((prev) => [...prev, bestMove1]);
 
-      minimaxProps.doAlphaBeta = true;
-      const bestMove2 = getBestMove(board, minimaxProps);
-      setStateProps.setMinimaxMoves((prev) => [...prev, bestMove2]);
+      // minimaxProps.doTranspositionTable = true;
+      // const bestMove2 = getBestMove(board, minimaxProps);
+      // setStateProps.setMinimaxMoves((prev) => [...prev, bestMove2]);
 
-      minimaxProps.doTranspositionTable = true;
-      const bestMove3 = getBestMove(board, minimaxProps);
-      setStateProps.setMinimaxMoves((prev) => [...prev, bestMove3]);
+      // minimaxProps.doMoveOrdering = true;
+      // const bestMove3 = getBestMove(board, minimaxProps);
+      // setStateProps.setMinimaxMoves((prev) => [...prev, bestMove3]);
 
-      minimaxProps.doMoveOrdering = true;
+      minimaxProps.doNullMove = true;
       const bestMove4 = getBestMove(board, minimaxProps);
       setStateProps.setMinimaxMoves((prev) => [...prev, bestMove4]);
     }, 200);

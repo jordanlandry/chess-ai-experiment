@@ -82,7 +82,7 @@ export default function Game1() {
 
   const { selectedPieceX, selectedPieceY } = useSelectedpiecePosition(board, selectedPiece);
 
-  usePromotePiece(promotionPiece, setPromotionPiece, setBoard, setIsPromoting, setTurn);
+  usePromotePiece(promotionPiece, isPromoting, setPromotionPiece, setBoard, setIsPromoting, setTurn);
 
   // Image elements for promoted pieces as they aren't initially on the board
   const promotedPiecesElements = promotedPieces.map((promotedPiece, i) => {

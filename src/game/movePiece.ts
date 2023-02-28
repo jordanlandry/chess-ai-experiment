@@ -1,4 +1,4 @@
-import properties, { audioSettings, blankPiece, Moves, PiecesType, PieceType, PromotionPieceType, Teams } from "../properties";
+import properties, { audioSettings, blankPiece, kingPositions, Moves, PiecesType, PieceType, PromotionPieceType, Teams } from "../properties";
 
 export async function movePiece(
   board: PieceType[][],
@@ -39,6 +39,11 @@ export async function movePiece(
   // if the board at the position is a promoted piece, remove it
   if (board[to.y][to.x].promotionPiece) {
     setPromotedPieces((prev) => prev.filter((p) => p.id !== board[to.y][to.x].id));
+  }
+
+  // Update the king positions
+  if (piece.piece === PiecesType.King) {
+    kingPositions[piece.color] = to;
   }
 
   newBoard[from.y][from.x] = { ...blankPiece, hasMoved: true };

@@ -2,6 +2,7 @@ import {
   baseMinimaxResults,
   blankPiece,
   boardToKey,
+  kingPositions,
   map,
   MinimaxProps,
   MinimaxReturn,
@@ -81,6 +82,7 @@ function reset(board: PieceType[][]) {
 
 // White is maximizing, black is minimizing
 let initialTime = 0;
+const nullMove = { ...baseMinimaxResults };
 
 const prevBestMoves: Moves[] = [];
 export default function getBestMove(board: PieceType[][], props: MinimaxProps) {
@@ -92,12 +94,16 @@ export default function getBestMove(board: PieceType[][], props: MinimaxProps) {
   let depth = 1;
   if (props.useTimeLimit) {
     while (Date.now() - initialTime < props.maxTime) {
-      const newBestMove = minimax(board, depth, false, -Infinity, Infinity, props);
+      const newBestMove = minimax(board, depth, false, -Infinity, Infinity, { ...nullMove }, props);
+      if (!newBestMove || newBestMove.move.from.x === -1) break;
+
+      if (newBestMove.score === Infinity || newBestMove.score === -Infinity) {
+        bestMove = newBestMove;
+        break;
+      }
 
       // Reset the transposition table every iteration
       transpositionTable = {};
-
-      if (!newBestMove || newBestMove.move.from.x === -1) break;
 
       bestMove = newBestMove;
       prevBestMoves.push(bestMove.move);
@@ -109,7 +115,7 @@ export default function getBestMove(board: PieceType[][], props: MinimaxProps) {
   // We don't use a time limit so we just use a set max depth
   else {
     props.maxTime = Infinity;
-    bestMove = minimax(board, props.maxDepth, false, -Infinity, Infinity, props)!;
+    bestMove = minimax(board, props.maxDepth, false, -Infinity, Infinity, { ...nullMove }, props)!;
     depth = props.maxDepth;
   }
 
@@ -122,18 +128,15 @@ export default function getBestMove(board: PieceType[][], props: MinimaxProps) {
   return minimaxResults;
 }
 
-function evaluateBoard(board: PieceType[][]) {
+function evaluateBoard(board: PieceType[][], moves: Moves[], isMax: boolean) {
+  if (moves.length === 0) {
+    if (inStaleMate(board, isMax)) return 0;
+    else return isMax ? -Infinity : Infinity;
+  }
+
   let score = 0;
 
   const initialTime = Date.now();
-
-  // Object.keys(piecesCount.maximizingPlayer).forEach((piece) => {
-  //   score += piecesCount.maximizingPlayer[piece] * pieceValues[piece];
-  // });
-
-  // Object.keys(piecesCount.minimizingPlayer).forEach((piece) => {
-  //   score -= piecesCount.minimizingPlayer[piece] * pieceValues[piece];
-  // });
 
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
@@ -169,15 +172,19 @@ function evaluateBoard(board: PieceType[][]) {
   return score;
 }
 
-const nullMove = { ...baseMinimaxResults };
 // I need to keep a constant position of each pieces so that I don't need to search for them
 // every time I evaluate the board, as it will slow it down a lot
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-let currentBestMoveMax = { ...nullMove };
-let currentBestMoveMin = { ...nullMove };
-
-function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alpha: number, beta: number, props: MinimaxProps): MinimaxReturn | null {
+function minimax(
+  board: PieceType[][],
+  depth: number,
+  isMaximizing: boolean,
+  alpha: number,
+  beta: number,
+  currentBestMove: MinimaxReturn,
+  props: MinimaxProps
+): MinimaxReturn | null {
   if (transpositionTableSize > MAX_TRANSPOSITION_TABLE_SIZE) {
     transpositionTable = {};
     transpositionTableSize = 0;
@@ -200,23 +207,6 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
   calculations++;
 
   // If we have reached the end of the search, return the evaluation of the board
-  if (depth <= 0) {
-    minimaxResults.count++;
-    return { ...nullMove, score: evaluateBoard(board) };
-  }
-
-  // Null move pruning
-  if (props.doNullMove) {
-    if (isMaximizing && depth > 1) {
-      const newBoard = [...board];
-      const nextMove = minimax(newBoard, depth - 3, true, alpha, beta, props);
-
-      if (!nextMove) return null;
-
-      if (nextMove.score <= alpha) return { ...nullMove, score: Infinity };
-    }
-  }
-
   // Copy the board
   const boardCopyTime = Date.now();
   const newBoard = board.map((row) => row.slice());
@@ -225,25 +215,44 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
   const allMoves = getAllMoves(board, isMaximizing);
   times.gettingMoves += Date.now() - getMovesTime;
 
+  if (depth <= 0) {
+    minimaxResults.count++;
+    return { ...nullMove, score: evaluateBoard(board, allMoves, isMaximizing) };
+  }
+
+  // Null move pruning
+  if (props.doNullMove) {
+    if (!isMaximizing && depth >= 3) {
+      const newBoard = [...board];
+      const nextMove = minimax(newBoard, depth - 3, true, -beta, -beta + 1, currentBestMove, props);
+
+      if (nextMove && nextMove.score >= beta) return { ...nullMove, score: Infinity };
+    }
+  }
+
   const orderingMoveTime = Date.now();
   const orderedMoves = props.doMoveOrdering ? orderMoves(newBoard, allMoves, prevBestMoves, isMaximizing) : allMoves;
   times.orderingMoves += Date.now() - orderingMoveTime;
 
-  // Checkmate or stalemate
-  if (orderedMoves.length === 0) {
-    if (inStaleMate(board, isMaximizing)) return isMaximizing ? { ...currentBestMoveMax, score: 0 } : { ...currentBestMoveMin, score: 0 };
+  // If in checkmate
+  if (currentBestMove.score === -Infinity || currentBestMove.score === Infinity) return currentBestMove;
 
-    if (isMaximizing) return { ...currentBestMoveMax, score: -Infinity };
-    return { ...currentBestMoveMin, score: Infinity };
+  if (allMoves.length === 0) {
+    if (inStaleMate(newBoard, isMaximizing)) return { ...currentBestMove, score: 0 };
+
+    currentBestMove.score = isMaximizing ? -Infinity : Infinity;
+    return currentBestMove;
   }
 
   // Maximizing player
   if (isMaximizing) {
     times.boardCopy += Date.now() - boardCopyTime;
 
-    for (const move of orderedMoves) {
+    for (let i = 0; i < orderedMoves.length; i++) {
+      const move = orderedMoves[i];
+
       // Update the count of each piece
-      makePieceCountUpdate(board, move);
+      // makePieceCountUpdate(board, move);
 
       // Make the move
       const makeMoveTime = Date.now();
@@ -251,7 +260,8 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
       times.makingMove += Date.now() - makeMoveTime;
 
       // Get score with the new board
-      const nextMove = minimax(newBoard, depth - 1, false, alpha, beta, props);
+      const nextMove = minimax(newBoard, depth - 1, false, alpha, beta, currentBestMove, props);
+
       if (!nextMove) return null;
 
       const score = nextMove.score;
@@ -269,7 +279,7 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
         bestMove.move = move;
         bestMove.count = calculations;
 
-        currentBestMoveMax = { ...bestMove };
+        currentBestMove = { ...bestMove };
       }
 
       // Add to transposition table if it's the last call
@@ -288,18 +298,19 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
 
   // Minimizing player
   else {
-    for (const move of orderedMoves) {
+    for (let i = 0; i < orderedMoves.length; i++) {
+      const move = orderedMoves[i];
+
       // Update the count of each piece
-      makePieceCountUpdate(board, move);
+      // makePieceCountUpdate(board, move);
 
       // Make the move
       const initialTime1 = Date.now();
-      newBoard[move.to.y][move.to.x] = newBoard[move.from.y][move.from.x];
-      newBoard[move.from.y][move.from.x] = { piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false };
+      makeMove(newBoard, move);
       times.makingMove += Date.now() - initialTime1;
 
       // Get score with the new board
-      const nextMove = minimax(newBoard, depth - 1, true, alpha, beta, props);
+      const nextMove = minimax(newBoard, depth - 1, true, alpha, beta, currentBestMove, props);
       if (!nextMove) return null;
 
       const score = nextMove.score;
@@ -316,7 +327,7 @@ function minimax(board: PieceType[][], depth: number, isMaximizing: boolean, alp
         bestMove.move = move;
         bestMove.count = calculations;
 
-        currentBestMoveMin = { ...bestMove };
+        currentBestMove = { ...bestMove };
       }
 
       // Add to transposition table if it's the last call
@@ -340,6 +351,14 @@ function inStaleMate(board: PieceType[][], isMaximizing: boolean) {
   // Find the king
   let kingX = -1;
   let kingY = -1;
+  if (isMaximizing) {
+    kingX = kingPositions[Teams.White].x;
+    kingY = kingPositions[Teams.White].y;
+  } else {
+    kingX = kingPositions[Teams.Black].x;
+    kingY = kingPositions[Teams.Black].y;
+  }
+
   for (let y = 0; y < 8; y++) {
     for (let x = 0; x < 8; x++) {
       if (board[y][x].piece === PiecesType.King && board[y][x].color === (isMaximizing ? Teams.White : Teams.Black)) {
@@ -361,7 +380,13 @@ function handlePromote(newBoard: PieceType[][], oldBoard: PieceType[][], move: M
   if (undo) {
     newBoard[move.from.y][move.from.x].piece = PiecesType.Pawn;
     newBoard = oldBoard.map((row) => row.slice());
-  } else newBoard[move.to.y][move.to.x] = { ...move.piece, piece: move.promotionPiece! };
+  } else {
+    newBoard[move.to.y][move.to.x] = { ...move.piece, piece: move.promotionPiece! };
+    newBoard[move.from.y][move.from.x] = { ...move.piece, piece: PiecesType.None, color: Teams.None };
+  }
+
+  if (move.to.y === 7 && !undo) {
+  }
 }
 
 function handleEnPassant(board: PieceType[][], move: Moves, undo: boolean) {
@@ -415,14 +440,6 @@ function getAllMoves(board: PieceType[][], isMaximizing: boolean) {
   return moves;
 }
 
-function makePieceCountUpdate(board: PieceType[][], move: Moves) {
-  const { piece, color } = board[move.to.y][move.to.x];
-  if (piece === PiecesType.None) return;
-
-  if (color === Teams.White) piecesCount.maximizingPlayer[piece]--;
-  else if (color === Teams.Black) piecesCount.minimizingPlayer[piece]--;
-}
-
 function undoPieceCountUpdate(board: PieceType[][], move: Moves) {
   const { piece, color } = board[move.to.y][move.to.x];
   if (piece === PiecesType.None) return;
@@ -446,6 +463,8 @@ function makeMove(board: PieceType[][], move: Moves) {
 }
 
 function undoMove(board: PieceType[][], newBoard: PieceType[][], move: Moves) {
+  if (move.piece.piece === PiecesType.King) kingPositions[move.piece.color] = { x: move.from.x, y: move.from.y };
+
   newBoard[move.from.y][move.from.x] = newBoard[move.to.y][move.to.x];
   newBoard[move.to.y][move.to.x] = board[move.to.y][move.to.x];
 
@@ -461,49 +480,3 @@ function undoMove(board: PieceType[][], newBoard: PieceType[][], move: Moves) {
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~33ms for 500,000 calculations (on my machine results may vary)
-function testBoardKeySpeeds(board: PieceType[][]) {
-  const initialTime = Date.now();
-  for (let i = 0; i < 500_000; i++) {
-    const key = boardToKey(board, true);
-  }
-
-  console.log(Date.now() - initialTime + "ms");
-}
-
-function testBoardCopySpeeds(board: PieceType[][]) {
-  // Test
-  let startTime = Date.now();
-  for (let i = 0; i < 100_000; i++) {
-    const newBoard = board.map((row) => row.map((piece) => ({ ...piece })));
-  }
-
-  console.log(Date.now() - startTime + "ms");
-
-  startTime = Date.now();
-  for (let i = 0; i < 100_000; i++) {
-    const newBoard = JSON.parse(JSON.stringify(board));
-  }
-
-  console.log(Date.now() - startTime + "ms");
-
-  startTime = Date.now();
-  for (let i = 0; i < 100_000; i++) {
-    const newBoard = Array.from(board, (arr) => arr.slice());
-  }
-
-  console.log(Date.now() - startTime + "ms");
-
-  startTime = Date.now();
-  for (let i = 0; i < 100_000; i++) {
-    const newBoard = board.map((row) => row.slice());
-  }
-
-  console.log(Date.now() - startTime + "ms");
-
-  startTime = Date.now();
-  for (let i = 0; i < 100_000; i++) {
-    const newArray = Array.from(board, (arr) => Array.from(arr));
-  }
-
-  console.log(Date.now() - startTime + "ms");
-}
