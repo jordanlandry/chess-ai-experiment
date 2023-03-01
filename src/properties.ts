@@ -31,7 +31,7 @@ const properties = {
 
   overlayColors: {
     selected: "rgba(255, 255, 0, 0.5)",
-    available: "rgba(0, 0, 0, 0.1)",
+    available: "rgba(0, 0, 0, 0.15)",
     capture: "rgba(255, 0, 0, 0.5)",
     lastMove: "rgba(255, 255, 0, 0.5)",
   },

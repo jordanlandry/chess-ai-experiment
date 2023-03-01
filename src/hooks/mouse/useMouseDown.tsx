@@ -4,7 +4,7 @@ import getAvailableMoves from "../../game/getAvailableMovesOld";
 import getAvailableMovesTest from "../../game/getAvailableMoves";
 import getMouseSpot from "../../helpers/getMouseSpot";
 import makeMove from "../../helpers/makeMove";
-import { Teams } from "../../properties";
+import properties, { Teams } from "../../properties";
 
 export default function useMouseDownTest(
   currentTurn: Teams,
@@ -14,8 +14,10 @@ export default function useMouseDownTest(
   const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
 
   useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
+    const handleMouseDown = async (e: MouseEvent) => {
       const position = getMouseSpot(e);
+      if (position === null) return; // Have to have === null (instead of !position) because 0 is a valid position
+
       if (selectedPiece === null) {
         if (getTeam(board[position]) !== currentTurn) return;
 
@@ -26,7 +28,10 @@ export default function useMouseDownTest(
 
         const moves = getAvailableMovesTest(position, team);
         setAvailableMoves(moves);
-      } else {
+      }
+
+      // If you have a piece selected and you click somewhere
+      else {
         setAvailableMoves((prevMoves) => {
           // Selecting a new piece
           if (getTeam(board[position]) === currentTurn) {
@@ -37,16 +42,18 @@ export default function useMouseDownTest(
           // If you selecting a square that's not a piece, deselect the piece, and move the piece if it's a valid move
           for (let i = 0; i < prevMoves.length; i++) {
             if (prevMoves[i].to === position) {
-              makeMove(selectedPiece, position);
-              setCurrentTurn((prevTurn) => (prevTurn === Teams.White ? Teams.Black : Teams.White));
+              makeMove(selectedPiece, position, prevMoves[i].castle, prevMoves[i].enPassant);
+
+              setTimeout(() => {
+                setCurrentTurn((currentTurn) => (currentTurn === Teams.White ? Teams.Black : Teams.White));
+              }, properties.animationTimeMs + 100);
               return [];
             }
           }
 
+          setSelectedPiece(null);
           return [];
         });
-
-        setSelectedPiece(null);
       }
     };
 
@@ -54,5 +61,14 @@ export default function useMouseDownTest(
     return () => window.removeEventListener("mousedown", handleMouseDown);
   }, [selectedPiece, currentTurn]);
 
-  return [selectedPiece, setSelectedPiece];
+  // Put the piece z index above everything else
+  useEffect(() => {
+    if (!selectedPiece) return;
+    for (let i = 0; i < 64; i++) {
+      const square = document.getElementById(i.toString());
+      if (square) square.style.zIndex = i === selectedPiece ? "100" : "1";
+    }
+  }, [selectedPiece]);
+
+  return { selectedPiece, setSelectedPiece };
 }

@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { board, Move } from "../board";
 import useAITest from "../hooks/game/useAI";
-import useMouseDownTest from "../hooks/mouse/useMouseDownTest";
-import useMouseUp from "../hooks/mouse/useMouseUp";
-import useMouseUpTest from "../hooks/mouse/useMouseUpTest";
-import usePieceCenteringTest from "../hooks/usePieceCenteringTest";
+import useMouseDown from "../hooks/mouse/useMouseDown";
+import usePieceCenteringTest from "../hooks/usePieceCentering";
 import { Teams } from "../properties";
 import AvailableCapture from "./overlays/AvailableCapture";
 import AvailableMove from "./overlays/AvailableMove";
+import LastMove from "./overlays/LastMove";
+import SelectedPiece from "./overlays/SelectedPiece";
 
 export default function Chess() {
   // AI
@@ -17,14 +17,15 @@ export default function Chess() {
   // Game
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
   const [currentTurn, setCurrentTurn] = useState(Teams.White);
+  const [moveHistory, setMoveHistory] = useState<Move[]>([]);
 
   // Mouse hooks
   const [mouseDown, setMouseDown] = useState(false);
 
-  const [selectedPiece, setSelectedPiece] = useMouseDownTest(currentTurn, setAvailableMoves, setCurrentTurn);
+  const { selectedPiece, setSelectedPiece } = useMouseDown(currentTurn, setAvailableMoves, setCurrentTurn);
 
   useAITest(currentTurn, aiTeam, setCurrentTurn);
-  usePieceCenteringTest();
+  usePieceCenteringTest(setCurrentTurn);
 
   return (
     <div>
@@ -32,6 +33,10 @@ export default function Chess() {
         if (board[move.to] === 0) return <AvailableMove key={i} index={move.to} />;
         return <AvailableCapture key={i} index={move.to} />;
       })}
+
+      <SelectedPiece index={selectedPiece} />
+
+      <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} />
     </div>
   );
 }

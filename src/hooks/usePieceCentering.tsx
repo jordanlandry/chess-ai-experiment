@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { getAllPieces } from "../board";
-import properties from "../properties";
+import properties, { Teams } from "../properties";
 import useBoardBound from "./useBoardBound";
 import useLoad from "./useLoad";
 
-export default function usePieceCentering() {
+export default function usePieceCentering(setTurn: React.Dispatch<React.SetStateAction<Teams>>) {
   const loaded = useLoad();
   const board = getAllPieces();
   const { boardLeft, boardTop, squareSize } = useBoardBound();

@@ -6,7 +6,12 @@ import {
   BlackQueens,
   BlackRooks,
   board,
-  getZobristKey,
+  calcXY,
+  getKey,
+  lookupArrayXY,
+  lookupObjectXY,
+  // getZobristKey,
+  Move,
   WhiteBishops,
   WhiteKing,
   WhiteKnights,
@@ -18,6 +23,11 @@ import makeMove from "../../helpers/makeMove";
 import { Teams } from "../../properties";
 import { getAllAvailableMovesTest } from "../getAvailableMoves";
 import orderMovesTest from "./orderMoves";
+
+interface Minimax {
+  score: number;
+  move: Move;
+}
 
 function evaluateBoard() {
   let score = 0;
@@ -41,18 +51,31 @@ function evaluateBoard() {
   return score;
 }
 
-let table = {} as { [key: string]: number };
+interface Table extends Minimax {
+  depth: number;
+}
 
+const MAX_TABLE_SIZE = 128_000;
+let tableSize = 0;
+let table = {} as { [key: string]: Table };
+
+const maxTime = 2500;
 let startTime = 0;
 export default function getBestMoveTest(aiTeam: Teams) {
-  table = {};
-
   let depth = 1;
   startTime = Date.now();
 
-  let bestMove = { score: 0, move: { from: -1, to: -1 } };
-  while (Date.now() - startTime < 2500) {
-    [];
+  // const idx = Math.floor(Math.random() * 64);
+  // testFunctionSpeed(() => calcXY(idx), "calculation");
+  // testFunctionSpeed(() => lookupObjectXY(idx), "lookup");
+  // testFunctionSpeed(() => lookupArrayXY(idx), "Array lookup");
+
+  let bestMove: Minimax = { score: 0, move: { from: -1, to: -1 } };
+
+  // return bestMove;
+
+  while (Date.now() - startTime < maxTime) {
+    table = {};
     const next = minimax(depth, -Infinity, Infinity, aiTeam === Teams.White);
 
     if (!next) break;
@@ -65,10 +88,15 @@ export default function getBestMoveTest(aiTeam: Teams) {
   return bestMove;
 }
 
-function minimax(depth: number, alpha: number, beta: number, isMax: boolean) {
+function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Minimax | null {
   if (depth === 0) return { score: evaluateBoard(), move: { from: -1, to: -1 } };
 
-  if (Date.now() - startTime > 1000) return null;
+  if (tableSize > MAX_TABLE_SIZE) {
+    table = {};
+    tableSize = 0;
+  }
+
+  if (Date.now() - startTime > maxTime) return null;
 
   // 1. Generate all possible moves
   // 2. Make each move
@@ -76,30 +104,30 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean) {
   // 4. Undo move
   // 5. Update best move
   // 6. Update alpha and beta
-  // 7. Return best move][]
+  // 7. Return best move
 
   // Maximizer
   if (isMax) {
-    // const boardHash = getZobristKey();
-    // if (table[boardHash]) return table[boardHash];
+    const boardHash = getKey();
+    if (table[boardHash] && depth === table[boardHash].depth) return table[boardHash];
 
     const bestMove = { score: -Infinity, move: { from: -1, to: -1 } };
 
     const moves = orderMovesTest(getAllAvailableMovesTest(Teams.White));
     for (let i = 0; i < moves.length; i++) {
-      const { from, to } = moves[i];
+      const { from, to, castle, enPassant } = moves[i];
 
       // Save the piece that is being captured (if any)
       const capturedPiece = board[to];
 
       // Make move
-      makeMove(from, to, true);
+      makeMove(from, to, castle, enPassant, true);
 
       // Evaluate the next depth of moves
       const nextEval = minimax(depth - 1, alpha, beta, !isMax);
 
       // Undo move
-      makeMove(to, from, true, true, capturedPiece);
+      makeMove(to, from, castle, enPassant, true, true, capturedPiece);
 
       // Update best move
       if (!nextEval) return null;
@@ -110,7 +138,10 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean) {
       }
 
       // Add to table
-      // if (depth === 1) table[boardHash] = bestScore;
+      if (depth === 1) {
+        table[boardHash] = { ...bestMove, depth };
+        tableSize++;
+      }
 
       // Update alpha
       alpha = Math.max(alpha, bestMove.score);
@@ -121,26 +152,26 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean) {
 
   // Minimizer
   else {
-    // const boardHash = getZobristKey();
-    // if (table[boardHash]) return table[boardHash];
+    const boardHash = getKey() * -1;
+    if (table[boardHash] && depth === table[boardHash].depth) return table[boardHash];
 
     let bestMove = { score: Infinity, move: { from: -1, to: -1 } };
 
     const moves = orderMovesTest(getAllAvailableMovesTest(Teams.Black));
 
     for (let i = 0; i < moves.length; i++) {
-      const { from, to } = moves[i];
+      const { from, to, castle, enPassant } = moves[i];
 
       // Save the piece that is being captured (if any)
       const capturedPiece = board[to];
 
       // Make move
-      makeMove(from, to, true);
+      makeMove(from, to, castle, enPassant, true);
 
       // Evaluate the next depth of moves
       const nextEval = minimax(depth - 1, alpha, beta, !isMax);
       // Undo move
-      makeMove(to, from, true, true, capturedPiece);
+      makeMove(to, from, castle, enPassant, true, true, capturedPiece);
 
       // Update best move
       if (!nextEval) return null;
@@ -150,7 +181,10 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean) {
       }
 
       // Add to table
-      // if (depth === 1) table[boardHash] = bestScore;
+      if (depth === 1) {
+        table[boardHash] = { ...bestMove, depth };
+        tableSize++;
+      }
 
       // Update beta
       beta = Math.min(beta, bestMove.score);
@@ -158,4 +192,7 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean) {
     }
     return bestMove;
   }
+}
+function test1(arg0: number) {
+  throw new Error("Function not implemented.");
 }

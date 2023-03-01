@@ -1,11 +1,11 @@
-import React from "react";
 import useBoardBound from "../../hooks/useBoardBound";
 import properties from "../../properties";
 
-type Props = { index: number };
+type Props = { index: number | null };
 
-export default function AvailableMove({ index }: Props) {
+export default function SelectedPiece({ index }: Props) {
   const { boardLeft, boardTop, squareSize } = useBoardBound();
+  if (index === null) return null;
 
   const x = boardLeft + (index % 8) * squareSize;
   const y = boardTop + Math.floor(index / 8) * squareSize;
@@ -16,11 +16,9 @@ export default function AvailableMove({ index }: Props) {
         position: "absolute",
         left: x + "px",
         top: y + "px",
-        transform: "translate(100%, 100%)",
-        borderRadius: "50%",
-        width: squareSize / 3 + "px",
-        height: squareSize / 3 + "px",
-        backgroundColor: properties.overlayColors.available,
+        width: squareSize + "px",
+        height: squareSize + "px",
+        backgroundColor: properties.overlayColors.selected,
       }}
     />
   );

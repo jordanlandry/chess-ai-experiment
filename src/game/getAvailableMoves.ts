@@ -1,4 +1,5 @@
 import {
+  blackAttacks,
   BlackBishops,
   BlackKing,
   BlackKnights,
@@ -6,11 +7,16 @@ import {
   BlackQueens,
   BlackRooks,
   board,
+  castleWhoHasMoved,
+  enPassant,
   INITIAL_BLACK_PAWN_Y,
   INITIAL_WHITE_PAWN_Y,
+  King,
   Move,
   occupiedSquares,
   pieceType,
+  Rook,
+  whiteAttacks,
   WhiteBishops,
   WhiteKing,
   WhiteKnights,
@@ -77,6 +83,13 @@ function occupiedBy(pos: number, team: Teams) {
 // ~~~ PAWNS ~~~ \\
 function whitePawn(moves: Move[], pos: number) {
   const x = pos % 8;
+  const y = Math.floor(pos / 8);
+
+  // En Passant
+  if (y === 3) {
+    if (x !== 7 && enPassant === pos + 1) moves.push({ from: pos, to: pos - 7, enPassant: true });
+    if (x !== 0 && enPassant === pos - 1) moves.push({ from: pos, to: pos - 9, enPassant: true });
+  }
 
   // Right
   if (x !== 7) {
@@ -97,7 +110,6 @@ function whitePawn(moves: Move[], pos: number) {
   // Move up 1
   moves.push({ from: pos, to: up1 });
 
-  const y = Math.floor(pos / 8);
   if (y === INITIAL_WHITE_PAWN_Y) {
     const up2 = pos - 16;
     if (!occupied(up2)) moves.push({ from: pos, to: up2 });
@@ -106,6 +118,7 @@ function whitePawn(moves: Move[], pos: number) {
 
 function blackPawn(moves: Move[], pos: number) {
   const x = pos % 8;
+  const y = Math.floor(pos / 8);
 
   // Right
   if (x !== 7) {
@@ -119,6 +132,12 @@ function blackPawn(moves: Move[], pos: number) {
     if (occupiedBy(l, Teams.White)) moves.push({ from: pos, to: l });
   }
 
+  // En Passant
+  if (y === 4) {
+    if (x !== 7 && enPassant === pos + 1) moves.push({ from: pos, to: pos + 9, enPassant: true });
+    if (x !== 0 && enPassant === pos - 1) moves.push({ from: pos, to: pos + 7, enPassant: true });
+  }
+
   // Can't move if there is a piece in front of it
   const up1 = pos + 8;
   if (occupied(up1)) return;
@@ -126,7 +145,6 @@ function blackPawn(moves: Move[], pos: number) {
   // Move up 1
   moves.push({ from: pos, to: up1 });
 
-  const y = Math.floor(pos / 8);
   if (y === INITIAL_BLACK_PAWN_Y) {
     const up2 = pos + 16;
     if (!occupied(up2)) moves.push({ from: pos, to: up2 });
@@ -292,5 +310,85 @@ function king(moves: Move[], pos: number, team: Teams) {
     if (!occupiedBy(downRight, team)) moves.push({ from: pos, to: downRight });
   }
 
-  // Castling todo
+  // Castling
+  // TODO remove illegal castling moves (if king or rook has moved, or if any piece the king passes through is being attacked)
+  // White
+  if (team === Teams.White) {
+    if (canCastle(pos, 62, Teams.White)) moves.push({ from: pos, to: 62, castle: true });
+    if (canCastle(pos, 58, Teams.White)) moves.push({ from: pos, to: 58, castle: true });
+  }
+
+  // Black
+  if (team === Teams.Black) {
+    if (canCastle(pos, 6, Teams.Black)) moves.push({ from: pos, to: 6, castle: true });
+    if (canCastle(pos, 2, Teams.Black)) moves.push({ from: pos, to: 2, castle: true });
+  }
+
+  // if (pos === 60 && !occupied(61) && !occupied(62) && !blackAttacks[60] && !blackAttacks[61] && !blackAttacks[62] ) {
+  //   moves.push({ from: pos, to: 62, castle: true }); // King side
+  // if (pos === 60 && !occupied(59) && !occupied(58) && !occupied(57)) moves.push({ from: pos, to: 58, castle: true }); // Queen side
+
+  // Black
+  // else {
+  //   if (pos === 4 && !occupied(5) && !occupied(6)) moves.push({ from: pos, to: 6, castle: true }); // King side
+  //   if (pos === 4 && !occupied(3) && !occupied(2) && !occupied(1)) moves.push({ from: pos, to: 2, castle: true }); // Queen side
+  // }
+}
+
+function canCastle(from: number, to: number, team: Teams) {
+  if (team === Teams.White) {
+    if (board[60] !== King) return false;
+
+    if (blackAttacks[60]) return false;
+    if (castleWhoHasMoved[team].king) return false;
+
+    if (from !== 60) return false;
+    if (to === 62) {
+      if (blackAttacks[61] || blackAttacks[62]) return false;
+      if (occupied(61) || occupied(62)) return false;
+      if (board[63] !== Rook) return false;
+      if (castleWhoHasMoved[team].rightRook) return false;
+
+      return true;
+    }
+
+    if (to === 58) {
+      if (blackAttacks[59] || blackAttacks[58] || blackAttacks[57]) return false;
+      if (occupied(59) || occupied(58) || occupied(57)) return false;
+      if (board[56] !== Rook) return false;
+      if (castleWhoHasMoved[team].leftRook) return false;
+
+      return true;
+    }
+
+    return false;
+  }
+
+  // Black team
+  else {
+    if (board[4] !== -King) return false;
+    if (whiteAttacks[4]) return false;
+    if (castleWhoHasMoved[team].king) return false;
+
+    if (from !== 4) return false;
+    if (to === 6) {
+      if (whiteAttacks[5] || whiteAttacks[6]) return false;
+      if (occupied(5) || occupied(6)) return false;
+      if (board[7] !== -Rook) return false;
+      if (castleWhoHasMoved[team].rightRook) return false;
+
+      return true;
+    }
+
+    if (to === 2) {
+      if (whiteAttacks[3] || whiteAttacks[2] || whiteAttacks[1]) return false;
+      if (occupied(3) || occupied(2) || occupied(1)) return false;
+      if (board[0] !== -Rook) return false;
+      if (castleWhoHasMoved[team].leftRook) return false;
+
+      return true;
+    }
+  }
+
+  return false;
 }

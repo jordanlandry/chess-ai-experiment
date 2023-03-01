@@ -1,5 +1,6 @@
 import React from "react";
 import useBoardBound from "../../hooks/useBoardBound";
+import properties from "../../properties";
 
 type Props = { index: number };
 
@@ -17,7 +18,7 @@ export default function AvailableCapture({ index }: Props) {
         top: y + "px",
         width: squareSize + "px",
         height: squareSize + "px",
-        backgroundColor: "rgba(255, 0, 0, 0.5)",
+        backgroundColor: properties.overlayColors.capture,
       }}
     />
   );
