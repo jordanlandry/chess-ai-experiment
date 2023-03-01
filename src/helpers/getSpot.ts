@@ -2,6 +2,7 @@ import getBoardBound from "./getBoardBound";
 
 export default function getSpot({ x, y }: MouseEvent) {
   const { boardLeft, boardTop, squareSize } = getBoardBound();
+
   const spot = {
     x: Math.floor((x - boardLeft) / squareSize),
     y: Math.floor((y - boardTop) / squareSize),

@@ -1,457 +1,296 @@
-import properties, { blankPiece, kingPositions, Moves, PiecesType, PieceType, Teams } from "../properties";
+import {
+  BlackBishops,
+  BlackKing,
+  BlackKnights,
+  BlackPawns,
+  BlackQueens,
+  BlackRooks,
+  board,
+  INITIAL_BLACK_PAWN_Y,
+  INITIAL_WHITE_PAWN_Y,
+  Move,
+  occupiedSquares,
+  pieceType,
+  WhiteBishops,
+  WhiteKing,
+  WhiteKnights,
+  WhitePawns,
+  WhiteQueens,
+  WhiteRooks,
+} from "../board";
+import { Moves, PiecesType, Teams } from "../properties";
 
-export default function getAvailableMoves(board: PieceType[][], pos: { x: number; y: number }, team: Teams) {
-  const availableMoves: Moves[] = [];
+export default function getAvailableMovesTest(pos: number, team: Teams) {
+  const moves: Move[] = [];
 
-  const moveFunctions = {
-    [PiecesType.Pawn]: pawn,
+  const pieceFunctions = {
+    [PiecesType.Pawn]: team === Teams.White ? whitePawn : blackPawn,
     [PiecesType.Rook]: rook,
     [PiecesType.Knight]: knight,
     [PiecesType.Bishop]: bishop,
     [PiecesType.Queen]: queen,
     [PiecesType.King]: king,
-  };
+    [PiecesType.None]: () => {},
+  } as { [key: string]: Function };
 
-  const { x, y } = pos;
-  const { piece, color } = board[y][x];
-  if (piece === PiecesType.None || color !== team) return availableMoves;
+  const piece = pieceType(board[pos]);
+  if (piece) pieceFunctions[piece](moves, pos, team);
 
-  moveFunctions[piece](board, { x, y }, availableMoves, color);
-
-  return availableMoves;
+  return moves;
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function inBounds(pos: { x: number; y: number }) {
-  return pos.x >= 0 && pos.x <= 7 && pos.y >= 0 && pos.y <= 7;
-}
+export function getAllAvailableMovesTest(team: Teams) {
+  const moves: Move[] = [];
 
-function empty(board: PieceType[][], pos: { x: number; y: number }) {
-  if (!inBounds(pos)) return false;
-  return board[pos.y][pos.x].piece === PiecesType.None;
-}
-
-function addIfLegal(board: PieceType[][], move: Moves, availableMoves: Moves[]) {
-  const color = move.piece.color;
-
-  // Make the move
-  const testBoard = board.map((row) => row.slice());
-
-  // if (move.piece.piece === PiecesType.King) kingPositions[color] = move.to;
-  testBoard[move.to.y][move.to.x] = testBoard[move.from.y][move.from.x];
-  testBoard[move.from.y][move.from.x] = blankPiece;
-
-  let kingX = 0;
-  let kingY = 0;
-  for (let y = 0; y < 8; y++) {
-    for (let x = 0; x < 8; x++) {
-      if (testBoard[y][x].piece === PiecesType.King && testBoard[y][x].color === color) {
-        kingX = x;
-        kingY = y;
-        break;
-      }
-    }
-  }
-
-  if (squareUnderAttack(testBoard, { x: kingX, y: kingY })) return;
-
-  // Add the move
-  availableMoves.push(move);
-}
-
-function pawn(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[], color: Teams) {
-  if (color === Teams.White) whitePawn(board, pos, availableMoves);
-  else blackPawn(board, pos, availableMoves);
-}
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function whitePawn(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[]) {
-  const { x, y } = pos;
-
-  const promotion = y === 1;
-  // 1 Square Forward
-  if (empty(board, { x, y: y - 1 })) addIfLegal(board, { from: { x, y }, to: { x, y: y - 1 }, piece: board[y][x], promotion }, availableMoves);
-
-  // 2 Squares Forward
-  if (y === 6 && empty(board, { x, y: y - 1 }) && empty(board, { x, y: y - 2 }))
-    addIfLegal(board, { from: { x, y }, to: { x, y: y - 2 }, piece: board[y][x], promotion }, availableMoves);
-
-  // Capture Left
-  const left = { x: x - 1, y: y - 1 };
-  if (inBounds(left) && !empty(board, left) && board[left.y][left.x].color === Teams.Black)
-    addIfLegal(board, { from: { x, y }, to: left, piece: board[y][x], promotion }, availableMoves);
-
-  // Capture Right
-  const right = { x: x + 1, y: y - 1 };
-  if (inBounds(right) && !empty(board, right) && board[right.y][right.x].color === Teams.Black)
-    addIfLegal(board, { from: { x, y }, to: right, piece: board[y][x], promotion }, availableMoves);
-
-  const boardHistory = properties.boardHistory;
-
-  // En Passant
-  if (y === 3 && boardHistory.length > 1) {
-    const lastBoard = boardHistory[boardHistory.length - 2];
-    const xOffsets = [-1, 1];
-
-    xOffsets.forEach((xOffset) => {
-      if (
-        inBounds({ x: x + xOffset, y: 0 }) &&
-        board[3][x + xOffset].piece === PiecesType.Pawn && // Pawn in correct spot
-        board[3][x + xOffset].color === Teams.Black && // Pawn is opposite color
-        board[1][x + xOffset].piece === PiecesType.None && // No pawn at the original spot (needs to have moved)
-        lastBoard[3][x + xOffset].piece === PiecesType.None && // Last board has no pawn at target spot
-        lastBoard[2][x + xOffset].piece === PiecesType.None && // No piece in front of the pawn last turn
-        lastBoard[1][x + xOffset].piece === PiecesType.Pawn && // Pawn in original spot on last board
-        lastBoard[1][x + xOffset].color === Teams.Black // Pawn is opposite color
-      ) {
-        addIfLegal(board, { from: { x, y }, to: { x: x + xOffset, y: y - 1 }, piece: board[y][x], enPassant: true }, availableMoves);
-      }
-    });
-  }
-}
-
-function blackPawn(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[]) {
-  const { x, y } = pos;
-
-  const promotion = y === 6;
-
-  // 1 Square Forward
-  if (empty(board, { x, y: y + 1 })) addIfLegal(board, { from: { x, y }, to: { x, y: y + 1 }, piece: board[y][x], promotion }, availableMoves);
-
-  // 2 Squares Forward
-  if (y === 1 && empty(board, { x, y: y + 1 }) && empty(board, { x, y: y + 2 }))
-    addIfLegal(board, { from: { x, y }, to: { x, y: y + 2 }, piece: board[y][x], promotion }, availableMoves);
-
-  // Capture Left
-  const left = { x: x - 1, y: y + 1 };
-  if (inBounds(left) && !empty(board, left) && board[left.y][left.x].color === Teams.White)
-    addIfLegal(board, { from: { x, y }, to: left, piece: board[y][x], promotion }, availableMoves);
-
-  // Capture Right
-  const right = { x: x + 1, y: y + 1 };
-  if (inBounds(right) && !empty(board, right) && board[right.y][right.x].color === Teams.White)
-    addIfLegal(board, { from: { x, y }, to: right, piece: board[y][x], promotion }, availableMoves);
-
-  // En Passant
-  const boardHistory = properties.boardHistory;
-  if (y === 4 && boardHistory.length > 1) {
-    const lastBoard = boardHistory[boardHistory.length - 2];
-    const xOffsets = [-1, 1]; // Left and Right
-
-    xOffsets.forEach((xOffset) => {
-      if (
-        inBounds({ x: x + xOffset, y: 0 }) &&
-        board[4][x + xOffset].piece === PiecesType.Pawn && // Pawn in correct spot
-        board[4][x + xOffset].color === Teams.White && // Pawn is opposite color
-        board[6][x + xOffset].piece === PiecesType.None && // No pawn at the original spot (needs to have moved)
-        lastBoard[4][x + xOffset].piece === PiecesType.None && // Last board has no pawn at target spot
-        lastBoard[5][x + xOffset].piece === PiecesType.None && // No piece in front of the pawn last turn
-        lastBoard[6][x + xOffset].piece === PiecesType.Pawn && // Pawn in original spot on last board
-        lastBoard[6][x + xOffset].color === Teams.White // Pawn is opposite color
-      ) {
-        addIfLegal(board, { from: { x, y }, to: { x: x + xOffset, y: y + 1 }, piece: board[y][x], enPassant: true }, availableMoves);
-      }
-    });
-  }
-}
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function rook(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[], color: Teams) {
-  const { x, y } = pos;
-  const offsets = [
-    { x: 1, y: 0 },
-    { x: -1, y: 0 },
-    { x: 0, y: 1 },
-    { x: 0, y: -1 },
-  ];
-
-  offsets.forEach((offset) => {
-    let i = 1;
-    while (x + offset.x * i >= 0 && x + offset.x * i <= 7 && y + offset.y * i >= 0 && y + offset.y * i <= 7) {
-      if (empty(board, { x: x + offset.x * i, y: y + offset.y * i })) {
-        addIfLegal(board, { from: { x, y }, to: { x: x + offset.x * i, y: y + offset.y * i }, piece: board[y][x] }, availableMoves);
-      }
-      // Capture
-      else if (board[y + offset.y * i][x + offset.x * i].color !== color) {
-        addIfLegal(board, { from: { x, y }, to: { x: x + offset.x * i, y: y + offset.y * i }, piece: board[y][x] }, availableMoves);
-        break;
-      } else break;
-
-      i++;
-    }
-  });
-}
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function knight(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[], color: Teams) {
-  const { x, y } = pos;
-  const offsets = [
-    { x: 1, y: 2 },
-    { x: 2, y: 1 },
-    { x: 2, y: -1 },
-    { x: 1, y: -2 },
-    { x: -1, y: -2 },
-    { x: -2, y: -1 },
-    { x: -2, y: 1 },
-    { x: -1, y: 2 },
-  ];
-
-  offsets.forEach((offset) => {
-    if (x + offset.x >= 0 && x + offset.x <= 7 && y + offset.y >= 0 && y + offset.y <= 7) {
-      if (empty(board, { x: x + offset.x, y: y + offset.y })) {
-        addIfLegal(board, { from: { x, y }, to: { x: x + offset.x, y: y + offset.y }, piece: board[y][x] }, availableMoves);
-      } else if (board[y + offset.y][x + offset.x].color !== color) {
-        addIfLegal(board, { from: { x, y }, to: { x: x + offset.x, y: y + offset.y }, piece: board[y][x] }, availableMoves);
-      }
-    }
-  });
-}
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function bishop(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[], color: Teams) {
-  const { x, y } = pos;
-  const offsets = [
-    { x: 1, y: 1 },
-    { x: -1, y: 1 },
-    { x: 1, y: -1 },
-    { x: -1, y: -1 },
-  ];
-
-  offsets.forEach((offset) => {
-    let i = 1;
-    while (x + offset.x * i >= 0 && x + offset.x * i <= 7 && y + offset.y * i >= 0 && y + offset.y * i <= 7) {
-      if (empty(board, { x: x + offset.x * i, y: y + offset.y * i })) {
-        addIfLegal(board, { from: { x, y }, to: { x: x + offset.x * i, y: y + offset.y * i }, piece: board[y][x] }, availableMoves);
-      } else if (board[y + offset.y * i][x + offset.x * i].color !== color) {
-        addIfLegal(board, { from: { x, y }, to: { x: x + offset.x * i, y: y + offset.y * i }, piece: board[y][x] }, availableMoves);
-        break;
-      } else break;
-      i++;
-    }
-  });
-}
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function queen(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[], color: Teams) {
-  rook(board, pos, availableMoves, color);
-  bishop(board, pos, availableMoves, color);
-}
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function king(board: PieceType[][], pos: { x: number; y: number }, availableMoves: Moves[], color: Teams) {
-  const { x, y } = pos;
-  const offsets = [
-    { x: 1, y: 0 },
-    { x: -1, y: 0 },
-    { x: 0, y: 1 },
-    { x: 0, y: -1 },
-    { x: 1, y: 1 },
-    { x: -1, y: 1 },
-    { x: 1, y: -1 },
-    { x: -1, y: -1 },
-  ];
-
-  offsets.forEach((offset) => {
-    if (x + offset.x >= 0 && x + offset.x <= 7 && y + offset.y >= 0 && y + offset.y <= 7) {
-      if (empty(board, { x: x + offset.x, y: y + offset.y })) {
-        addIfLegal(board, { from: { x, y }, to: { x: x + offset.x, y: y + offset.y }, piece: board[y][x] }, availableMoves);
-      } else if (board[y + offset.y][x + offset.x].color !== color) {
-        addIfLegal(board, { from: { x, y }, to: { x: x + offset.x, y: y + offset.y }, piece: board[y][x] }, availableMoves);
-      }
-    }
-  });
-
-  // Castling
-  if (color === Teams.White) {
-    if (board[7][4].hasMoved) return;
-
-    if (
-      !board[7][0].hasMoved &&
-      board[7][0].piece === PiecesType.Rook &&
-      board[7][1].piece === PiecesType.None &&
-      board[7][2].piece === PiecesType.None &&
-      board[7][3].piece === PiecesType.None &&
-      !squareUnderAttack(board, { y: 7, x: 2 }, Teams.White) &&
-      !squareUnderAttack(board, { y: 7, x: 3 }, Teams.White) &&
-      !squareUnderAttack(board, { y: 7, x: 4 }, Teams.White)
-    ) {
-      availableMoves.push({
-        from: { x, y },
-        to: { x: 2, y: 7 },
-        piece: board[y][x],
-        castle: {
-          rookFrom: { x: 0, y: 7 },
-          rookTo: { x: 3, y: 7 },
-        },
-      });
-    }
-
-    if (
-      board[7][7].piece === PiecesType.Rook &&
-      board[7][5].piece === PiecesType.None &&
-      board[7][6].piece === PiecesType.None &&
-      !board[7][7].hasMoved &&
-      !squareUnderAttack(board, { y: 7, x: 6 }, Teams.White) &&
-      !squareUnderAttack(board, { y: 7, x: 5 }, Teams.White) &&
-      !squareUnderAttack(board, { y: 7, x: 4 }, Teams.White)
-    ) {
-      availableMoves.push({
-        from: { x, y },
-        to: { x: 6, y: 7 },
-        piece: board[y][x],
-        castle: {
-          rookFrom: { x: 7, y: 7 },
-          rookTo: { x: 5, y: 7 },
-        },
-      });
-    }
-  }
-
-  if (color === Teams.Black) {
-    if (board[0][4].hasMoved) return;
-
-    if (
-      !board[0][0].hasMoved &&
-      board[0][1].piece === PiecesType.None &&
-      board[0][2].piece === PiecesType.None &&
-      board[0][3].piece === PiecesType.None &&
-      !squareUnderAttack(board, { y: 0, x: 2 }, Teams.Black) &&
-      !squareUnderAttack(board, { y: 0, x: 3 }, Teams.Black) &&
-      !squareUnderAttack(board, { y: 0, x: 4 }, Teams.Black)
-    ) {
-      availableMoves.push({
-        from: { x, y },
-        to: { x: 2, y: 0 },
-        piece: board[y][x],
-        castle: {
-          rookFrom: { x: 0, y: 0 },
-          rookTo: { x: 3, y: 0 },
-        },
-      });
-    }
-
-    if (
-      !board[0][7].hasMoved &&
-      board[0][5].piece === PiecesType.None &&
-      board[0][6].piece === PiecesType.None &&
-      !squareUnderAttack(board, { y: 0, x: 4 }, Teams.Black) &&
-      !squareUnderAttack(board, { y: 0, x: 5 }, Teams.Black) &&
-      !squareUnderAttack(board, { y: 0, x: 6 }, Teams.Black)
-    ) {
-      availableMoves.push({
-        from: { x, y },
-        to: { x: 6, y: 0 },
-        piece: board[y][x],
-        castle: {
-          rookFrom: { x: 7, y: 0 },
-          rookTo: { x: 5, y: 0 },
-        },
-      });
-    }
-  }
-}
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-export function squareUnderAttack(board: PieceType[][], square: { x: number; y: number }, color?: Teams) {
-  const { x, y } = square;
-  if (!inBounds(square)) return false;
-
-  const team = color ?? board[y][x].color;
-
-  // Pawn attacks
-  if (team === Teams.Black) {
-    if (x + 1 <= 7 && y + 1 <= 7 && board[y + 1][x + 1].color === Teams.White && board[y + 1][x + 1].piece === PiecesType.Pawn) return true;
-    if (x - 1 >= 0 && y + 1 <= 7 && board[y + 1][x - 1].color === Teams.White && board[y + 1][x - 1].piece === PiecesType.Pawn) return true;
-  }
-
+  // White Team
   if (team === Teams.White) {
-    if (x + 1 <= 7 && y - 1 >= 0 && board[y - 1][x + 1].color === Teams.Black && board[y - 1][x + 1].piece === PiecesType.Pawn) return true;
-    if (x - 1 >= 0 && y - 1 >= 0 && board[y - 1][x - 1].color === Teams.Black && board[y - 1][x - 1].piece === PiecesType.Pawn) return true;
+    WhitePawns.forEach((pos) => whitePawn(moves, pos));
+    WhiteRooks.forEach((pos) => rook(moves, pos, team));
+    WhiteKnights.forEach((pos) => knight(moves, pos, team));
+    WhiteBishops.forEach((pos) => bishop(moves, pos, team));
+    WhiteQueens.forEach((pos) => queen(moves, pos, team));
+    king(moves, WhiteKing[0], team);
   }
 
-  // Knight attacks
-  const knightOffsets = [
-    { x: 1, y: 2 },
-    { x: 2, y: 1 },
-    { x: 2, y: -1 },
-    { x: 1, y: -2 },
-    { x: -1, y: -2 },
-    { x: -2, y: -1 },
-    { x: -2, y: 1 },
-    { x: -1, y: 2 },
-  ];
-
-  for (let i = 0; i < knightOffsets.length; i++) {
-    const offset = knightOffsets[i];
-    if (inBounds({ x: x + offset.x, y: y + offset.y })) {
-      if (board[y + offset.y][x + offset.x].color !== team && board[y + offset.y][x + offset.x].piece === PiecesType.Knight) return true;
-    }
+  // Black Team
+  else {
+    BlackPawns.forEach((pos) => blackPawn(moves, pos));
+    BlackRooks.forEach((pos) => rook(moves, pos, team));
+    BlackBishops.forEach((pos) => bishop(moves, pos, team));
+    BlackKnights.forEach((pos) => knight(moves, pos, team));
+    BlackQueens.forEach((pos) => queen(moves, pos, team));
+    king(moves, BlackKing[0], team);
   }
 
-  // King attacks
-  const kingOffsets = [
-    { x: 1, y: 0 },
-    { x: -1, y: 0 },
-    { x: 0, y: 1 },
-    { x: 0, y: -1 },
-    { x: 1, y: 1 },
-    { x: -1, y: 1 },
-    { x: 1, y: -1 },
-    { x: -1, y: -1 },
-  ];
+  return moves;
+}
 
-  for (let i = 0; i < kingOffsets.length; i++) {
-    const offset = kingOffsets[i];
-    if (inBounds({ x: x + offset.x, y: y + offset.y })) {
-      if (board[y + offset.y][x + offset.x].color !== team && board[y + offset.y][x + offset.x].piece === PiecesType.King) return true;
-    }
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function occupied(pos: number) {
+  return occupiedSquares[pos] !== Teams.None;
+}
+
+function occupiedBy(pos: number, team: Teams) {
+  return occupiedSquares[pos] === team;
+}
+
+// ~~~ PAWNS ~~~ \\
+function whitePawn(moves: Move[], pos: number) {
+  const x = pos % 8;
+
+  // Right
+  if (x !== 7) {
+    const r = pos - 7;
+    if (occupiedBy(r, Teams.Black)) moves.push({ from: pos, to: r });
   }
 
-  // // Rook attacks
-  const rookOffsets = [
-    { x: 1, y: 0 },
-    { x: -1, y: 0 },
-    { x: 0, y: 1 },
-    { x: 0, y: -1 },
-  ];
-
-  for (let i = 0; i < rookOffsets.length; i++) {
-    const offset = rookOffsets[i];
-    let x1 = x + offset.x;
-    let y1 = y + offset.y;
-    while (inBounds({ x: x1, y: y1 })) {
-      if (board[y1][x1].piece !== PiecesType.None) {
-        if (board[y1][x1].color !== team && (board[y1][x1].piece === PiecesType.Rook || board[y1][x1].piece === PiecesType.Queen)) return true;
-        break;
-      }
-
-      x1 += offset.x;
-      y1 += offset.y;
-    }
+  // Left
+  if (x !== 0) {
+    const l = pos - 9;
+    if (occupiedBy(l, Teams.Black)) moves.push({ from: pos, to: l });
   }
 
-  // Bishop attacks
-  const bishopOffsets = [
-    { x: 1, y: 1 },
-    { x: -1, y: 1 },
-    { x: 1, y: -1 },
-    { x: -1, y: -1 },
-  ];
+  // Can't move if there is a piece in front of it
+  const up1 = pos - 8;
+  if (occupied(up1)) return;
 
-  for (let i = 0; i < bishopOffsets.length; i++) {
-    const offset = bishopOffsets[i];
-    let x1 = x + offset.x;
-    let y1 = y + offset.y;
-    while (inBounds({ x: x1, y: y1 })) {
-      if (board[y1][x1].piece !== PiecesType.None) {
-        if (board[y1][x1].color !== team && (board[y1][x1].piece === PiecesType.Bishop || board[y1][x1].piece === PiecesType.Queen)) return true;
-        break;
-      }
+  // Move up 1
+  moves.push({ from: pos, to: up1 });
 
-      x1 += offset.x;
-      y1 += offset.y;
-    }
+  const y = Math.floor(pos / 8);
+  if (y === INITIAL_WHITE_PAWN_Y) {
+    const up2 = pos - 16;
+    if (!occupied(up2)) moves.push({ from: pos, to: up2 });
+  }
+}
+
+function blackPawn(moves: Move[], pos: number) {
+  const x = pos % 8;
+
+  // Right
+  if (x !== 7) {
+    const r = pos + 9;
+    if (occupiedBy(r, Teams.White)) moves.push({ from: pos, to: r });
   }
 
-  return false;
+  // Left
+  if (x !== 0) {
+    const l = pos + 7;
+    if (occupiedBy(l, Teams.White)) moves.push({ from: pos, to: l });
+  }
+
+  // Can't move if there is a piece in front of it
+  const up1 = pos + 8;
+  if (occupied(up1)) return;
+
+  // Move up 1
+  moves.push({ from: pos, to: up1 });
+
+  const y = Math.floor(pos / 8);
+  if (y === INITIAL_BLACK_PAWN_Y) {
+    const up2 = pos + 16;
+    if (!occupied(up2)) moves.push({ from: pos, to: up2 });
+  }
+}
+
+// ~~~ ROOKS ~~~ \\
+function rook(moves: Move[], pos: number, team: Teams) {
+  const x = pos % 8;
+  const y = Math.floor(pos / 8);
+
+  // Right
+  for (let i = x + 1; i < 8; i++) {
+    const r = y * 8 + i;
+    if (occupiedBy(r, team)) break;
+    moves.push({ from: pos, to: r });
+    if (occupied(r)) break;
+  }
+
+  // Left
+  for (let i = x - 1; i >= 0; i--) {
+    const l = y * 8 + i;
+    if (occupiedBy(l, team)) break;
+    moves.push({ from: pos, to: l });
+    if (occupied(l)) break;
+  }
+
+  // Up
+  for (let i = y - 1; i >= 0; i--) {
+    const u = i * 8 + x;
+    if (occupiedBy(u, team)) break;
+    moves.push({ from: pos, to: u });
+    if (occupied(u)) break;
+  }
+
+  // Down
+  for (let i = y + 1; i < 8; i++) {
+    const d = i * 8 + x;
+    if (occupiedBy(d, team)) break;
+    moves.push({ from: pos, to: d });
+    if (occupied(d)) break;
+  }
+}
+
+// ~~~ KNIGHTS ~~~ \\
+function knight(moves: Move[], pos: number, team: Teams) {
+  const u2l1 = pos - 17;
+  const u2r1 = pos - 15;
+  const u1l2 = pos - 10;
+  const u1r2 = pos - 6;
+  const d1l2 = pos + 6;
+  const d1r2 = pos + 10;
+  const d2l1 = pos + 15;
+  const d2r1 = pos + 17;
+
+  const x = pos % 8;
+  const y = Math.floor(pos / 8);
+
+  if (x >= 1 && y >= 2 && !occupiedBy(u2l1, team)) moves.push({ from: pos, to: u2l1 });
+  if (x <= 6 && y >= 2 && !occupiedBy(u2r1, team)) moves.push({ from: pos, to: u2r1 });
+  if (x >= 2 && y >= 1 && !occupiedBy(u1l2, team)) moves.push({ from: pos, to: u1l2 });
+  if (x <= 5 && y >= 1 && !occupiedBy(u1r2, team)) moves.push({ from: pos, to: u1r2 });
+  if (x >= 2 && y <= 6 && !occupiedBy(d1l2, team)) moves.push({ from: pos, to: d1l2 });
+  if (x <= 5 && y <= 6 && !occupiedBy(d1r2, team)) moves.push({ from: pos, to: d1r2 });
+  if (x >= 1 && y <= 5 && !occupiedBy(d2l1, team)) moves.push({ from: pos, to: d2l1 });
+  if (x <= 6 && y <= 5 && !occupiedBy(d2r1, team)) moves.push({ from: pos, to: d2r1 });
+}
+
+// ~~~ BISHOPS ~~~ \\
+function bishop(moves: Move[], pos: number, team: Teams) {
+  const x = pos % 8;
+  const y = Math.floor(pos / 8);
+
+  // Up Left
+  for (let i = 1; i <= Math.min(x, y); i++) {
+    const upLeft = pos - 9 * i;
+    if (occupiedBy(upLeft, team)) break;
+    moves.push({ from: pos, to: upLeft });
+    if (occupied(upLeft)) break;
+  }
+
+  // Up Right
+  for (let i = 1; i <= Math.min(7 - x, y); i++) {
+    const upRight = pos - 7 * i;
+    if (occupiedBy(upRight, team)) break;
+    moves.push({ from: pos, to: upRight });
+    if (occupied(upRight)) break;
+  }
+
+  // Down Left
+  for (let i = 1; i <= Math.min(x, 7 - y); i++) {
+    const downLeft = pos + 7 * i;
+    if (occupiedBy(downLeft, team)) break;
+    moves.push({ from: pos, to: downLeft });
+    if (occupied(downLeft)) break;
+  }
+
+  // Down Right
+  for (let i = 1; i <= Math.min(7 - x, 7 - y); i++) {
+    const downRight = pos + 9 * i;
+    if (occupiedBy(downRight, team)) break;
+    moves.push({ from: pos, to: downRight });
+    if (occupied(downRight)) break;
+  }
+}
+
+// ~~~ QUEENS ~~~ \\
+function queen(moves: Move[], pos: number, team: Teams) {
+  rook(moves, pos, team);
+  bishop(moves, pos, team);
+}
+
+// ~~~ KINGS ~~~ \\
+function king(moves: Move[], pos: number, team: Teams) {
+  const x = pos % 8;
+  const y = Math.floor(pos / 8);
+
+  // Up
+  if (y > 0) {
+    const up = pos - 8;
+    if (!occupiedBy(up, team)) moves.push({ from: pos, to: up });
+  }
+
+  // Down
+  if (y < 7) {
+    const down = pos + 8;
+    if (!occupiedBy(down, team)) moves.push({ from: pos, to: down });
+  }
+
+  // Left
+  if (x > 0) {
+    const left = pos - 1;
+    if (!occupiedBy(left, team)) moves.push({ from: pos, to: left });
+  }
+
+  // Right
+  if (x < 7) {
+    const right = pos + 1;
+    if (!occupiedBy(right, team)) moves.push({ from: pos, to: right });
+  }
+
+  // Up Left
+  if (x > 0 && y > 0) {
+    const upLeft = pos - 9;
+    if (!occupiedBy(upLeft, team)) moves.push({ from: pos, to: upLeft });
+  }
+
+  // Up Right
+  if (x < 7 && y > 0) {
+    const upRight = pos - 7;
+    if (!occupiedBy(upRight, team)) moves.push({ from: pos, to: upRight });
+  }
+
+  // Down Left
+  if (x > 0 && y < 7) {
+    const downLeft = pos + 7;
+    if (!occupiedBy(downLeft, team)) moves.push({ from: pos, to: downLeft });
+  }
+
+  // Down Right
+  if (x < 7 && y < 7) {
+    const downRight = pos + 9;
+    if (!occupiedBy(downRight, team)) moves.push({ from: pos, to: downRight });
+  }
+
+  // Castling todo
 }

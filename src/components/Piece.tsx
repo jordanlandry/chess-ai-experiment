@@ -1,10 +1,11 @@
 import { useContext, useEffect, useState } from "react";
 import { PieceStyleContext } from "../App";
 import useBoardBound from "../hooks/useBoardBound";
-import properties, { PiecesType, STARTING_BOARD, Teams } from "../properties";
+import properties, { PiecesType, Teams } from "../properties";
 
 type Props = {
-  id: number | string;
+  id: number;
+  pos: number;
   piece: PiecesType;
   color: Teams;
   onClick?: () => void;

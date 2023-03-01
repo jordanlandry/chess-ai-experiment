@@ -1,71 +1,58 @@
 import { useEffect, useState } from "react";
-import getAvailableMoves from "../../game/getAvailableMoves";
-import { movePiece } from "../../game/movePiece";
-import getSpot from "../../helpers/getSpot";
-import { Moves, PiecesType, PieceType, PromotionPieceType, Teams } from "../../properties";
+import { board, Move, getTeam } from "../../board";
+import getAvailableMoves from "../../game/getAvailableMovesOld";
+import getAvailableMovesTest from "../../game/getAvailableMoves";
+import getMouseSpot from "../../helpers/getMouseSpot";
+import makeMove from "../../helpers/makeMove";
+import { Teams } from "../../properties";
 
-export default function useMouseDown(
-  board: PieceType[][],
-  whosTurn: Teams,
-  aiTeam: Teams,
-  isPromoting: boolean,
-  props: {
-    setBoard: React.Dispatch<React.SetStateAction<PieceType[][]>>;
-    setTurn: React.Dispatch<React.SetStateAction<Teams>>;
-    setAvailableMoves: React.Dispatch<React.SetStateAction<Moves[]>>;
-    setMouseDown: React.Dispatch<React.SetStateAction<boolean>>;
-    setMoveHistory: React.Dispatch<React.SetStateAction<Moves[]>>;
-    setBoardHistory: React.Dispatch<React.SetStateAction<PieceType[][][]>>;
-    setIsPromoting: React.Dispatch<React.SetStateAction<boolean>>;
-    setPromotedPieces: React.Dispatch<React.SetStateAction<PromotionPieceType[]>>;
-    setPromotionPiece: React.Dispatch<React.SetStateAction<PromotionPieceType>>;
-  }
+export default function useMouseDownTest(
+  currentTurn: Teams,
+  setAvailableMoves: React.Dispatch<React.SetStateAction<Move[]>>,
+  setCurrentTurn: React.Dispatch<React.SetStateAction<Teams>>
 ) {
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  const [selectedPiece, setSelectedPiece] = useState<PieceType>({ piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false });
-  const { setBoard, setTurn, setAvailableMoves, setMouseDown, setMoveHistory, setBoardHistory, setPromotedPieces, setPromotionPiece } = props;
+  const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
 
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   useEffect(() => {
-    const handleDown = (e: MouseEvent) => {
-      if (isPromoting) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      const position = getMouseSpot(e);
+      if (selectedPiece === null) {
+        if (getTeam(board[position]) !== currentTurn) return;
 
-      const { x, y } = getSpot(e);
+        setSelectedPiece(position);
 
-      // Invalid square
-      if (x < 0 || x > 7 || y < 0 || y > 7) {
-        setSelectedPiece({ piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false });
-        return;
-      }
+        const piece = board[position];
+        const team = getTeam(piece);
 
-      // Valid square - if you clicked on your own piece, select it and show available moves
-      if (board[y][x].piece !== PiecesType.None && board[y][x].color === whosTurn) {
-        setSelectedPiece(board[y][x]);
-        setAvailableMoves(getAvailableMoves(board, { x, y }, whosTurn));
-      }
+        const moves = getAvailableMovesTest(position, team);
+        setAvailableMoves(moves);
+      } else {
+        setAvailableMoves((prevMoves) => {
+          // Selecting a new piece
+          if (getTeam(board[position]) === currentTurn) {
+            setSelectedPiece(position);
+            return getAvailableMovesTest(position, getTeam(board[position]));
+          }
 
-      // If you selecting a square that's not a piece, deselect the piece, and move the piece if it's a valid move
-      else {
-        setSelectedPiece({ piece: PiecesType.None, color: Teams.None, id: -1, hasMoved: false });
-
-        setAvailableMoves((prevMove) => {
-          for (let i = 0; i < prevMove.length; i++) {
-            if (prevMove[i].to.x === x && prevMove[i].to.y === y) {
-              movePiece(board, prevMove[i], aiTeam, props);
+          // If you selecting a square that's not a piece, deselect the piece, and move the piece if it's a valid move
+          for (let i = 0; i < prevMoves.length; i++) {
+            if (prevMoves[i].to === position) {
+              makeMove(selectedPiece, position);
+              setCurrentTurn((prevTurn) => (prevTurn === Teams.White ? Teams.Black : Teams.White));
+              return [];
             }
           }
 
           return [];
         });
-      }
 
-      setMouseDown(true);
+        setSelectedPiece(null);
+      }
     };
 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    document.addEventListener("mousedown", handleDown);
-    return () => document.removeEventListener("mousedown", handleDown);
-  }, [board, whosTurn, isPromoting]);
+    window.addEventListener("mousedown", handleMouseDown);
+    return () => window.removeEventListener("mousedown", handleMouseDown);
+  }, [selectedPiece, currentTurn]);
 
-  return [selectedPiece, setSelectedPiece] as const;
+  return [selectedPiece, setSelectedPiece];
 }
