@@ -7,6 +7,7 @@ import makeMove from "../../helpers/makeMove";
 import properties, { Teams } from "../../properties";
 
 export default function useMouseDownTest(
+  changingStyles: boolean,
   currentTurn: Teams,
   setAvailableMoves: React.Dispatch<React.SetStateAction<Move[]>>,
   setCurrentTurn: React.Dispatch<React.SetStateAction<Teams>>
@@ -14,6 +15,7 @@ export default function useMouseDownTest(
   const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
 
   useEffect(() => {
+    if (changingStyles) return;
     const handleMouseDown = async (e: MouseEvent) => {
       const position = getMouseSpot(e);
       if (position === null) return; // Have to have === null (instead of !position) because 0 is a valid position

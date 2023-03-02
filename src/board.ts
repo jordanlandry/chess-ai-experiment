@@ -1,3 +1,4 @@
+import { squareIsAttacked } from "./game/getAvailableMoves";
 import { PiecesType, PieceType, Teams } from "./properties";
 
 // prettier-ignore
@@ -14,13 +15,35 @@ export const occupiedSquares = [
 ]
 
 // prettier-ignore
+// export const whiteAttacks = [
+//   false, false, false, false, false, false, false, false,
+//   false, false, false, false, false, false, false, false,
+//   false, false, false, false, false, false, false, false,
+//   false, false, false, false, false, false, false, false,
+//   false, false, false, false, false, false, false, false,
+//   true, true, true, true, true, true, true, true,
+//   false, false, false, false, false, false, false, false,
+//   false, false, false, false, false, false, false, false,
+// ]
+
+// // prettier-ignore
+// export const blackAttacks = [
+//   false, false, false, false, false, false, false, false,
+//   false, false, false, false, false, false, false, false,
+//   true, true, true, true, true, true, true, true,
+//   false, false, false, false, false, false, false, false,
+//   false, false, false, false, false, false, false, false,
+//   false, false, false, false, false, false, false, false,
+//   false, false, false, false, false, false, false, false,
+//   false, false, false, false, false, false, false, false,
+// ]
 export const whiteAttacks = [
   false, false, false, false, false, false, false, false,
   false, false, false, false, false, false, false, false,
   false, false, false, false, false, false, false, false,
   false, false, false, false, false, false, false, false,
   false, false, false, false, false, false, false, false,
-  true, true, true, true, true, true, true, true,
+  false, false, false, false, false, false, false, false,
   false, false, false, false, false, false, false, false,
   false, false, false, false, false, false, false, false,
 ]
@@ -29,7 +52,7 @@ export const whiteAttacks = [
 export const blackAttacks = [
   false, false, false, false, false, false, false, false,
   false, false, false, false, false, false, false, false,
-  true, true, true, true, true, true, true, true,
+  false, false, false, false, false, false, false, false,
   false, false, false, false, false, false, false, false,
   false, false, false, false, false, false, false, false,
   false, false, false, false, false, false, false, false,
@@ -284,7 +307,10 @@ export function updatePiecePositions(
       // Remove the piece from the black pawns array
       const blackPawnIndex = BlackPawns.indexOf(to + 8);
       BlackPawns.splice(blackPawnIndex, 1);
-    } else {
+    }
+
+    // Black team
+    else {
       board[to - 8] = 0;
       occupiedSquares[to - 8] = Teams.None;
 
@@ -320,6 +346,13 @@ export function updatePiecePositions(
   // Update the occupied squares
   occupiedSquares[from] = Teams.None;
   occupiedSquares[to] = team;
+
+  // Update the spots that are attacked
+  // We need to update the pieces that were being attacked before the move
+  // And the pieces that are being attacked after the move
+  // updateAttackedSquares(from, to, team);
+
+  // updateAttackedSquaresTest();
 }
 
 // When undoing, the from and to are given in reverse order from the move that was actually made
@@ -382,6 +415,103 @@ export function undoPiecePosition(
   // Update the occupied squares
   occupiedSquares[to] = team;
   occupiedSquares[from] = capturedPiece ? (team === Teams.White ? Teams.Black : Teams.White) : Teams.None;
+}
+
+function updateAttackedSquaresTest() {
+  // Go through the board
+  for (let i = 0; i < 64; i++) {
+    whiteAttacks[i] = squareIsAttacked(i, Teams.White);
+  }
+
+  for (let i = 0; i < 64; i++) {
+    blackAttacks[i] = squareIsAttacked(i, Teams.Black);
+  }
+}
+
+// TODO - This is a bit of a mess, clean it up and also finish it
+// I'll probably need to rework it because if you move a piece there are a lot of
+// Things that will change. You'll need to update multiple pieces and not just the piece
+// That was moved. For now I will update the attacked squares when the move generation is called
+// The more I think about it the more I think I'll need to keep track of what each piece is attacking
+
+function updateAttackedSquares(from: number, to: number, team: Teams) {
+  const attacks = team === Teams.White ? whiteAttacks : blackAttacks;
+
+  // Rook
+  if (board[to] === Rook) {
+    const prevX = from % 8;
+    const prevY = Math.floor(from / 8);
+
+    const newX = to % 8;
+    const newY = Math.floor(to / 8);
+
+    // Up
+    if (prevY === newY) {
+      let blocked = false;
+      for (let i = 1; i < 8; i++) {
+        if (from - i * 8 > 0) attacks[from - i * 8] = false; // No longer attacked
+
+        // Newly attacked
+        const newlyAttacked = to - i * 8;
+        if (!blocked) {
+          if (board[newlyAttacked] === 0) attacks[newlyAttacked] = true; // No piece in the way
+          if (board[newlyAttacked] > 0) blocked = true; // Your own piece is blocking
+
+          // Enemy piece is blocking
+          if (board[newlyAttacked] < 0) {
+            attacks[newlyAttacked] = true;
+            blocked = true;
+          }
+        }
+      }
+
+      // Down
+      for (let i = 1; i < 8; i++) {
+        let blocked = false;
+        if (from + i * 8 < 64) attacks[from + i * 8] = false; // No longer attacked
+
+        // Newly attacked
+        const newlyAttacked = to + i * 8;
+        if (!blocked) {
+          if (board[newlyAttacked] === 0) attacks[newlyAttacked] = true; // No piece in the way
+          if (board[newlyAttacked] > 0) blocked = true; // Your own piece is blocking
+
+          // Enemy piece is blocking
+          if (board[newlyAttacked] < 0) {
+            attacks[newlyAttacked] = true;
+            blocked = true;
+          }
+        }
+      }
+    }
+  }
+
+  // Pawn
+  if (board[to] === Pawn) {
+    const prevX = from % 8;
+    const prevY = Math.floor(from / 8);
+
+    const newX = to % 8;
+    const newY = Math.floor(to / 8);
+
+    // Up
+    // Can attack left and right diagonally
+    // Remove the previous attacks
+    board[from - 7] === 0 && attacks[from - 7] && (attacks[from - 7] = false);
+    board[from - 9] === 0 && attacks[from - 9] && (attacks[from - 9] = false);
+
+    // Add the new attacks
+    board[to - 7] === 0 && (attacks[to - 7] = true);
+    board[to - 9] === 0 && (attacks[to - 9] = true);
+  }
+}
+
+// This will only be called if there are no moves available
+// So I don't need to check for that in this function so
+// I only have to check if the king is attacked
+export function inStalemate(team: Teams) {
+  const king = team === Teams.White ? WhiteKing[0] : BlackKing[0];
+  return squareIsAttacked(king, team === Teams.White ? Teams.Black : Teams.White);
 }
 
 export interface Move {

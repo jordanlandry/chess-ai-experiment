@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { ChangingStylesContext } from "../App";
 import { board, Move } from "../board";
 import useAITest from "../hooks/game/useAI";
 import useMouseDown from "../hooks/mouse/useMouseDown";
@@ -8,8 +9,12 @@ import AvailableCapture from "./overlays/AvailableCapture";
 import AvailableMove from "./overlays/AvailableMove";
 import LastMove from "./overlays/LastMove";
 import SelectedPiece from "./overlays/SelectedPiece";
+import TestElement from "./Testing/TestElement";
 
 export default function Chess() {
+  // Imports
+  const changingStyles = useContext(ChangingStylesContext);
+
   // AI
   const [usingAi, setUsingAi] = useState(true);
   const [aiTeam, setAiTeam] = useState(usingAi ? Teams.Black : Teams.None);
@@ -22,7 +27,7 @@ export default function Chess() {
   // Mouse hooks
   const [mouseDown, setMouseDown] = useState(false);
 
-  const { selectedPiece, setSelectedPiece } = useMouseDown(currentTurn, setAvailableMoves, setCurrentTurn);
+  const { selectedPiece, setSelectedPiece } = useMouseDown(changingStyles!, currentTurn, setAvailableMoves, setCurrentTurn);
 
   useAITest(currentTurn, aiTeam, setCurrentTurn);
   usePieceCenteringTest(setCurrentTurn);
@@ -37,6 +42,8 @@ export default function Chess() {
       <SelectedPiece index={selectedPiece} />
 
       <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} />
+
+      {/* <TestElement /> */}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import {
-  blackAttacks,
+  Bishop,
   BlackBishops,
   BlackKing,
   BlackKnights,
@@ -12,11 +12,13 @@ import {
   INITIAL_BLACK_PAWN_Y,
   INITIAL_WHITE_PAWN_Y,
   King,
+  Knight,
   Move,
   occupiedSquares,
+  Pawn,
   pieceType,
+  Queen,
   Rook,
-  whiteAttacks,
   WhiteBishops,
   WhiteKing,
   WhiteKnights,
@@ -24,7 +26,8 @@ import {
   WhiteQueens,
   WhiteRooks,
 } from "../board";
-import { Moves, PiecesType, Teams } from "../properties";
+import makeMove from "../helpers/makeMove";
+import { PiecesType, Teams } from "../properties";
 
 export default function getAvailableMovesTest(pos: number, team: Teams) {
   const moves: Move[] = [];
@@ -71,6 +74,23 @@ export function getAllAvailableMovesTest(team: Teams) {
   return moves;
 }
 
+function pushIfLegal(moves: Move[], move: Move, team: Teams) {
+  const attackingTeam = team === Teams.White ? Teams.Black : Teams.White;
+
+  // If move is a capture, save the piece so we can undo it later
+  const capturedPiece = board[move.to];
+
+  // Make the move
+  makeMove(move.from, move.to, move.castle, move.enPassant, true);
+  const kingPosition = team === Teams.White ? WhiteKing[0] : BlackKing[0];
+
+  // Push if the king is not in check
+  if (!squareIsAttacked(kingPosition, attackingTeam)) moves.push(move);
+
+  // Undo move
+  makeMove(move.to, move.from, move.castle, move.enPassant, true, true, capturedPiece);
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function occupied(pos: number) {
   return occupiedSquares[pos] !== Teams.None;
@@ -87,20 +107,20 @@ function whitePawn(moves: Move[], pos: number) {
 
   // En Passant
   if (y === 3) {
-    if (x !== 7 && enPassant === pos + 1) moves.push({ from: pos, to: pos - 7, enPassant: true });
-    if (x !== 0 && enPassant === pos - 1) moves.push({ from: pos, to: pos - 9, enPassant: true });
+    if (x !== 7 && enPassant === pos + 1) pushIfLegal(moves, { from: pos, to: pos - 7, enPassant: true }, Teams.White);
+    if (x !== 0 && enPassant === pos - 1) pushIfLegal(moves, { from: pos, to: pos - 9, enPassant: true }, Teams.White);
   }
 
   // Right
   if (x !== 7) {
     const r = pos - 7;
-    if (occupiedBy(r, Teams.Black)) moves.push({ from: pos, to: r });
+    if (occupiedBy(r, Teams.Black)) pushIfLegal(moves, { from: pos, to: r }, Teams.White);
   }
 
   // Left
   if (x !== 0) {
     const l = pos - 9;
-    if (occupiedBy(l, Teams.Black)) moves.push({ from: pos, to: l });
+    if (occupiedBy(l, Teams.Black)) pushIfLegal(moves, { from: pos, to: l }, Teams.White);
   }
 
   // Can't move if there is a piece in front of it
@@ -108,11 +128,11 @@ function whitePawn(moves: Move[], pos: number) {
   if (occupied(up1)) return;
 
   // Move up 1
-  moves.push({ from: pos, to: up1 });
+  pushIfLegal(moves, { from: pos, to: up1 }, Teams.White);
 
   if (y === INITIAL_WHITE_PAWN_Y) {
     const up2 = pos - 16;
-    if (!occupied(up2)) moves.push({ from: pos, to: up2 });
+    if (!occupied(up2)) pushIfLegal(moves, { from: pos, to: up2 }, Teams.White);
   }
 }
 
@@ -123,19 +143,19 @@ function blackPawn(moves: Move[], pos: number) {
   // Right
   if (x !== 7) {
     const r = pos + 9;
-    if (occupiedBy(r, Teams.White)) moves.push({ from: pos, to: r });
+    if (occupiedBy(r, Teams.White)) pushIfLegal(moves, { from: pos, to: r }, Teams.Black);
   }
 
   // Left
   if (x !== 0) {
     const l = pos + 7;
-    if (occupiedBy(l, Teams.White)) moves.push({ from: pos, to: l });
+    if (occupiedBy(l, Teams.White)) pushIfLegal(moves, { from: pos, to: l }, Teams.Black);
   }
 
   // En Passant
   if (y === 4) {
-    if (x !== 7 && enPassant === pos + 1) moves.push({ from: pos, to: pos + 9, enPassant: true });
-    if (x !== 0 && enPassant === pos - 1) moves.push({ from: pos, to: pos + 7, enPassant: true });
+    if (x !== 7 && enPassant === pos + 1) pushIfLegal(moves, { from: pos, to: pos + 9, enPassant: true }, Teams.Black);
+    if (x !== 0 && enPassant === pos - 1) pushIfLegal(moves, { from: pos, to: pos + 7, enPassant: true }, Teams.Black);
   }
 
   // Can't move if there is a piece in front of it
@@ -143,11 +163,10 @@ function blackPawn(moves: Move[], pos: number) {
   if (occupied(up1)) return;
 
   // Move up 1
-  moves.push({ from: pos, to: up1 });
-
+  pushIfLegal(moves, { from: pos, to: up1 }, Teams.Black);
   if (y === INITIAL_BLACK_PAWN_Y) {
     const up2 = pos + 16;
-    if (!occupied(up2)) moves.push({ from: pos, to: up2 });
+    if (!occupied(up2)) pushIfLegal(moves, { from: pos, to: up2 }, Teams.Black);
   }
 }
 
@@ -160,7 +179,7 @@ function rook(moves: Move[], pos: number, team: Teams) {
   for (let i = x + 1; i < 8; i++) {
     const r = y * 8 + i;
     if (occupiedBy(r, team)) break;
-    moves.push({ from: pos, to: r });
+    pushIfLegal(moves, { from: pos, to: r }, team);
     if (occupied(r)) break;
   }
 
@@ -168,7 +187,7 @@ function rook(moves: Move[], pos: number, team: Teams) {
   for (let i = x - 1; i >= 0; i--) {
     const l = y * 8 + i;
     if (occupiedBy(l, team)) break;
-    moves.push({ from: pos, to: l });
+    pushIfLegal(moves, { from: pos, to: l }, team);
     if (occupied(l)) break;
   }
 
@@ -176,7 +195,7 @@ function rook(moves: Move[], pos: number, team: Teams) {
   for (let i = y - 1; i >= 0; i--) {
     const u = i * 8 + x;
     if (occupiedBy(u, team)) break;
-    moves.push({ from: pos, to: u });
+    pushIfLegal(moves, { from: pos, to: u }, team);
     if (occupied(u)) break;
   }
 
@@ -184,7 +203,7 @@ function rook(moves: Move[], pos: number, team: Teams) {
   for (let i = y + 1; i < 8; i++) {
     const d = i * 8 + x;
     if (occupiedBy(d, team)) break;
-    moves.push({ from: pos, to: d });
+    pushIfLegal(moves, { from: pos, to: d }, team);
     if (occupied(d)) break;
   }
 }
@@ -203,14 +222,14 @@ function knight(moves: Move[], pos: number, team: Teams) {
   const x = pos % 8;
   const y = Math.floor(pos / 8);
 
-  if (x >= 1 && y >= 2 && !occupiedBy(u2l1, team)) moves.push({ from: pos, to: u2l1 });
-  if (x <= 6 && y >= 2 && !occupiedBy(u2r1, team)) moves.push({ from: pos, to: u2r1 });
-  if (x >= 2 && y >= 1 && !occupiedBy(u1l2, team)) moves.push({ from: pos, to: u1l2 });
-  if (x <= 5 && y >= 1 && !occupiedBy(u1r2, team)) moves.push({ from: pos, to: u1r2 });
-  if (x >= 2 && y <= 6 && !occupiedBy(d1l2, team)) moves.push({ from: pos, to: d1l2 });
-  if (x <= 5 && y <= 6 && !occupiedBy(d1r2, team)) moves.push({ from: pos, to: d1r2 });
-  if (x >= 1 && y <= 5 && !occupiedBy(d2l1, team)) moves.push({ from: pos, to: d2l1 });
-  if (x <= 6 && y <= 5 && !occupiedBy(d2r1, team)) moves.push({ from: pos, to: d2r1 });
+  if (x >= 1 && y >= 2 && !occupiedBy(u2l1, team)) pushIfLegal(moves, { from: pos, to: u2l1 }, team);
+  if (x <= 6 && y >= 2 && !occupiedBy(u2r1, team)) pushIfLegal(moves, { from: pos, to: u2r1 }, team);
+  if (x >= 2 && y >= 1 && !occupiedBy(u1l2, team)) pushIfLegal(moves, { from: pos, to: u1l2 }, team);
+  if (x <= 5 && y >= 1 && !occupiedBy(u1r2, team)) pushIfLegal(moves, { from: pos, to: u1r2 }, team);
+  if (x >= 2 && y <= 6 && !occupiedBy(d1l2, team)) pushIfLegal(moves, { from: pos, to: d1l2 }, team);
+  if (x <= 5 && y <= 6 && !occupiedBy(d1r2, team)) pushIfLegal(moves, { from: pos, to: d1r2 }, team);
+  if (x >= 1 && y <= 5 && !occupiedBy(d2l1, team)) pushIfLegal(moves, { from: pos, to: d2l1 }, team);
+  if (x <= 6 && y <= 5 && !occupiedBy(d2r1, team)) pushIfLegal(moves, { from: pos, to: d2r1 }, team);
 }
 
 // ~~~ BISHOPS ~~~ \\
@@ -222,7 +241,7 @@ function bishop(moves: Move[], pos: number, team: Teams) {
   for (let i = 1; i <= Math.min(x, y); i++) {
     const upLeft = pos - 9 * i;
     if (occupiedBy(upLeft, team)) break;
-    moves.push({ from: pos, to: upLeft });
+    pushIfLegal(moves, { from: pos, to: upLeft }, team);
     if (occupied(upLeft)) break;
   }
 
@@ -230,7 +249,7 @@ function bishop(moves: Move[], pos: number, team: Teams) {
   for (let i = 1; i <= Math.min(7 - x, y); i++) {
     const upRight = pos - 7 * i;
     if (occupiedBy(upRight, team)) break;
-    moves.push({ from: pos, to: upRight });
+    pushIfLegal(moves, { from: pos, to: upRight }, team);
     if (occupied(upRight)) break;
   }
 
@@ -238,7 +257,7 @@ function bishop(moves: Move[], pos: number, team: Teams) {
   for (let i = 1; i <= Math.min(x, 7 - y); i++) {
     const downLeft = pos + 7 * i;
     if (occupiedBy(downLeft, team)) break;
-    moves.push({ from: pos, to: downLeft });
+    pushIfLegal(moves, { from: pos, to: downLeft }, team);
     if (occupied(downLeft)) break;
   }
 
@@ -246,7 +265,7 @@ function bishop(moves: Move[], pos: number, team: Teams) {
   for (let i = 1; i <= Math.min(7 - x, 7 - y); i++) {
     const downRight = pos + 9 * i;
     if (occupiedBy(downRight, team)) break;
-    moves.push({ from: pos, to: downRight });
+    pushIfLegal(moves, { from: pos, to: downRight }, team);
     if (occupied(downRight)) break;
   }
 }
@@ -265,53 +284,52 @@ function king(moves: Move[], pos: number, team: Teams) {
   // Up
   if (y > 0) {
     const up = pos - 8;
-    if (!occupiedBy(up, team)) moves.push({ from: pos, to: up });
+    if (!occupiedBy(up, team)) pushIfLegal(moves, { from: pos, to: up }, team);
   }
 
   // Down
   if (y < 7) {
     const down = pos + 8;
-    if (!occupiedBy(down, team)) moves.push({ from: pos, to: down });
+    if (!occupiedBy(down, team)) pushIfLegal(moves, { from: pos, to: down }, team);
   }
 
   // Left
   if (x > 0) {
     const left = pos - 1;
-    if (!occupiedBy(left, team)) moves.push({ from: pos, to: left });
+    if (!occupiedBy(left, team)) pushIfLegal(moves, { from: pos, to: left }, team);
   }
 
   // Right
   if (x < 7) {
     const right = pos + 1;
-    if (!occupiedBy(right, team)) moves.push({ from: pos, to: right });
+    if (!occupiedBy(right, team)) pushIfLegal(moves, { from: pos, to: right }, team);
   }
 
   // Up Left
   if (x > 0 && y > 0) {
     const upLeft = pos - 9;
-    if (!occupiedBy(upLeft, team)) moves.push({ from: pos, to: upLeft });
+    if (!occupiedBy(upLeft, team)) pushIfLegal(moves, { from: pos, to: upLeft }, team);
   }
 
   // Up Right
   if (x < 7 && y > 0) {
     const upRight = pos - 7;
-    if (!occupiedBy(upRight, team)) moves.push({ from: pos, to: upRight });
+    if (!occupiedBy(upRight, team)) pushIfLegal(moves, { from: pos, to: upRight }, team);
   }
 
   // Down Left
   if (x > 0 && y < 7) {
     const downLeft = pos + 7;
-    if (!occupiedBy(downLeft, team)) moves.push({ from: pos, to: downLeft });
+    if (!occupiedBy(downLeft, team)) pushIfLegal(moves, { from: pos, to: downLeft }, team);
   }
 
   // Down Right
   if (x < 7 && y < 7) {
     const downRight = pos + 9;
-    if (!occupiedBy(downRight, team)) moves.push({ from: pos, to: downRight });
+    if (!occupiedBy(downRight, team)) pushIfLegal(moves, { from: pos, to: downRight }, team);
   }
 
   // Castling
-  // TODO remove illegal castling moves (if king or rook has moved, or if any piece the king passes through is being attacked)
   // White
   if (team === Teams.White) {
     if (canCastle(pos, 62, Teams.White)) moves.push({ from: pos, to: 62, castle: true });
@@ -323,28 +341,21 @@ function king(moves: Move[], pos: number, team: Teams) {
     if (canCastle(pos, 6, Teams.Black)) moves.push({ from: pos, to: 6, castle: true });
     if (canCastle(pos, 2, Teams.Black)) moves.push({ from: pos, to: 2, castle: true });
   }
-
-  // if (pos === 60 && !occupied(61) && !occupied(62) && !blackAttacks[60] && !blackAttacks[61] && !blackAttacks[62] ) {
-  //   moves.push({ from: pos, to: 62, castle: true }); // King side
-  // if (pos === 60 && !occupied(59) && !occupied(58) && !occupied(57)) moves.push({ from: pos, to: 58, castle: true }); // Queen side
-
-  // Black
-  // else {
-  //   if (pos === 4 && !occupied(5) && !occupied(6)) moves.push({ from: pos, to: 6, castle: true }); // King side
-  //   if (pos === 4 && !occupied(3) && !occupied(2) && !occupied(1)) moves.push({ from: pos, to: 2, castle: true }); // Queen side
-  // }
 }
+
+const blackAttacks = (pos: number) => squareIsAttacked(pos, Teams.Black);
+const whiteAttacks = (pos: number) => squareIsAttacked(pos, Teams.White);
 
 function canCastle(from: number, to: number, team: Teams) {
   if (team === Teams.White) {
     if (board[60] !== King) return false;
 
-    if (blackAttacks[60]) return false;
+    if (blackAttacks(60)) return false;
     if (castleWhoHasMoved[team].king) return false;
 
     if (from !== 60) return false;
     if (to === 62) {
-      if (blackAttacks[61] || blackAttacks[62]) return false;
+      if (blackAttacks(61) || blackAttacks(62)) return false;
       if (occupied(61) || occupied(62)) return false;
       if (board[63] !== Rook) return false;
       if (castleWhoHasMoved[team].rightRook) return false;
@@ -353,7 +364,7 @@ function canCastle(from: number, to: number, team: Teams) {
     }
 
     if (to === 58) {
-      if (blackAttacks[59] || blackAttacks[58] || blackAttacks[57]) return false;
+      if (blackAttacks(59) || blackAttacks(58) || blackAttacks(57)) return false;
       if (occupied(59) || occupied(58) || occupied(57)) return false;
       if (board[56] !== Rook) return false;
       if (castleWhoHasMoved[team].leftRook) return false;
@@ -367,12 +378,12 @@ function canCastle(from: number, to: number, team: Teams) {
   // Black team
   else {
     if (board[4] !== -King) return false;
-    if (whiteAttacks[4]) return false;
+    if (whiteAttacks(4)) return false;
     if (castleWhoHasMoved[team].king) return false;
 
     if (from !== 4) return false;
     if (to === 6) {
-      if (whiteAttacks[5] || whiteAttacks[6]) return false;
+      if (whiteAttacks(5) || whiteAttacks(6)) return false;
       if (occupied(5) || occupied(6)) return false;
       if (board[7] !== -Rook) return false;
       if (castleWhoHasMoved[team].rightRook) return false;
@@ -381,13 +392,167 @@ function canCastle(from: number, to: number, team: Teams) {
     }
 
     if (to === 2) {
-      if (whiteAttacks[3] || whiteAttacks[2] || whiteAttacks[1]) return false;
+      if (whiteAttacks(3) || whiteAttacks(2) || whiteAttacks(1)) return false;
       if (occupied(3) || occupied(2) || occupied(1)) return false;
       if (board[0] !== -Rook) return false;
       if (castleWhoHasMoved[team].leftRook) return false;
 
       return true;
     }
+  }
+
+  return false;
+}
+
+export function squareIsAttacked(pos: number, attackedBy: Teams) {
+  // Check for rooks
+  const attackingRook = attackedBy === Teams.White ? Rook : -Rook;
+  const attackingQueen = attackedBy === Teams.White ? Queen : -Queen;
+
+  const x = pos % 8;
+  const y = Math.floor(pos / 8);
+
+  // Down
+  for (let i = pos - 8; i >= 0; i -= 8) {
+    const newX = i % 8;
+    if (newX !== x) break;
+    if (board[i] === 0) continue;
+    if (occupiedBy(pos, attackedBy)) break;
+    if (board[i] === attackingRook || board[i] === attackingQueen) return true;
+    if (occupied(i)) break;
+  }
+
+  // Up
+  for (let i = pos + 8; i < 64; i += 8) {
+    const newX = i % 8;
+    if (newX !== x) break;
+
+    if (board[i] === 0) continue;
+    if (occupiedBy(pos, attackedBy)) break;
+    if (board[i] === attackingRook || board[i] === attackingQueen) return true;
+    if (occupied(i)) break;
+  }
+
+  // Right
+  for (let i = pos + 1; i < pos + 8; i++) {
+    const newY = Math.floor(i / 8);
+    if (newY !== y) break;
+
+    if (board[i] === 0) continue;
+    if (occupiedBy(pos, attackedBy)) break;
+    if (board[i] === attackingRook || board[i] === attackingQueen) return true;
+    if (occupied(i)) break;
+  }
+
+  // Left
+  for (let i = pos - 1; i > pos - 8; i--) {
+    const newY = Math.floor(i / 8);
+    if (newY !== y) break;
+
+    if (board[i] === 0) continue;
+    if (occupiedBy(pos, attackedBy)) break;
+    if (board[i] === attackingRook || board[i] === attackingQueen) return true;
+    if (occupied(i)) break;
+  }
+
+  // Check for bishops
+  const attackingBishop = attackedBy === Teams.White ? Bishop : -Bishop;
+  for (let i = pos + 7; i < 64; i += 7) {
+    const newX = i % 8;
+    const newY = Math.floor(i / 8);
+    if (newX > x || newY < y) break;
+
+    if (board[i] === 0) continue;
+    if (occupiedBy(pos, attackedBy)) break;
+    if (board[i] === attackingBishop || board[i] === attackingQueen) return true;
+    if (occupied(i)) break;
+  }
+
+  for (let i = pos + 9; i < 64; i += 9) {
+    const newX = i % 8;
+    const newY = Math.floor(i / 8);
+    if (newX < x || newY < y) break;
+
+    if (board[i] === 0) continue;
+    if (occupiedBy(pos, attackedBy)) break;
+    if (board[i] === attackingBishop || board[i] === attackingQueen) return true;
+    if (occupied(i)) break;
+  }
+
+  for (let i = pos - 7; i >= 0; i -= 7) {
+    const newX = i % 8;
+    const newY = Math.floor(i / 8);
+    if (newX < x || newY > y) break;
+
+    if (board[i] === 0) continue;
+    if (occupiedBy(pos, attackedBy)) break;
+    if (board[i] === attackingBishop || board[i] === attackingQueen) return true;
+    if (occupied(i)) break;
+  }
+
+  for (let i = pos - 9; i >= 0; i -= 9) {
+    const newX = i % 8;
+    const newY = Math.floor(i / 8);
+    if (newX > x || newY > y) break;
+
+    if (board[i] === 0) continue;
+    if (occupiedBy(pos, attackedBy)) break;
+    if (board[i] === attackingBishop || board[i] === attackingQueen) return true;
+    if (occupied(i)) break;
+  }
+
+  // Check for knights
+  const attackingKnight = attackedBy === Teams.White ? Knight : -Knight;
+  const knightMoves = [pos + 17, pos + 15, pos + 10, pos + 6, pos - 17, pos - 15, pos - 10, pos - 6];
+
+  for (let i = 0; i < knightMoves.length; i++) {
+    if (occupiedBy(pos, attackedBy)) continue;
+    const newX = knightMoves[i] % 8;
+    const newY = Math.floor(knightMoves[i] / 8);
+    if (newX > x + 2 || newX < x - 2) continue;
+    if (newY > y + 2 || newY < y - 2) continue;
+
+    if (board[knightMoves[i]] === attackingKnight) return true;
+  }
+
+  // Check for pawns
+  const attackingPawn = attackedBy === Teams.White ? Pawn : -Pawn;
+  const pawnMoves = attackedBy === Teams.White ? [pos + 9, pos + 7] : [pos - 9, pos - 7];
+
+  for (let i = 0; i < pawnMoves.length; i++) {
+    if (occupiedBy(pos, attackedBy)) continue;
+    const newX = pawnMoves[i] % 8;
+    const newY = Math.floor(pawnMoves[i] / 8);
+    if (newX > x + 1 || newX < x - 1) continue;
+    if (newY > y + 1 || newY < y - 1) continue;
+
+    if (board[pawnMoves[i]] === attackingPawn) return true;
+
+    // Check for en passant
+    if (enPassant !== -1 && pawnMoves[i] === enPassant) return true;
+    if (attackedBy === Teams.White && y === 3) {
+      if (enPassant === pos - 1) return true;
+      if (enPassant === pos + 1) return true;
+    }
+
+    if (attackedBy === Teams.Black && y === 4) {
+      if (enPassant === pos - 1) return true;
+      if (enPassant === pos + 1) return true;
+    }
+  }
+
+  // Check for king
+  const attackingKing = attackedBy === Teams.White ? King : -King;
+  const kingMoves = [pos + 1, pos - 1, pos + 8, pos - 8, pos + 7, pos - 7, pos + 9, pos - 9];
+
+  for (let i = 0; i < kingMoves.length; i++) {
+    if (occupiedBy(pos, attackedBy)) continue;
+    const newX = kingMoves[i] % 8;
+    const newY = Math.floor(kingMoves[i] / 8);
+    if (newX > x + 1 || newX < x - 1) continue;
+    if (newY > y + 1 || newY < y - 1) continue;
+
+    if (board[kingMoves[i]] === attackingKing) return true;
   }
 
   return false;

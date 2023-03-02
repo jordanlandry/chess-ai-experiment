@@ -19,6 +19,7 @@ export default function usePieceCentering(setTurn: React.Dispatch<React.SetState
     // Anyways this is the best way I could think of to do this at the moment.
 
     board.forEach((id) => {
+      if (!loaded) return;
       const piece = document.getElementById(id + "");
 
       if (!piece) return;

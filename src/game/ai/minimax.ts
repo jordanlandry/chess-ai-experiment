@@ -6,11 +6,8 @@ import {
   BlackQueens,
   BlackRooks,
   board,
-  calcXY,
   getKey,
-  lookupArrayXY,
-  lookupObjectXY,
-  // getZobristKey,
+  inStalemate,
   Move,
   WhiteBishops,
   WhiteKing,
@@ -61,19 +58,13 @@ let table = {} as { [key: string]: Table };
 
 const maxTime = 2500;
 let startTime = 0;
+let previousBestMove = { from: -1, to: -1 };
+
 export default function getBestMoveTest(aiTeam: Teams) {
   let depth = 1;
   startTime = Date.now();
 
-  // const idx = Math.floor(Math.random() * 64);
-  // testFunctionSpeed(() => calcXY(idx), "calculation");
-  // testFunctionSpeed(() => lookupObjectXY(idx), "lookup");
-  // testFunctionSpeed(() => lookupArrayXY(idx), "Array lookup");
-
   let bestMove: Minimax = { score: 0, move: { from: -1, to: -1 } };
-
-  // return bestMove;
-
   while (Date.now() - startTime < maxTime) {
     table = {};
     const next = minimax(depth, -Infinity, Infinity, aiTeam === Teams.White);
@@ -81,6 +72,7 @@ export default function getBestMoveTest(aiTeam: Teams) {
     if (!next) break;
 
     bestMove = next;
+    previousBestMove = next.move;
     depth++;
   }
 
@@ -106,6 +98,17 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
   // 6. Update alpha and beta
   // 7. Return best move
 
+  // Null move pruning (https://www.chessprogramming.org/Null_Move_Pruning)
+  if (depth >= 3 && !isMax) {
+    const nullMove = minimax(depth - 3, alpha, beta, true);
+    if (nullMove && nullMove.score <= alpha) return nullMove;
+  }
+
+  if (depth >= 3 && isMax) {
+    const nullMove = minimax(depth - 3, alpha, beta, false);
+    if (nullMove && nullMove.score >= beta) return nullMove;
+  }
+
   // Maximizer
   if (isMax) {
     const boardHash = getKey();
@@ -113,7 +116,12 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
 
     const bestMove = { score: -Infinity, move: { from: -1, to: -1 } };
 
-    const moves = orderMovesTest(getAllAvailableMovesTest(Teams.White));
+    const moves = orderMovesTest(getAllAvailableMovesTest(Teams.White), previousBestMove);
+    if (moves.length === 0) {
+      if (inStalemate(Teams.White)) return { score: 0, move: { from: -1, to: -1 } };
+      return bestMove;
+    }
+
     for (let i = 0; i < moves.length; i++) {
       const { from, to, castle, enPassant } = moves[i];
 
@@ -123,8 +131,10 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       // Make move
       makeMove(from, to, castle, enPassant, true);
 
+      // Search deeper if the move is a capture
+
       // Evaluate the next depth of moves
-      const nextEval = minimax(depth - 1, alpha, beta, !isMax);
+      const nextEval = capturedPiece ? searchThroughCaptures(depth + 1, alpha, beta, !isMax) : minimax(depth - 1, alpha, beta, !isMax);
 
       // Undo move
       makeMove(to, from, castle, enPassant, true, true, capturedPiece);
@@ -157,7 +167,11 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
 
     let bestMove = { score: Infinity, move: { from: -1, to: -1 } };
 
-    const moves = orderMovesTest(getAllAvailableMovesTest(Teams.Black));
+    const moves = orderMovesTest(getAllAvailableMovesTest(Teams.Black), previousBestMove);
+    if (moves.length === 0) {
+      if (inStalemate(Teams.Black)) return { score: 0, move: { from: -1, to: -1 } };
+      return bestMove;
+    }
 
     for (let i = 0; i < moves.length; i++) {
       const { from, to, castle, enPassant } = moves[i];
@@ -169,7 +183,8 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       makeMove(from, to, castle, enPassant, true);
 
       // Evaluate the next depth of moves
-      const nextEval = minimax(depth - 1, alpha, beta, !isMax);
+      const nextEval = capturedPiece ? searchThroughCaptures(depth + 1, alpha, beta, !isMax) : minimax(depth - 1, alpha, beta, !isMax);
+      minimax(depth - 1, alpha, beta, !isMax);
       // Undo move
       makeMove(to, from, castle, enPassant, true, true, capturedPiece);
 
@@ -193,6 +208,100 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
     return bestMove;
   }
 }
-function test1(arg0: number) {
-  throw new Error("Function not implemented.");
+
+// Quiescence search (https://www.chessprogramming.org/Quiescence_Search)
+// I called it this instead cuz who want's to spell out quiescence
+// I haven't added checks yet only captures
+function searchThroughCaptures(depth: number, alpha: number, beta: number, isMax: boolean) {
+  // 1. Generate all captures
+  // 2. Make a capture move
+  // 3. Recursively call this function to search the next capture
+  // 4. Undo move
+  // 5. Update best move
+  // 6. Update alpha and beta
+  // 7. Return best move
+
+  if (Date.now() - startTime > maxTime) return null;
+  if (depth === 0) return { score: evaluateBoard(), move: { from: -1, to: -1 } };
+
+  const { moves, captures } = generateCaptures(isMax ? Teams.White : Teams.Black);
+
+  const bestMove = { score: isMax ? -Infinity : Infinity, move: { from: -1, to: -1 } };
+
+  if (moves.length === 0) {
+    if (inStalemate(isMax ? Teams.White : Teams.Black)) return { score: 0, move: { from: -1, to: -1 } };
+    return bestMove;
+  }
+
+  // Base case
+  if (captures.length === 0) {
+    const score = evaluateBoard();
+    return { score, move: { from: -1, to: -1 } };
+  }
+
+  // Maximizer
+  if (isMax) {
+    for (let i = 0; i < captures.length; i++) {
+      const capturedPiece = board[captures[i].to];
+
+      // Make move
+      makeMove(captures[i].from, captures[i].to, captures[i].castle, captures[i].enPassant, true);
+
+      // Evaluate the next depth of captures
+      const nextEval = searchThroughCaptures(depth - 1, alpha, beta, !isMax);
+
+      // Undo move
+      makeMove(captures[i].to, captures[i].from, captures[i].castle, captures[i].enPassant, true, true, capturedPiece);
+
+      // Update best move
+      if (!nextEval) return null;
+      if (nextEval.score > bestMove.score) {
+        bestMove.score = nextEval.score;
+        bestMove.move = captures[i];
+      }
+
+      // Update alpha
+      alpha = Math.max(alpha, bestMove.score);
+      if (beta <= alpha) break;
+    }
+    return bestMove;
+  }
+
+  // Minimizer
+  else {
+    for (let i = 0; i < captures.length; i++) {
+      const capturedPiece = board[captures[i].to];
+
+      // Make move
+      makeMove(captures[i].from, captures[i].to, captures[i].castle, captures[i].enPassant, true);
+
+      // Evaluate the next depth of captures
+      const nextEval = searchThroughCaptures(depth - 1, alpha, beta, !isMax);
+
+      // Undo move
+      makeMove(captures[i].to, captures[i].from, captures[i].castle, captures[i].enPassant, true, true, capturedPiece);
+
+      // Update best move
+      if (!nextEval) return null;
+      if (nextEval.score < bestMove.score) {
+        bestMove.score = nextEval.score;
+        bestMove.move = captures[i];
+      }
+
+      // Update beta
+      beta = Math.min(beta, bestMove.score);
+      if (beta <= alpha) break;
+    }
+    return bestMove;
+  }
+}
+
+function generateCaptures(team: Teams) {
+  const moves = getAllAvailableMovesTest(team);
+  const captures = [];
+  for (let i = 0; i < moves.length; i++) {
+    if (board[moves[i].to] || moves[i].enPassant) captures.push(moves[i]);
+  }
+
+  return { captures, moves };
 }

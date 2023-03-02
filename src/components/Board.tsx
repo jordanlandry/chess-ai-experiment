@@ -1,12 +1,22 @@
 import { useContext, useState } from "react";
 import nextId from "react-id-generator";
-import { SetBoardColorContext, BoardColorContext, PieceStyleContext, SetPieceStyleContext } from "../App";
+import {
+  SetBoardColorContext,
+  BoardColorContext,
+  PieceStyleContext,
+  SetPieceStyleContext,
+  SetChangingStylesContext,
+  ChangingStylesContext,
+} from "../App";
 
 import properties from "../properties";
 import Modal from "./Modal";
 
 export default function Board() {
-  const [changingSettings, setChangingSettings] = useState(false);
+  // const [changingSettings, setChangingSettings] = useState(false);
+
+  const changingSettings = useContext(ChangingStylesContext);
+  const setChangingSettings = useContext(SetChangingStylesContext);
 
   // Context Imports
   const boardColor = useContext(BoardColorContext)!;
@@ -47,8 +57,6 @@ export default function Board() {
     setChangingSettings(false);
   };
 
-  const [b, a] = useState(10);
-
   // Render
   return (
     <div
@@ -68,7 +76,7 @@ export default function Board() {
         }}
       >
         <div style={{ backgroundColor: "ddd", height: "100%", border: "1px solid black", width: "25%" }}>
-          <div style={{ backgroundColor: "#444", height: score + "%", width: "100%", transition: "0.5s" }} onClick={() => a(50)}></div>
+          <div style={{ backgroundColor: "#444", height: score + "%", width: "100%", transition: "0.5s" }}></div>
         </div>
       </div>
       <div
@@ -95,7 +103,7 @@ export default function Board() {
         </svg>
       </div>
 
-      <Modal onClose={() => setChangingSettings(false)} open={changingSettings}>
+      <Modal onClose={() => setChangingSettings(false)} open={changingSettings!}>
         <h2 style={{ fontSize: "2rem" }}>Settings</h2>
         <div>Change Style</div>
         <select value={boardColor} onChange={changeSettings} style={{ textTransform: "capitalize" }}>
