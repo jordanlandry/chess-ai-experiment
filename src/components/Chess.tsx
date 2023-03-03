@@ -1,7 +1,9 @@
 import { useContext, useState } from "react";
 import { ChangingStylesContext } from "../App";
-import { board, Move } from "../board";
+import { board, Move, Queen } from "../board";
 import useAITest from "../hooks/game/useAI";
+import useMoveUpdater from "../hooks/game/useMoveUpdater";
+import usePiecePromotion from "../hooks/game/usePiecePromotion";
 import useMouseDown from "../hooks/mouse/useMouseDown";
 import usePieceCenteringTest from "../hooks/usePieceCentering";
 import { Teams } from "../properties";
@@ -9,7 +11,7 @@ import AvailableCapture from "./overlays/AvailableCapture";
 import AvailableMove from "./overlays/AvailableMove";
 import LastMove from "./overlays/LastMove";
 import SelectedPiece from "./overlays/SelectedPiece";
-import TestElement from "./Testing/TestElement";
+import PromotionSelect from "./PromotionSelect";
 
 export default function Chess() {
   // Imports
@@ -24,24 +26,55 @@ export default function Chess() {
   const [currentTurn, setCurrentTurn] = useState(Teams.White);
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
 
+  const [promotionPosition, setPromotionPosition] = useState(-1);
+  const [promotionPiece, setPromotionPiece] = useState(0);
+  const [promotion, setPromotion] = useState<Move | null>(null);
+
   // Mouse hooks
   const [mouseDown, setMouseDown] = useState(false);
 
-  const { selectedPiece, setSelectedPiece } = useMouseDown(changingStyles!, currentTurn, setAvailableMoves, setCurrentTurn);
+  const { selectedPiece, setSelectedPiece } = useMouseDown(
+    changingStyles!,
+    promotionPosition,
+    currentTurn,
+    setPromotionPosition,
+    setAvailableMoves,
+    setCurrentTurn,
+    setPromotion
+  );
+
+  useMoveUpdater(currentTurn, setMoveHistory);
 
   useAITest(currentTurn, aiTeam, setCurrentTurn);
-  usePieceCenteringTest(setCurrentTurn);
+  usePieceCenteringTest(promotionPiece, moveHistory);
+
+  // Promotion
+  usePiecePromotion(promotion, promotionPiece, setPromotion, setPromotionPiece, setCurrentTurn);
 
   return (
     <div>
       {availableMoves.map((move, i) => {
+        // move.promoteTo adds 4 moves, 1 for each piece but they're all in the same spot
+        // I don't want to show all 4 moves, because it's transparent and will stack and become opaque
+        // So I'm only going to show one move, in this case the queen.
+        if (move.promoteTo) {
+          if (move.promoteTo !== Queen && move.promoteTo !== -Queen) return null;
+        }
+
         if (board[move.to] === 0) return <AvailableMove key={i} index={move.to} />;
-        return <AvailableCapture key={i} index={move.to} />;
+        else return <AvailableCapture key={i} index={move.to} />;
       })}
 
       <SelectedPiece index={selectedPiece} />
 
       <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} />
+
+      <PromotionSelect
+        index={promotionPosition}
+        team={currentTurn}
+        setPromotionPosition={setPromotionPosition}
+        setPromotionPiece={setPromotionPiece}
+      />
 
       {/* <TestElement /> */}
     </div>

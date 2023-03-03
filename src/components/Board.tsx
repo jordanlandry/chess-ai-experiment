@@ -13,8 +13,6 @@ import properties from "../properties";
 import Modal from "./Modal";
 
 export default function Board() {
-  // const [changingSettings, setChangingSettings] = useState(false);
-
   const changingSettings = useContext(ChangingStylesContext);
   const setChangingSettings = useContext(SetChangingStylesContext);
 

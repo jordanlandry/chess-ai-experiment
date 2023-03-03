@@ -8,14 +8,18 @@ import properties, { Teams } from "../../properties";
 
 export default function useMouseDownTest(
   changingStyles: boolean,
+  promotionPosition: number,
   currentTurn: Teams,
+  setPromotionPosition: React.Dispatch<React.SetStateAction<number>>,
   setAvailableMoves: React.Dispatch<React.SetStateAction<Move[]>>,
-  setCurrentTurn: React.Dispatch<React.SetStateAction<Teams>>
+  setCurrentTurn: React.Dispatch<React.SetStateAction<Teams>>,
+  setPromotion: React.Dispatch<React.SetStateAction<Move | null>>
 ) {
   const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
 
   useEffect(() => {
-    if (changingStyles) return;
+    if (changingStyles || promotionPosition !== -1) return;
+
     const handleMouseDown = async (e: MouseEvent) => {
       const position = getMouseSpot(e);
       if (position === null) return; // Have to have === null (instead of !position) because 0 is a valid position
@@ -44,11 +48,18 @@ export default function useMouseDownTest(
           // If you selecting a square that's not a piece, deselect the piece, and move the piece if it's a valid move
           for (let i = 0; i < prevMoves.length; i++) {
             if (prevMoves[i].to === position) {
-              makeMove(selectedPiece, position, prevMoves[i].castle, prevMoves[i].enPassant);
+              if (prevMoves[i].promoteTo) {
+                setPromotionPosition(prevMoves[i].to);
+                setPromotion(prevMoves[i]);
+                return [];
+              }
 
-              setTimeout(() => {
-                setCurrentTurn((currentTurn) => (currentTurn === Teams.White ? Teams.Black : Teams.White));
-              }, properties.animationTimeMs + 100);
+              makeMove(selectedPiece, position, prevMoves[i].castle, prevMoves[i].enPassant, prevMoves[i].promoteTo);
+
+              // setTimeout(() => {
+              setCurrentTurn((currentTurn) => (currentTurn === Teams.White ? Teams.Black : Teams.White));
+              // }, properties.animationTimeMs + 100);
+
               return [];
             }
           }
@@ -61,7 +72,7 @@ export default function useMouseDownTest(
 
     window.addEventListener("mousedown", handleMouseDown);
     return () => window.removeEventListener("mousedown", handleMouseDown);
-  }, [selectedPiece, currentTurn]);
+  }, [selectedPiece, currentTurn, promotionPosition]);
 
   // Put the piece z index above everything else
   useEffect(() => {

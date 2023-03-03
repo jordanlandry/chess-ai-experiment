@@ -16,3 +16,13 @@ td {
   border: 1px solid #ccc;
   border-collapse: collapse;
 }
+
+.promote-img {
+  cursor: pointer;
+  outline: transparent solid 2px;
+}
+
+.promote-img:hover {
+  outline-color: black;
+  z-index: 501;
+}

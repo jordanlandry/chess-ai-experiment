@@ -280,6 +280,8 @@ const pieceToPiecePositions = {
   } as { [key: string]: number[] },
 } as { [key: number]: { [key: string]: number[] } };
 
+export let lastMove: Move | null = null;
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 export function updatePiecePositions(
   piece: PiecesType,
@@ -287,7 +289,8 @@ export function updatePiecePositions(
   from: number,
   to: number,
   castle: boolean | undefined,
-  doEnPassant: boolean | undefined
+  doEnPassant: boolean | undefined,
+  promotionPiece: number | undefined
 ) {
   const piecePositions = pieceToPiecePositions[team][piece];
   const pieceIndex = piecePositions.indexOf(from);
@@ -325,10 +328,10 @@ export function updatePiecePositions(
 
   // If it was a castle, we need to update the rook's position by running this function again
   if (castle) {
-    if (to === 62) updatePiecePositions(PiecesType.Rook, team, 63, 61, undefined, undefined);
-    if (to === 58) updatePiecePositions(PiecesType.Rook, team, 56, 59, undefined, undefined);
-    if (to === 6) updatePiecePositions(PiecesType.Rook, team, 7, 5, undefined, undefined);
-    if (to === 2) updatePiecePositions(PiecesType.Rook, team, 0, 3, undefined, undefined);
+    if (to === 62) updatePiecePositions(PiecesType.Rook, team, 63, 61, undefined, undefined, undefined);
+    if (to === 58) updatePiecePositions(PiecesType.Rook, team, 56, 59, undefined, undefined, undefined);
+    if (to === 6) updatePiecePositions(PiecesType.Rook, team, 7, 5, undefined, undefined, undefined);
+    if (to === 2) updatePiecePositions(PiecesType.Rook, team, 0, 3, undefined, undefined, undefined);
   }
 
   // If you capture a piece you need the position to be removed from it's array
@@ -339,13 +342,25 @@ export function updatePiecePositions(
     capturedPiecePositions.splice(capturedPieceIndex, 1);
   }
 
-  // Update the board
   board[to] = board[from];
   board[from] = 0;
+
+  // If it was a promotion, we need to remove the pawn and add the new piece
+  if (promotionPiece) {
+    const promotionPieceType = pieceType(promotionPiece);
+    if (team === Teams.Black) promotionPiece *= -1;
+    piecePositions.splice(pieceIndex, 1);
+
+    pieceToPiecePositions[team][promotionPieceType].push(to);
+    board[to] = promotionPiece;
+  }
 
   // Update the occupied squares
   occupiedSquares[from] = Teams.None;
   occupiedSquares[to] = team;
+
+  // Update the last move
+  lastMove = { from, to, castle, enPassant: doEnPassant, promoteTo: promotionPiece };
 
   // Update the spots that are attacked
   // We need to update the pieces that were being attacked before the move
@@ -363,6 +378,7 @@ export function undoPiecePosition(
   to: number,
   castle: boolean | undefined,
   doEnPassant: boolean | undefined,
+  promotionPiece: number | undefined,
   capturedPiece?: number
 ) {
   const piecePositions = pieceToPiecePositions[team][piece];
@@ -392,10 +408,10 @@ export function undoPiecePosition(
 
   // If it was a castle, run the same function again but with the rook
   if (castle) {
-    if (from === 62) undoPiecePosition(PiecesType.Rook, team, 61, 63, undefined, undefined);
-    if (from === 58) undoPiecePosition(PiecesType.Rook, team, 59, 56, undefined, undefined);
-    if (from === 6) undoPiecePosition(PiecesType.Rook, team, 5, 7, undefined, undefined);
-    if (from === 2) undoPiecePosition(PiecesType.Rook, team, 3, 0, undefined, undefined);
+    if (from === 62) undoPiecePosition(PiecesType.Rook, team, 61, 63, undefined, undefined, undefined);
+    if (from === 58) undoPiecePosition(PiecesType.Rook, team, 59, 56, undefined, undefined, undefined);
+    if (from === 6) undoPiecePosition(PiecesType.Rook, team, 5, 7, undefined, undefined, undefined);
+    if (from === 2) undoPiecePosition(PiecesType.Rook, team, 3, 0, undefined, undefined, undefined);
   }
 
   // If you capture a piece you need the position to be added to it's array
@@ -412,11 +428,27 @@ export function undoPiecePosition(
   board[to] = board[from];
   board[from] = capturedPiece || 0;
 
+  // If it was a promotion, we need to remove the new piece and add the pawn back
+  if (promotionPiece) {
+    const promotedPieceType = pieceType(promotionPiece);
+    const promotedPiecePositions = pieceToPiecePositions[team][promotedPieceType];
+    const promotedPieceIndex = promotedPiecePositions.indexOf(to);
+    promotedPiecePositions.splice(promotedPieceIndex, 1);
+
+    // console.log({ to, from });
+
+    pieceToPiecePositions[team][PiecesType.Pawn].push(to);
+
+    board[to] = team === Teams.White ? Pawn : -Pawn;
+  }
+
   // Update the occupied squares
   occupiedSquares[to] = team;
   occupiedSquares[from] = capturedPiece ? (team === Teams.White ? Teams.Black : Teams.White) : Teams.None;
 }
 
+// This was to test if squareIsAttacked was working correctly,
+// I have a test component that highlights the squares that are attacked
 function updateAttackedSquaresTest() {
   // Go through the board
   for (let i = 0; i < 64; i++) {
@@ -519,4 +551,5 @@ export interface Move {
   to: number;
   castle?: boolean;
   enPassant?: boolean;
+  promoteTo?: number;
 }

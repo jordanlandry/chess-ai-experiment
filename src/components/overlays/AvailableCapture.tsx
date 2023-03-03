@@ -16,9 +16,10 @@ export default function AvailableCapture({ index }: Props) {
         position: "absolute",
         left: x + "px",
         top: y + "px",
-        width: squareSize + "px",
-        height: squareSize + "px",
-        backgroundColor: properties.overlayColors.capture,
+        width: squareSize * 0.8 + "px",
+        height: squareSize * 0.8 + "px",
+        borderRadius: "50%",
+        border: "6px solid " + properties.overlayColors.capture,
       }}
     />
   );

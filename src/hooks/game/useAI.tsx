@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Move } from "../../board";
 import getBestMoveTest from "../../game/ai/minimax";
 import { movePiece } from "../../game/movePiece";
 import makeMove from "../../helpers/makeMove";
@@ -11,15 +12,15 @@ export default function useAITest(currentTurn: Teams, aiTeam: Teams, setCurrentT
     // Before making the move, we need to wait for the animation and the board to update
     // and the sound to play as minimax will freeze the browser if we don't wait
 
-    const start = Date.now();
-    const bestMove = getBestMoveTest(aiTeam);
-    const end = Date.now();
+    setTimeout(() => {
+      const bestMove = getBestMoveTest(aiTeam);
 
-    // console.log("AI took " + (end - start) + "ms to find best move.");
+      // console.log("AI took " + (end - start) + "ms to find best move.");
 
-    if (bestMove) {
-      makeMove(bestMove.move.from, bestMove.move.to, bestMove.move.castle, bestMove.move.enPassant);
-      setCurrentTurn((currentTurn) => (currentTurn === Teams.White ? Teams.Black : Teams.White));
-    }
+      if (bestMove) {
+        makeMove(bestMove.move.from, bestMove.move.to, bestMove.move.castle, bestMove.move.enPassant, bestMove.move.promoteTo);
+        setCurrentTurn((currentTurn) => (currentTurn === Teams.White ? Teams.Black : Teams.White));
+      }
+    }, 500);
   }, [currentTurn]);
 }

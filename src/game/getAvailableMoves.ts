@@ -81,14 +81,14 @@ function pushIfLegal(moves: Move[], move: Move, team: Teams) {
   const capturedPiece = board[move.to];
 
   // Make the move
-  makeMove(move.from, move.to, move.castle, move.enPassant, true);
+  makeMove(move.from, move.to, move.castle, move.enPassant, move.promoteTo, true);
   const kingPosition = team === Teams.White ? WhiteKing[0] : BlackKing[0];
 
   // Push if the king is not in check
   if (!squareIsAttacked(kingPosition, attackingTeam)) moves.push(move);
 
   // Undo move
-  makeMove(move.to, move.from, move.castle, move.enPassant, true, true, capturedPiece);
+  makeMove(move.to, move.from, move.castle, move.enPassant, move.promoteTo, true, true, capturedPiece);
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -111,16 +111,26 @@ function whitePawn(moves: Move[], pos: number) {
     if (x !== 0 && enPassant === pos - 1) pushIfLegal(moves, { from: pos, to: pos - 9, enPassant: true }, Teams.White);
   }
 
+  const promotionPieces = [Queen, Rook, Bishop, Knight];
+
   // Right
   if (x !== 7) {
     const r = pos - 7;
-    if (occupiedBy(r, Teams.Black)) pushIfLegal(moves, { from: pos, to: r }, Teams.White);
+
+    if (occupiedBy(r, Teams.Black)) {
+      if (y === 1) promotionPieces.forEach((piece) => pushIfLegal(moves, { from: pos, to: r, promoteTo: piece }, Teams.White));
+      else pushIfLegal(moves, { from: pos, to: r }, Teams.White);
+    }
   }
 
   // Left
   if (x !== 0) {
     const l = pos - 9;
-    if (occupiedBy(l, Teams.Black)) pushIfLegal(moves, { from: pos, to: l }, Teams.White);
+
+    if (occupiedBy(l, Teams.Black)) {
+      if (y === 1) promotionPieces.forEach((piece) => pushIfLegal(moves, { from: pos, to: l, promoteTo: piece }, Teams.White));
+      else pushIfLegal(moves, { from: pos, to: l }, Teams.White);
+    }
   }
 
   // Can't move if there is a piece in front of it
@@ -128,8 +138,10 @@ function whitePawn(moves: Move[], pos: number) {
   if (occupied(up1)) return;
 
   // Move up 1
-  pushIfLegal(moves, { from: pos, to: up1 }, Teams.White);
+  if (y === 1) promotionPieces.forEach((piece) => pushIfLegal(moves, { from: pos, to: up1, promoteTo: piece }, Teams.White));
+  else pushIfLegal(moves, { from: pos, to: up1 }, Teams.White);
 
+  // Move up by 2 (will never be able to promote)
   if (y === INITIAL_WHITE_PAWN_Y) {
     const up2 = pos - 16;
     if (!occupied(up2)) pushIfLegal(moves, { from: pos, to: up2 }, Teams.White);
@@ -140,16 +152,26 @@ function blackPawn(moves: Move[], pos: number) {
   const x = pos % 8;
   const y = Math.floor(pos / 8);
 
+  const promotionPieces = [Queen, Rook, Bishop, Knight];
+
   // Right
   if (x !== 7) {
     const r = pos + 9;
-    if (occupiedBy(r, Teams.White)) pushIfLegal(moves, { from: pos, to: r }, Teams.Black);
+
+    if (occupiedBy(r, Teams.White)) {
+      if (y === 6) promotionPieces.forEach((piece) => pushIfLegal(moves, { from: pos, to: r, promoteTo: piece }, Teams.Black));
+      else pushIfLegal(moves, { from: pos, to: r }, Teams.Black);
+    }
   }
 
   // Left
   if (x !== 0) {
     const l = pos + 7;
-    if (occupiedBy(l, Teams.White)) pushIfLegal(moves, { from: pos, to: l }, Teams.Black);
+
+    if (occupiedBy(l, Teams.White)) {
+      if (y === 6) promotionPieces.forEach((piece) => pushIfLegal(moves, { from: pos, to: l, promoteTo: piece }, Teams.Black));
+      else pushIfLegal(moves, { from: pos, to: l }, Teams.Black);
+    }
   }
 
   // En Passant
@@ -163,7 +185,10 @@ function blackPawn(moves: Move[], pos: number) {
   if (occupied(up1)) return;
 
   // Move up 1
-  pushIfLegal(moves, { from: pos, to: up1 }, Teams.Black);
+  if (y === 6) promotionPieces.forEach((piece) => pushIfLegal(moves, { from: pos, to: up1, promoteTo: piece }, Teams.Black));
+  else pushIfLegal(moves, { from: pos, to: up1 }, Teams.Black);
+
+  // Move up by 2 (will never be able to promote)
   if (y === INITIAL_BLACK_PAWN_Y) {
     const up2 = pos + 16;
     if (!occupied(up2)) pushIfLegal(moves, { from: pos, to: up2 }, Teams.Black);

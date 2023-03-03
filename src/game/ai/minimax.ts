@@ -80,6 +80,10 @@ export default function getBestMoveTest(aiTeam: Teams) {
   return bestMove;
 }
 
+// Depth for quiescence search (don't wanna use quiscence in the name of the variable)
+// Cuz stupid word
+const qDepth = 5;
+
 function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Minimax | null {
   if (depth === 0) return { score: evaluateBoard(), move: { from: -1, to: -1 } };
 
@@ -104,10 +108,10 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
     if (nullMove && nullMove.score <= alpha) return nullMove;
   }
 
-  if (depth >= 3 && isMax) {
-    const nullMove = minimax(depth - 3, alpha, beta, false);
-    if (nullMove && nullMove.score >= beta) return nullMove;
-  }
+  // if (depth >= 3 && isMax) {
+  //   const nullMove = minimax(depth - 3, alpha, beta, false);
+  //   if (nullMove && nullMove.score >= beta) return nullMove;
+  // }
 
   // Maximizer
   if (isMax) {
@@ -123,21 +127,25 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
     }
 
     for (let i = 0; i < moves.length; i++) {
-      const { from, to, castle, enPassant } = moves[i];
+      const { from, to, castle, enPassant, promoteTo } = moves[i];
 
       // Save the piece that is being captured (if any)
       const capturedPiece = board[to];
 
       // Make move
-      makeMove(from, to, castle, enPassant, true);
+      makeMove(from, to, castle, enPassant, promoteTo, true);
 
       // Search deeper if the move is a capture
 
       // Evaluate the next depth of moves
-      const nextEval = capturedPiece ? searchThroughCaptures(depth + 1, alpha, beta, !isMax) : minimax(depth - 1, alpha, beta, !isMax);
+      // let nextEval;
+      // if (capturedPiece && depth === 1) nextEval = searchThroughCaptures(qDepth, alpha, beta, !isMax);
+      // else nextEval = minimax(depth - 1, alpha, beta, !isMax);
+      // const nextEval = capturedPiece ? searchThroughCaptures(depth + 1, alpha, beta, !isMax) : minimax(depth - 1, alpha, beta, !isMax);
+      const nextEval = minimax(depth - 1, alpha, beta, !isMax);
 
       // Undo move
-      makeMove(to, from, castle, enPassant, true, true, capturedPiece);
+      makeMove(to, from, castle, enPassant, promoteTo, true, true, capturedPiece);
 
       // Update best move
       if (!nextEval) return null;
@@ -146,6 +154,9 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
         bestMove.score = nextEval.score;
         bestMove.move = moves[i];
       }
+
+      // If you won the game
+      // if (bestMove.score === Infinity) return bestMove;
 
       // Add to table
       if (depth === 1) {
@@ -174,19 +185,24 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
     }
 
     for (let i = 0; i < moves.length; i++) {
-      const { from, to, castle, enPassant } = moves[i];
+      const { from, to, castle, enPassant, promoteTo } = moves[i];
 
       // Save the piece that is being captured (if any)
       const capturedPiece = board[to];
 
       // Make move
-      makeMove(from, to, castle, enPassant, true);
+      makeMove(from, to, castle, enPassant, promoteTo, true);
 
       // Evaluate the next depth of moves
-      const nextEval = capturedPiece ? searchThroughCaptures(depth + 1, alpha, beta, !isMax) : minimax(depth - 1, alpha, beta, !isMax);
-      minimax(depth - 1, alpha, beta, !isMax);
+      // let nextEval;
+      // if (capturedPiece && depth === 1) nextEval = searchThroughCaptures(qDepth, alpha, beta, !isMax);
+      // else nextEval = minimax(depth - 1, alpha, beta, !isMax);
+      const nextEval = minimax(depth - 1, alpha, beta, !isMax);
+
+      // const nextEval = capturedPiece ? searchThroughCaptures(depth + 1, alpha, beta, !isMax) : minimax(depth - 1, alpha, beta, !isMax);
+      // minimax(depth - 1, alpha, beta, !isMax);
       // Undo move
-      makeMove(to, from, castle, enPassant, true, true, capturedPiece);
+      makeMove(to, from, castle, enPassant, promoteTo, true, true, capturedPiece);
 
       // Update best move
       if (!nextEval) return null;
@@ -194,6 +210,9 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
         bestMove.score = nextEval.score;
         bestMove.move = moves[i];
       }
+
+      // If you won the game
+      // if (bestMove.score === -Infinity) return bestMove;
 
       // Add to table
       if (depth === 1) {
@@ -245,13 +264,13 @@ function searchThroughCaptures(depth: number, alpha: number, beta: number, isMax
       const capturedPiece = board[captures[i].to];
 
       // Make move
-      makeMove(captures[i].from, captures[i].to, captures[i].castle, captures[i].enPassant, true);
+      makeMove(captures[i].from, captures[i].to, captures[i].castle, captures[i].enPassant, captures[i].promoteTo, true);
 
       // Evaluate the next depth of captures
       const nextEval = searchThroughCaptures(depth - 1, alpha, beta, !isMax);
 
       // Undo move
-      makeMove(captures[i].to, captures[i].from, captures[i].castle, captures[i].enPassant, true, true, capturedPiece);
+      makeMove(captures[i].to, captures[i].from, captures[i].castle, captures[i].enPassant, captures[i].promoteTo, true, true, capturedPiece);
 
       // Update best move
       if (!nextEval) return null;
@@ -273,13 +292,13 @@ function searchThroughCaptures(depth: number, alpha: number, beta: number, isMax
       const capturedPiece = board[captures[i].to];
 
       // Make move
-      makeMove(captures[i].from, captures[i].to, captures[i].castle, captures[i].enPassant, true);
+      makeMove(captures[i].from, captures[i].to, captures[i].castle, captures[i].enPassant, captures[i].promoteTo, true);
 
       // Evaluate the next depth of captures
       const nextEval = searchThroughCaptures(depth - 1, alpha, beta, !isMax);
 
       // Undo move
-      makeMove(captures[i].to, captures[i].from, captures[i].castle, captures[i].enPassant, true, true, capturedPiece);
+      makeMove(captures[i].to, captures[i].from, captures[i].castle, captures[i].enPassant, captures[i].promoteTo, true, true, capturedPiece);
 
       // Update best move
       if (!nextEval) return null;
