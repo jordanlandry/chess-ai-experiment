@@ -543,7 +543,7 @@ function updateAttackedSquares(from: number, to: number, team: Teams) {
 // I only have to check if the king is attacked
 export function inStalemate(team: Teams) {
   const king = team === Teams.White ? WhiteKing[0] : BlackKing[0];
-  return squareIsAttacked(king, team === Teams.White ? Teams.Black : Teams.White);
+  return !squareIsAttacked(king, team === Teams.White ? Teams.Black : Teams.White);
 }
 
 export interface Move {

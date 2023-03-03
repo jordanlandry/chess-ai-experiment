@@ -10,16 +10,18 @@ export default function AvailableCapture({ index }: Props) {
   const x = boardLeft + (index % 8) * squareSize;
   const y = boardTop + Math.floor(index / 8) * squareSize;
 
+  const borderSize = Math.ceil(squareSize * 0.1);
+
   return (
     <div
       style={{
         position: "absolute",
-        left: x + "px",
-        top: y + "px",
-        width: squareSize * 0.8 + "px",
-        height: squareSize * 0.8 + "px",
-        borderRadius: "50%",
-        border: "6px solid " + properties.overlayColors.capture,
+        left: x + borderSize + "px",
+        top: y + borderSize + "px",
+        width: squareSize - borderSize * 2 + "px",
+        height: squareSize - borderSize * 2 + "px",
+        outline: `${borderSize}px solid ${properties.overlayColors.capture}`,
+        zIndex: 600,
       }}
     />
   );

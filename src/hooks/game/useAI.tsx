@@ -15,6 +15,9 @@ export default function useAITest(currentTurn: Teams, aiTeam: Teams, setCurrentT
     setTimeout(() => {
       const bestMove = getBestMoveTest(aiTeam);
 
+      console.log("Score: " + bestMove.score);
+      console.log("Move: ", bestMove.move);
+
       // console.log("AI took " + (end - start) + "ms to find best move.");
 
       if (bestMove) {

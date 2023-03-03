@@ -103,7 +103,7 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
   // 7. Return best move
 
   // Null move pruning (https://www.chessprogramming.org/Null_Move_Pruning)
-  if (depth >= 3 && !isMax) {
+  if (depth === 3 && !isMax) {
     const nullMove = minimax(depth - 3, alpha, beta, true);
     if (nullMove && nullMove.score <= alpha) return nullMove;
   }
