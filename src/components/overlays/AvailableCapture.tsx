@@ -10,7 +10,7 @@ export default function AvailableCapture({ index }: Props) {
   const x = boardLeft + (index % 8) * squareSize;
   const y = boardTop + Math.floor(index / 8) * squareSize;
 
-  const borderSize = Math.ceil(squareSize * 0.05);
+  const borderSize = Math.ceil(squareSize * 0.1);
 
   return (
     <div

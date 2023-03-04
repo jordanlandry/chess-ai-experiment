@@ -181,16 +181,17 @@ export function lookupArrayXY(pos: number) {
 }
 
 export const pieceValues = {
-  [PiecesType.Pawn]: 100,
-  [PiecesType.Knight]: 320,
-  [PiecesType.Bishop]: 330,
-  [PiecesType.Rook]: 500,
-  [PiecesType.Queen]: 900,
+  [PiecesType.Pawn]: 1,
+  [PiecesType.Knight]: 3,
+  [PiecesType.Bishop]: 3,
+  [PiecesType.Rook]: 5,
+  [PiecesType.Queen]: 9,
   [PiecesType.King]: 20000,
 } as { [key: string]: number };
 
 // The reason for this is because this is faster than .length, and we'll need to check this a lot with minimax
 // So this will be updated every time a piece is captured
+// TODO Use this in minimax instead of .length
 export const pieceCounts = {
   [Teams.White]: {
     [PiecesType.Pawn]: 8,
@@ -210,6 +211,8 @@ export const pieceCounts = {
     [PiecesType.King]: 1,
   } as { [key: string]: number },
 } as { [key: string]: { [key: string]: number } };
+
+export let totalNumberOfPieces = 32;
 
 // prettier-ignore
 export const board = [
@@ -300,8 +303,10 @@ export function updatePiecePositions(
   const pieceIndex = piecePositions.indexOf(from);
 
   // Update en passant
-  if (piece === PiecesType.Pawn && Math.abs(from - to) === 16) enPassant = to;
-  else enPassant = -1;
+  if (updateLastMoveProps.updateLastMove) {
+    if (piece === PiecesType.Pawn && Math.abs(from - to) === 16) enPassant = to;
+    else enPassant = -1;
+  }
 
   // En passant is speacial, so we need to handle it differently
   // If we are the white team, remove the piece below our new position
@@ -344,6 +349,8 @@ export function updatePiecePositions(
     const capturedPiecePositions = pieceToPiecePositions[team === Teams.White ? Teams.Black : Teams.White][capturedPiece];
     const capturedPieceIndex = capturedPiecePositions.indexOf(to);
     capturedPiecePositions.splice(capturedPieceIndex, 1);
+
+    totalNumberOfPieces--;
   }
 
   board[to] = board[from];
@@ -364,7 +371,16 @@ export function updatePiecePositions(
   occupiedSquares[to] = team;
 
   // Update the last move
-  if (updateLastMoveProps.updateLastMove) lastMove = { from, to, castle, enPassant: doEnPassant, promoteTo: promotionPiece };
+  if (updateLastMoveProps.updateLastMove) {
+    lastMove = { from, to, castle, enPassant: doEnPassant, promoteTo: promotionPiece };
+
+    // Update castling properties
+    if (piece === PiecesType.King) castleWhoHasMoved[team].king = true;
+    if (piece === PiecesType.Rook) {
+      if (from === 0 || from === 56) castleWhoHasMoved[team].leftRook = true;
+      if (from === 7 || from === 63) castleWhoHasMoved[team].rightRook = true;
+    }
+  }
 
   // Update the spots that are attacked
   // We need to update the pieces that were being attacked before the move
@@ -426,6 +442,8 @@ export function undoPiecePosition(
 
     // Update the counts
     pieceCounts[team === Teams.White ? Teams.Black : Teams.White][capturedPieceType]++;
+
+    totalNumberOfPieces++;
   }
 
   // Update the board
@@ -439,12 +457,16 @@ export function undoPiecePosition(
     const promotedPieceIndex = promotedPiecePositions.indexOf(to);
     promotedPiecePositions.splice(promotedPieceIndex, 1);
 
-    // console.log({ to, from });
-
     pieceToPiecePositions[team][PiecesType.Pawn].push(to);
 
     board[to] = team === Teams.White ? Pawn : -Pawn;
   }
+
+  // To undo the castle properties, we need a local state from the move that was made, because
+  // From the AI, it gets called recursively, and the properties will be overwritten on each iteration.
+  // So we need to save the properties before they are overwritten
+  // In order to do this, I am going to update it in recursive calls from the AI as that is the only place
+  // where it would work properly ~ Similar to the capturedPiece property
 
   // Update the occupied squares
   occupiedSquares[to] = team;

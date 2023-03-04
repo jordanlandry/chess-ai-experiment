@@ -6,9 +6,11 @@ import {
   BlackQueens,
   BlackRooks,
   board,
+  castleWhoHasMoved,
   getKey,
   inStalemate,
   Move,
+  totalNumberOfPieces,
   WhiteBishops,
   WhiteKing,
   WhiteKnights,
@@ -56,7 +58,7 @@ const MAX_TABLE_SIZE = 128_000;
 let tableSize = 0;
 let table = {} as { [key: string]: Table };
 
-const maxTime = 2500;
+const maxTime = 1000;
 let startTime = 0;
 let previousBestMove = { from: -1, to: -1 };
 
@@ -84,8 +86,11 @@ export default function getBestMoveTest(aiTeam: Teams) {
 // Cuz stupid word
 const qDepth = 5;
 
+const nullMoveR = 3;
+const nullMoveAllowed = (isMax: boolean, depth: number) => totalNumberOfPieces > 10 && !isMax && depth > nullMoveR;
+
 function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Minimax | null {
-  if (depth === 0) return { score: evaluateBoard(), move: { from: -1, to: -1 } };
+  if (depth < 1) return { score: evaluateBoard(), move: { from: -1, to: -1 } };
 
   if (tableSize > MAX_TABLE_SIZE) {
     table = {};
@@ -103,15 +108,10 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
   // 7. Return best move
 
   // Null move pruning (https://www.chessprogramming.org/Null_Move_Pruning)
-  if (depth === 3 && !isMax) {
-    const nullMove = minimax(depth - 3, alpha, beta, true);
+  if (nullMoveAllowed(isMax, depth)) {
+    const nullMove = minimax(depth - 1 - nullMoveR, -alpha, -alpha + 1, true);
     if (nullMove && nullMove.score <= alpha) return nullMove;
   }
-
-  // if (depth >= 3 && isMax) {
-  //   const nullMove = minimax(depth - 3, alpha, beta, false);
-  //   if (nullMove && nullMove.score >= beta) return nullMove;
-  // }
 
   // Maximizer
   if (isMax) {
@@ -132,6 +132,8 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       // Save the piece that is being captured (if any)
       const capturedPiece = board[to];
 
+      const previousCastleState = JSON.parse(JSON.stringify(castleWhoHasMoved));
+
       // Make move
       makeMove(from, to, castle, enPassant, promoteTo, true);
 
@@ -141,11 +143,17 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       // let nextEval;
       // if (capturedPiece && depth === 1) nextEval = searchThroughCaptures(qDepth, alpha, beta, !isMax);
       // else nextEval = minimax(depth - 1, alpha, beta, !isMax);
+
       // const nextEval = capturedPiece ? searchThroughCaptures(depth + 1, alpha, beta, !isMax) : minimax(depth - 1, alpha, beta, !isMax);
+
       const nextEval = minimax(depth - 1, alpha, beta, !isMax);
 
       // Undo move
       makeMove(to, from, castle, enPassant, promoteTo, true, true, capturedPiece);
+
+      // Update castle state
+      castleWhoHasMoved[Teams.White] = previousCastleState[Teams.White];
+      castleWhoHasMoved[Teams.Black] = previousCastleState[Teams.Black];
 
       // Update best move
       if (!nextEval) return null;
@@ -189,6 +197,7 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
 
       // Save the piece that is being captured (if any)
       const capturedPiece = board[to];
+      const previousCastleState = JSON.parse(JSON.stringify(castleWhoHasMoved));
 
       // Make move
       makeMove(from, to, castle, enPassant, promoteTo, true);
@@ -197,12 +206,18 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       // let nextEval;
       // if (capturedPiece && depth === 1) nextEval = searchThroughCaptures(qDepth, alpha, beta, !isMax);
       // else nextEval = minimax(depth - 1, alpha, beta, !isMax);
+
       const nextEval = minimax(depth - 1, alpha, beta, !isMax);
 
       // const nextEval = capturedPiece ? searchThroughCaptures(depth + 1, alpha, beta, !isMax) : minimax(depth - 1, alpha, beta, !isMax);
       // minimax(depth - 1, alpha, beta, !isMax);
+
       // Undo move
       makeMove(to, from, castle, enPassant, promoteTo, true, true, capturedPiece);
+
+      // Update castle properties
+      castleWhoHasMoved[Teams.White] = previousCastleState[Teams.White];
+      castleWhoHasMoved[Teams.Black] = previousCastleState[Teams.Black];
 
       // Update best move
       if (!nextEval) return null;
@@ -231,6 +246,7 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
 // Quiescence search (https://www.chessprogramming.org/Quiescence_Search)
 // I called it this instead cuz who want's to spell out quiescence
 // I haven't added checks yet only captures
+
 function searchThroughCaptures(depth: number, alpha: number, beta: number, isMax: boolean) {
   // 1. Generate all captures
   // 2. Make a capture move
@@ -258,25 +274,28 @@ function searchThroughCaptures(depth: number, alpha: number, beta: number, isMax
     return { score, move: { from: -1, to: -1 } };
   }
 
+  const orderedCaptures = orderMovesTest(captures, { from: -1, to: -1 });
+
   // Maximizer
   if (isMax) {
-    for (let i = 0; i < captures.length; i++) {
+    for (let i = 0; i < orderedCaptures.length; i++) {
       const capturedPiece = board[captures[i].to];
+      const capture = orderedCaptures[i];
 
       // Make move
-      makeMove(captures[i].from, captures[i].to, captures[i].castle, captures[i].enPassant, captures[i].promoteTo, true);
+      makeMove(capture.from, capture.to, capture.castle, capture.enPassant, capture.promoteTo, true);
 
       // Evaluate the next depth of captures
       const nextEval = searchThroughCaptures(depth - 1, alpha, beta, !isMax);
 
       // Undo move
-      makeMove(captures[i].to, captures[i].from, captures[i].castle, captures[i].enPassant, captures[i].promoteTo, true, true, capturedPiece);
+      makeMove(capture.to, capture.from, capture.castle, capture.enPassant, capture.promoteTo, true, true, capturedPiece);
 
       // Update best move
       if (!nextEval) return null;
       if (nextEval.score > bestMove.score) {
         bestMove.score = nextEval.score;
-        bestMove.move = captures[i];
+        bestMove.move = capture;
       }
 
       // Update alpha
@@ -288,23 +307,24 @@ function searchThroughCaptures(depth: number, alpha: number, beta: number, isMax
 
   // Minimizer
   else {
-    for (let i = 0; i < captures.length; i++) {
+    for (let i = 0; i < orderedCaptures.length; i++) {
       const capturedPiece = board[captures[i].to];
+      const capture = orderedCaptures[i];
 
       // Make move
-      makeMove(captures[i].from, captures[i].to, captures[i].castle, captures[i].enPassant, captures[i].promoteTo, true);
+      makeMove(capture.from, capture.to, capture.castle, capture.enPassant, capture.promoteTo, true);
 
       // Evaluate the next depth of captures
       const nextEval = searchThroughCaptures(depth - 1, alpha, beta, !isMax);
 
       // Undo move
-      makeMove(captures[i].to, captures[i].from, captures[i].castle, captures[i].enPassant, captures[i].promoteTo, true, true, capturedPiece);
+      makeMove(capture.to, capture.from, capture.castle, capture.enPassant, capture.promoteTo, true, true, capturedPiece);
 
       // Update best move
       if (!nextEval) return null;
       if (nextEval.score < bestMove.score) {
         bestMove.score = nextEval.score;
-        bestMove.move = captures[i];
+        bestMove.move = capture;
       }
 
       // Update beta

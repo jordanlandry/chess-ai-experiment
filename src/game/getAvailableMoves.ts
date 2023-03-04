@@ -19,6 +19,7 @@ import {
   pieceType,
   Queen,
   Rook,
+  updateLastMoveProps,
   WhiteBishops,
   WhiteKing,
   WhiteKnights,
@@ -79,16 +80,18 @@ function pushIfLegal(moves: Move[], move: Move, team: Teams) {
 
   // If move is a capture, save the piece so we can undo it later
   const capturedPiece = board[move.to];
-
+  updateLastMoveProps.updateLastMove = false;
+  
   // Make the move
   makeMove(move.from, move.to, move.castle, move.enPassant, move.promoteTo, true);
   const kingPosition = team === Teams.White ? WhiteKing[0] : BlackKing[0];
-
+  
   // Push if the king is not in check
   if (!squareIsAttacked(kingPosition, attackingTeam)) moves.push(move);
-
+  
   // Undo move
   makeMove(move.to, move.from, move.castle, move.enPassant, move.promoteTo, true, true, capturedPiece);
+  updateLastMoveProps.updateLastMove = true;
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -376,6 +379,7 @@ function canCastle(from: number, to: number, team: Teams) {
     if (board[60] !== King) return false;
 
     if (blackAttacks(60)) return false;
+
     if (castleWhoHasMoved[team].king) return false;
 
     if (from !== 60) return false;
