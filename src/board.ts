@@ -121,6 +121,10 @@ const boardKeysRand = [
   Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(),
 ]
 
+export const updateLastMoveProps = {
+  updateLastMove: true,
+};
+
 // This will be added to the key if these pieces have been moved
 const castleMap = {
   wrRook: Math.random(),
@@ -360,7 +364,7 @@ export function updatePiecePositions(
   occupiedSquares[to] = team;
 
   // Update the last move
-  lastMove = { from, to, castle, enPassant: doEnPassant, promoteTo: promotionPiece };
+  if (updateLastMoveProps.updateLastMove) lastMove = { from, to, castle, enPassant: doEnPassant, promoteTo: promotionPiece };
 
   // Update the spots that are attacked
   // We need to update the pieces that were being attacked before the move

@@ -6,7 +6,8 @@ import useMoveUpdater from "../hooks/game/useMoveUpdater";
 import usePiecePromotion from "../hooks/game/usePiecePromotion";
 import useMouseDown from "../hooks/mouse/useMouseDown";
 import usePieceCenteringTest from "../hooks/usePieceCentering";
-import { Teams } from "../properties";
+import { EndGameState, Teams, WinStates } from "../properties";
+import GameOverScreen from "./GameOverScreen";
 import AvailableCapture from "./overlays/AvailableCapture";
 import AvailableMove from "./overlays/AvailableMove";
 import LastMove from "./overlays/LastMove";
@@ -26,6 +27,15 @@ export default function Chess() {
   const [currentTurn, setCurrentTurn] = useState(Teams.White);
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
 
+  // Game over
+  const [gameOverOpen, setGameOverOpen] = useState(false);
+  const [winState, setWinState] = useState<EndGameState>({
+    isOver: false,
+    winningTeam: Teams.None,
+    wonBy: WinStates.None,
+  });
+
+  // Promotion
   const [promotionPosition, setPromotionPosition] = useState(-1);
   const [promotionPiece, setPromotionPiece] = useState(0);
   const [promotion, setPromotion] = useState<Move | null>(null);
@@ -43,7 +53,7 @@ export default function Chess() {
     setPromotion
   );
 
-  useMoveUpdater(currentTurn, setMoveHistory);
+  useMoveUpdater(currentTurn, setMoveHistory, setWinState, setGameOverOpen);
 
   useAITest(currentTurn, aiTeam, setCurrentTurn);
   usePieceCenteringTest(promotionPiece, moveHistory);
@@ -53,6 +63,7 @@ export default function Chess() {
 
   return (
     <div>
+      <GameOverScreen winState={winState} aiTeam={aiTeam} open={gameOverOpen} setOpen={setGameOverOpen} />
       {availableMoves.map((move, i) => {
         // move.promoteTo adds 4 moves, 1 for each piece but they're all in the same spot
         // I don't want to show all 4 moves, because it's transparent and will stack and become opaque

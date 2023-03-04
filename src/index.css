@@ -4,6 +4,7 @@ body {
   overflow-x: hidden;
   background-color: rgb(70, 70, 70);
   color: white;
+  font-family: "Montserrat", sans-serif;
 }
 
 * {

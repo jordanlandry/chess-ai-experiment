@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { board, Move, getTeam } from "../../board";
-import getAvailableMoves from "../../game/getAvailableMovesOld";
+import { board, getTeam, Move } from "../../board";
 import getAvailableMovesTest from "../../game/getAvailableMoves";
 import getMouseSpot from "../../helpers/getMouseSpot";
 import makeMove from "../../helpers/makeMove";
-import properties, { Teams } from "../../properties";
+import { Teams } from "../../properties";
 
 export default function useMouseDownTest(
   changingStyles: boolean,
@@ -21,6 +20,8 @@ export default function useMouseDownTest(
     if (changingStyles || promotionPosition !== -1) return;
 
     const handleMouseDown = async (e: MouseEvent) => {
+      if (e.button !== 0) return;
+
       const position = getMouseSpot(e);
       if (position === null) return; // Have to have === null (instead of !position) because 0 is a valid position
 
@@ -55,10 +56,8 @@ export default function useMouseDownTest(
               }
 
               makeMove(selectedPiece, position, prevMoves[i].castle, prevMoves[i].enPassant, prevMoves[i].promoteTo);
-
-              // setTimeout(() => {
+              setSelectedPiece(null);
               setCurrentTurn((currentTurn) => (currentTurn === Teams.White ? Teams.Black : Teams.White));
-              // }, properties.animationTimeMs + 100);
 
               return [];
             }
@@ -72,7 +71,7 @@ export default function useMouseDownTest(
 
     window.addEventListener("mousedown", handleMouseDown);
     return () => window.removeEventListener("mousedown", handleMouseDown);
-  }, [selectedPiece, currentTurn, promotionPosition]);
+  }, [selectedPiece, currentTurn, promotionPosition, changingStyles]);
 
   // Put the piece z index above everything else
   useEffect(() => {

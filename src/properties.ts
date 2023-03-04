@@ -43,6 +43,20 @@ const properties = {
   currentId: 64,
 };
 
+export enum WinStates {
+  Time = "time",
+  Checkmate = "checkmate",
+  Stalemate = "stalemate",
+  RepeatMoves = "repeatMoves",
+  None = "none",
+}
+
+export interface EndGameState {
+  isOver: boolean;
+  winningTeam: Teams;
+  wonBy: WinStates;
+}
+
 export enum Teams {
   White = 0,
   Black = 1,

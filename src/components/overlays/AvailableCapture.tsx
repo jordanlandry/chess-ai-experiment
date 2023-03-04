@@ -10,7 +10,7 @@ export default function AvailableCapture({ index }: Props) {
   const x = boardLeft + (index % 8) * squareSize;
   const y = boardTop + Math.floor(index / 8) * squareSize;
 
-  const borderSize = Math.ceil(squareSize * 0.1);
+  const borderSize = Math.ceil(squareSize * 0.05);
 
   return (
     <div
@@ -21,6 +21,7 @@ export default function AvailableCapture({ index }: Props) {
         width: squareSize - borderSize * 2 + "px",
         height: squareSize - borderSize * 2 + "px",
         outline: `${borderSize}px solid ${properties.overlayColors.capture}`,
+        borderRadius: "50%",
         zIndex: 600,
       }}
     />
