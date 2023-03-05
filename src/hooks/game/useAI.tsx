@@ -1,7 +1,5 @@
 import { useEffect } from "react";
-import { Move } from "../../board";
 import getBestMoveTest from "../../game/ai/minimax";
-import { movePiece } from "../../game/movePiece";
 import makeMove from "../../helpers/makeMove";
 import { Teams } from "../../properties";
 
@@ -14,11 +12,6 @@ export default function useAITest(currentTurn: Teams, aiTeam: Teams, setCurrentT
 
     setTimeout(() => {
       const bestMove = getBestMoveTest(aiTeam);
-
-      console.log("Score: " + bestMove.score);
-      console.log("Move: ", bestMove.move);
-
-      // console.log("AI took " + (end - start) + "ms to find best move.");
 
       if (bestMove) {
         makeMove(bestMove.move.from, bestMove.move.to, bestMove.move.castle, bestMove.move.enPassant, bestMove.move.promoteTo);

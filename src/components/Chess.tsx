@@ -13,13 +13,14 @@ import AvailableMove from "./overlays/AvailableMove";
 import LastMove from "./overlays/LastMove";
 import SelectedPiece from "./overlays/SelectedPiece";
 import PromotionSelect from "./PromotionSelect";
+import TestElement from "../Testing/TestElement";
 
 export default function Chess() {
   // Imports
   const changingStyles = useContext(ChangingStylesContext);
 
   // AI
-  const [usingAi, setUsingAi] = useState(true);
+  const [usingAi, setUsingAi] = useState(false);
   const [aiTeam, setAiTeam] = useState(usingAi ? Teams.Black : Teams.None);
 
   // Game
@@ -77,7 +78,6 @@ export default function Chess() {
       })}
 
       <SelectedPiece index={selectedPiece} />
-
       <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} />
 
       <PromotionSelect

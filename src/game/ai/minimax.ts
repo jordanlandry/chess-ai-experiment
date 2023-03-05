@@ -58,7 +58,7 @@ const MAX_TABLE_SIZE = 128_000;
 let tableSize = 0;
 let table = {} as { [key: string]: Table };
 
-const maxTime = 1000;
+const maxTime = 2500;
 let startTime = 0;
 let previousBestMove = { from: -1, to: -1 };
 
@@ -164,7 +164,8 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       }
 
       // If you won the game
-      // if (bestMove.score === Infinity) return bestMove;
+      // If you lost the game, return the current move
+      if (bestMove.score === Infinity) return { move: { from, to, castle, enPassant, promoteTo }, score: Infinity };
 
       // Add to table
       if (depth === 1) {
@@ -225,6 +226,9 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
         bestMove.score = nextEval.score;
         bestMove.move = moves[i];
       }
+
+      // If you lost the game, return the current move
+      if (bestMove.score === -Infinity) return { move: { from, to, castle, enPassant, promoteTo }, score: -Infinity };
 
       // If you won the game
       // if (bestMove.score === -Infinity) return bestMove;

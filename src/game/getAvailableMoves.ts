@@ -76,19 +76,22 @@ export function getAllAvailableMovesTest(team: Teams) {
 }
 
 function pushIfLegal(moves: Move[], move: Move, team: Teams) {
+  moves.push(move);
+  return;
+
   const attackingTeam = team === Teams.White ? Teams.Black : Teams.White;
 
   // If move is a capture, save the piece so we can undo it later
   const capturedPiece = board[move.to];
   updateLastMoveProps.updateLastMove = false;
-  
+
   // Make the move
   makeMove(move.from, move.to, move.castle, move.enPassant, move.promoteTo, true);
   const kingPosition = team === Teams.White ? WhiteKing[0] : BlackKing[0];
-  
+
   // Push if the king is not in check
   if (!squareIsAttacked(kingPosition, attackingTeam)) moves.push(move);
-  
+
   // Undo move
   makeMove(move.to, move.from, move.castle, move.enPassant, move.promoteTo, true, true, capturedPiece);
   updateLastMoveProps.updateLastMove = true;

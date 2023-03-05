@@ -6,5 +6,5 @@ export default function testFunctionSpeed(callback: Function, name: string) {
 
   const end = performance.now();
 
-  console.log(name, "took", end - start + "ms");
+  console.log(name, "took", Math.floor(end - start) + "ms");
 }

@@ -4,6 +4,7 @@ import useLocalStorage from "./hooks/useLocalStorage";
 import Board from "./components/Board";
 import Chess from "./components/Chess";
 import Pieces from "./components/Pieces";
+import TestElement from "./Testing/TestElement";
 
 export const BoardColorContext = createContext<string | null>(null);
 export const SetBoardColorContext = createContext<React.Dispatch<string | null> | null>(null);
@@ -30,6 +31,8 @@ function App() {
                   <Board />
                   <Pieces />
                   <Chess />
+
+                  <TestElement />
                 </SetChangingStylesContext.Provider>
               </ChangingStylesContext.Provider>
             </SetPieceStyleContext.Provider>

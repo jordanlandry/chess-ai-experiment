@@ -16,6 +16,8 @@ export default async function makeMove(
   undo = false,
   capturedPiece?: number | undefined
 ) {
+  if (from === -1 || to === -1) return;
+
   const team = getTeam(board[from]);
   const piece = pieceType(board[from]);
 
@@ -28,7 +30,10 @@ export default async function makeMove(
       if (getTeam(board[from]) === Teams.White) {
         const previousPiece = document.getElementById((to + 8).toString());
         if (previousPiece) previousPiece.remove();
-      } else {
+      }
+
+      // Black
+      else {
         const previousPiece = document.getElementById((to - 8).toString());
         if (previousPiece) previousPiece.remove();
       }
@@ -40,9 +45,9 @@ export default async function makeMove(
       // Need to change the image source.
       // Replace the 6th last character with the new piece
       const type = pieceType(promotionPiece);
-      const a = movingPiece.src.split("");
-      a[a.length - 6] = type.toLowerCase();
-      const newSrc = a.join("");
+      const movingPieceArray = movingPiece.src.split("");
+      movingPieceArray[movingPieceArray.length - 6] = type.toLowerCase();
+      const newSrc = movingPieceArray.join("");
 
       movingPiece.src = newSrc;
       movingPiece.alt = type.toLowerCase();
@@ -54,7 +59,10 @@ export default async function makeMove(
         const rookTo = to === 62 ? 61 : 59;
         const rook = document.getElementById(rookFrom.toString());
         if (rook) rook.id = rookTo.toString();
-      } else {
+      }
+
+      // Black team
+      else {
         const rookFrom = to === 6 ? 7 : 0;
         const rookTo = to === 6 ? 5 : 3;
         const rook = document.getElementById(rookFrom.toString());
