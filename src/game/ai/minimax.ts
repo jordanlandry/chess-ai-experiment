@@ -1,25 +1,8 @@
-import {
-  BlackBishops,
-  BlackKing,
-  BlackKnights,
-  BlackPawns,
-  BlackQueens,
-  BlackRooks,
-  board,
-  castleWhoHasMoved,
-  getKey,
-  inStalemate,
-  Move,
-  totalNumberOfPieces,
-  WhiteBishops,
-  WhiteKing,
-  WhiteKnights,
-  WhitePawns,
-  WhiteQueens,
-  WhiteRooks,
-} from "../../board";
+import { Bishop, board, getKey, getTeam, inStalemate, King, Knight, Move, Pawn, pieceCounts, Queen, Rook, totalNumberOfPieces } from "../../board";
 import makeMove from "../../helpers/makeMove";
+import { makeMoveNew, undoMove } from "../../helpers/makeMoveNew";
 import { Teams } from "../../properties";
+import { availableMoves, pieceValues, printBoard, testBoard } from "../../Testing/testBoard";
 import { getAllAvailableMovesTest } from "../getAvailableMoves";
 import orderMovesTest from "./orderMoves";
 
@@ -31,21 +14,45 @@ interface Minimax {
 function evaluateBoard() {
   let score = 0;
 
-  // White Team
-  score += WhitePawns.length * 10;
-  score += WhiteRooks.length * 50;
-  score += WhiteKnights.length * 30;
-  score += WhiteBishops.length * 30;
-  score += WhiteQueens.length * 90;
-  score += WhiteKing.length * 900;
+  for (let i = 0; i < 64; i++) {
+    const piece = testBoard[i];
+    if (piece === 0) continue;
 
-  // Black Team
-  score -= BlackPawns.length * 10;
-  score -= BlackRooks.length * 50;
-  score -= BlackKnights.length * 30;
-  score -= BlackBishops.length * 30;
-  score -= BlackQueens.length * 90;
-  score -= BlackKing.length * 900;
+    const team = getTeam(piece);
+
+    if (team === Teams.White) score += pieceValues[piece];
+    else score -= pieceValues[-piece];
+  }
+
+  // score += pieceCounts[Teams.White][Rook];
+  // score += pieceCounts[Teams.White][Bishop];
+  // score += pieceCounts[Teams.White][Knight];
+  // score += pieceCounts[Teams.White][Queen];
+  // score += pieceCounts[Teams.White][Pawn];
+  // score += pieceCounts[Teams.White][King];
+
+  // score -= pieceCounts[Teams.Black][Rook];
+  // score -= pieceCounts[Teams.Black][Bishop];
+  // score -= pieceCounts[Teams.Black][Knight];
+  // score -= pieceCounts[Teams.Black][Queen];
+  // score -= pieceCounts[Teams.Black][Pawn];
+  // score -= pieceCounts[Teams.Black][King];
+
+  // White Team
+  // score += WhitePawns.length * 10;
+  // score += WhiteRooks.length * 50;
+  // score += WhiteKnights.length * 30;
+  // score += WhiteBishops.length * 30;
+  // score += WhiteQueens.length * 90;
+  // score += WhiteKing.length * 900;
+
+  // // Black Team
+  // score -= BlackPawns.length * 10;
+  // score -= BlackRooks.length * 50;
+  // score -= BlackKnights.length * 30;
+  // score -= BlackBishops.length * 30;
+  // score -= BlackQueens.length * 90;
+  // score -= BlackKing.length * 900;
 
   return score;
 }
@@ -78,7 +85,10 @@ export default function getBestMoveTest(aiTeam: Teams) {
     depth++;
   }
 
-  console.log("Depth: " + depth);
+  // bestMove = minimax(6, -Infinity, Infinity, aiTeam === Teams.White)!;
+
+  console.log({ depth });
+
   return bestMove;
 }
 
@@ -130,12 +140,13 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       const { from, to, castle, enPassant, promoteTo } = moves[i];
 
       // Save the piece that is being captured (if any)
-      const capturedPiece = board[to];
+      const capturedPiece = testBoard[to];
 
-      const previousCastleState = JSON.parse(JSON.stringify(castleWhoHasMoved));
+      // const previousCastleState = JSON.parse(JSON.stringify(castleWhoHasMoved));
 
       // Make move
-      makeMove(from, to, castle, enPassant, promoteTo, true);
+      // makeMove(from, to, castle, enPassant, promoteTo, true);
+      makeMoveNew(moves[i], false);
 
       // Search deeper if the move is a capture
 
@@ -149,11 +160,12 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       const nextEval = minimax(depth - 1, alpha, beta, !isMax);
 
       // Undo move
-      makeMove(to, from, castle, enPassant, promoteTo, true, true, capturedPiece);
+      // makeMove(to, from, castle, enPassant, promoteTo, true, true, capturedPiece);
+      undoMove(moves[i], capturedPiece);
 
       // Update castle state
-      castleWhoHasMoved[Teams.White] = previousCastleState[Teams.White];
-      castleWhoHasMoved[Teams.Black] = previousCastleState[Teams.Black];
+      // castleWhoHasMoved[Teams.White] = previousCastleState[Teams.White];
+      // castleWhoHasMoved[Teams.Black] = previousCastleState[Teams.Black];
 
       // Update best move
       if (!nextEval) return null;
@@ -197,11 +209,12 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       const { from, to, castle, enPassant, promoteTo } = moves[i];
 
       // Save the piece that is being captured (if any)
-      const capturedPiece = board[to];
-      const previousCastleState = JSON.parse(JSON.stringify(castleWhoHasMoved));
+      const capturedPiece = testBoard[to];
+      // const previousCastleState = JSON.parse(JSON.stringify(castleWhoHasMoved));
 
       // Make move
-      makeMove(from, to, castle, enPassant, promoteTo, true);
+      makeMoveNew(moves[i], false);
+      // makeMove(from, to, castle, enPassant, promoteTo, true);
 
       // Evaluate the next depth of moves
       // let nextEval;
@@ -214,11 +227,12 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       // minimax(depth - 1, alpha, beta, !isMax);
 
       // Undo move
-      makeMove(to, from, castle, enPassant, promoteTo, true, true, capturedPiece);
+      undoMove(moves[i], capturedPiece);
+      // makeMove(to, from, castle, enPassant, promoteTo, true, true, capturedPiece);
 
       // Update castle properties
-      castleWhoHasMoved[Teams.White] = previousCastleState[Teams.White];
-      castleWhoHasMoved[Teams.Black] = previousCastleState[Teams.Black];
+      // castleWhoHasMoved[Teams.White] = previousCastleState[Teams.White];
+      // castleWhoHasMoved[Teams.Black] = previousCastleState[Teams.Black];
 
       // Update best move
       if (!nextEval) return null;
@@ -251,100 +265,100 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
 // I called it this instead cuz who want's to spell out quiescence
 // I haven't added checks yet only captures
 
-function searchThroughCaptures(depth: number, alpha: number, beta: number, isMax: boolean) {
-  // 1. Generate all captures
-  // 2. Make a capture move
-  // 3. Recursively call this function to search the next capture
-  // 4. Undo move
-  // 5. Update best move
-  // 6. Update alpha and beta
-  // 7. Return best move
+// function searchThroughCaptures(depth: number, alpha: number, beta: number, isMax: boolean) {
+//   // 1. Generate all captures
+//   // 2. Make a capture move
+//   // 3. Recursively call this function to search the next capture
+//   // 4. Undo move
+//   // 5. Update best move
+//   // 6. Update alpha and beta
+//   // 7. Return best move
 
-  if (Date.now() - startTime > maxTime) return null;
-  if (depth === 0) return { score: evaluateBoard(), move: { from: -1, to: -1 } };
+//   if (Date.now() - startTime > maxTime) return null;
+//   if (depth === 0) return { score: evaluateBoard(), move: { from: -1, to: -1 } };
 
-  const { moves, captures } = generateCaptures(isMax ? Teams.White : Teams.Black);
+//   const { moves, captures } = generateCaptures(isMax ? Teams.White : Teams.Black);
 
-  const bestMove = { score: isMax ? -Infinity : Infinity, move: { from: -1, to: -1 } };
+//   const bestMove = { score: isMax ? -Infinity : Infinity, move: { from: -1, to: -1 } };
 
-  if (moves.length === 0) {
-    if (inStalemate(isMax ? Teams.White : Teams.Black)) return { score: 0, move: { from: -1, to: -1 } };
-    return bestMove;
-  }
+//   if (moves.length === 0) {
+//     if (inStalemate(isMax ? Teams.White : Teams.Black)) return { score: 0, move: { from: -1, to: -1 } };
+//     return bestMove;
+//   }
 
-  // Base case
-  if (captures.length === 0) {
-    const score = evaluateBoard();
-    return { score, move: { from: -1, to: -1 } };
-  }
+//   // Base case
+//   if (captures.length === 0) {
+//     const score = evaluateBoard();
+//     return { score, move: { from: -1, to: -1 } };
+//   }
 
-  const orderedCaptures = orderMovesTest(captures, { from: -1, to: -1 });
+//   const orderedCaptures = orderMovesTest(captures, { from: -1, to: -1 });
 
-  // Maximizer
-  if (isMax) {
-    for (let i = 0; i < orderedCaptures.length; i++) {
-      const capturedPiece = board[captures[i].to];
-      const capture = orderedCaptures[i];
+//   // Maximizer
+//   if (isMax) {
+//     for (let i = 0; i < orderedCaptures.length; i++) {
+//       const capturedPiece = testBoard[captures[i].to];
+//       const capture = orderedCaptures[i];
 
-      // Make move
-      makeMove(capture.from, capture.to, capture.castle, capture.enPassant, capture.promoteTo, true);
+//       // Make move
+//       makeMove(capture.from, capture.to, capture.castle, capture.enPassant, capture.promoteTo, true);
 
-      // Evaluate the next depth of captures
-      const nextEval = searchThroughCaptures(depth - 1, alpha, beta, !isMax);
+//       // Evaluate the next depth of captures
+//       const nextEval = searchThroughCaptures(depth - 1, alpha, beta, !isMax);
 
-      // Undo move
-      makeMove(capture.to, capture.from, capture.castle, capture.enPassant, capture.promoteTo, true, true, capturedPiece);
+//       // Undo move
+//       makeMove(capture.to, capture.from, capture.castle, capture.enPassant, capture.promoteTo, true, true, capturedPiece);
 
-      // Update best move
-      if (!nextEval) return null;
-      if (nextEval.score > bestMove.score) {
-        bestMove.score = nextEval.score;
-        bestMove.move = capture;
-      }
+//       // Update best move
+//       if (!nextEval) return null;
+//       if (nextEval.score > bestMove.score) {
+//         bestMove.score = nextEval.score;
+//         bestMove.move = capture;
+//       }
 
-      // Update alpha
-      alpha = Math.max(alpha, bestMove.score);
-      if (beta <= alpha) break;
-    }
-    return bestMove;
-  }
+//       // Update alpha
+//       alpha = Math.max(alpha, bestMove.score);
+//       if (beta <= alpha) break;
+//     }
+//     return bestMove;
+//   }
 
-  // Minimizer
-  else {
-    for (let i = 0; i < orderedCaptures.length; i++) {
-      const capturedPiece = board[captures[i].to];
-      const capture = orderedCaptures[i];
+//   // Minimizer
+//   else {
+//     for (let i = 0; i < orderedCaptures.length; i++) {
+//       const capturedPiece = testBoard[captures[i].to];
+//       const capture = orderedCaptures[i];
 
-      // Make move
-      makeMove(capture.from, capture.to, capture.castle, capture.enPassant, capture.promoteTo, true);
+//       // Make move
+//       makeMove(capture.from, capture.to, capture.castle, capture.enPassant, capture.promoteTo, true);
 
-      // Evaluate the next depth of captures
-      const nextEval = searchThroughCaptures(depth - 1, alpha, beta, !isMax);
+//       // Evaluate the next depth of captures
+//       const nextEval = searchThroughCaptures(depth - 1, alpha, beta, !isMax);
 
-      // Undo move
-      makeMove(capture.to, capture.from, capture.castle, capture.enPassant, capture.promoteTo, true, true, capturedPiece);
+//       // Undo move
+//       makeMove(capture.to, capture.from, capture.castle, capture.enPassant, capture.promoteTo, true, true, capturedPiece);
 
-      // Update best move
-      if (!nextEval) return null;
-      if (nextEval.score < bestMove.score) {
-        bestMove.score = nextEval.score;
-        bestMove.move = capture;
-      }
+//       // Update best move
+//       if (!nextEval) return null;
+//       if (nextEval.score < bestMove.score) {
+//         bestMove.score = nextEval.score;
+//         bestMove.move = capture;
+//       }
 
-      // Update beta
-      beta = Math.min(beta, bestMove.score);
-      if (beta <= alpha) break;
-    }
-    return bestMove;
-  }
-}
+//       // Update beta
+//       beta = Math.min(beta, bestMove.score);
+//       if (beta <= alpha) break;
+//     }
+//     return bestMove;
+//   }
+// }
 
-function generateCaptures(team: Teams) {
-  const moves = getAllAvailableMovesTest(team);
-  const captures = [];
-  for (let i = 0; i < moves.length; i++) {
-    if (board[moves[i].to] || moves[i].enPassant) captures.push(moves[i]);
-  }
+// function generateCaptures(team: Teams) {
+//   const moves = getAllAvailableMovesTest(team);
+//   const captures = [];
+//   for (let i = 0; i < moves.length; i++) {
+//     if (board[moves[i].to] || moves[i].enPassant) captures.push(moves[i]);
+//   }
 
-  return { captures, moves };
-}
+//   return { captures, moves };
+// }

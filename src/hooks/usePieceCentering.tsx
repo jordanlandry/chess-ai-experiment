@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { board, getAllPieces, Move } from "../board";
 import properties, { Teams } from "../properties";
+import { testBoard } from "../Testing/testBoard";
 import useBoardBound from "./useBoardBound";
 import useLoad from "./useLoad";
 
 export default function usePieceCentering(promotionPiece: number, moveHistory: Move[]) {
+  3080;
   const loaded = useLoad();
   // const board = getAllPieces();
   const { boardLeft, boardTop, squareSize } = useBoardBound();
@@ -20,8 +22,24 @@ export default function usePieceCentering(promotionPiece: number, moveHistory: M
     // Anyways this is the best way I could think of to do this at the moment, may or may not change it later as it works
     // And to change the functionality, would have to change multple functions.
 
-    board.forEach((_, i) => {
-      if (!loaded) return;
+    // board.forEach((_, i) => {
+    //   if (!loaded) return;
+    //   const piece = document.getElementById(i + "");
+
+    //   if (!piece) return;
+
+    //   const x = (i % 8) * squareSize;
+    //   const y = Math.floor(i / 8) * squareSize;
+
+    //   piece.style.position = "absolute";
+    //   piece.style.left = boardLeft + x + "px";
+    //   piece.style.top = boardTop + y + "px";
+
+    //   piece.style.transition = properties.animationTimeMs + "ms";
+    //   piece.style.display = "block";
+    // });
+
+    testBoard.forEach((_, i) => {
       const piece = document.getElementById(i + "");
 
       if (!piece) return;
@@ -47,9 +65,9 @@ export default function usePieceCentering(promotionPiece: number, moveHistory: M
   // And copilot probably could've just done it in like 5 seconds...
   // Oh well I'm too far into this now so deal with it
   useEffect(() => {
-    if (!loaded) return;
+    // if (!loaded) return;
 
-    board.forEach((_, i) => {
+    testBoard.forEach((_, i) => {
       const piece = document.getElementById(i + "");
       if (!piece) return;
 
@@ -63,4 +81,21 @@ export default function usePieceCentering(promotionPiece: number, moveHistory: M
       piece.style.display = "block";
     });
   }, [boardLeft, boardTop, squareSize, loaded]);
+  // useEffect(() => {
+  //   if (!loaded) return;
+
+  //   board.forEach((_, i) => {
+  //     const piece = document.getElementById(i + "");
+  //     if (!piece) return;
+
+  //     const x = (i % 8) * squareSize;
+  //     const y = Math.floor(i / 8) * squareSize;
+  //     piece.style.position = "absolute";
+  //     piece.style.left = boardLeft + x + "px";
+  //     piece.style.top = boardTop + y + "px";
+
+  //     piece.style.transition = "0s";
+  //     piece.style.display = "block";
+  //   });
+  // }, [boardLeft, boardTop, squareSize, loaded]);
 }

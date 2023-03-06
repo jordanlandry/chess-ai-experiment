@@ -1,6 +1,6 @@
 import { squareIsAttacked } from "./game/getAvailableMoves";
 import { PiecesType, Teams } from "./properties";
-import { updateAvailableMoves } from "./Testing/testBoard";
+import { testBoard, updateAvailableMoves } from "./Testing/testBoard";
 
 // prettier-ignore
 // Keep track of occupied squares so we don't have to loop through the board
@@ -143,8 +143,8 @@ export let enPassant = -1;
 export function getKey() {
   let key = 0;
   for (let i = 0; i < 64; i++) {
-    if (!board[i]) continue;
-    key += boardKeysRand[i];
+    if (!testBoard[i]) continue;
+    key += boardKeysRand[i] * testBoard[i];
   }
 
   // Castling

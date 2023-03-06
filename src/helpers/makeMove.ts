@@ -1,5 +1,6 @@
 import { board, getTeam, Move, pieceType, undoPiecePosition, updateBoard, updateOccupiedSquares, updatePiecePositions } from "../board";
 import { Teams } from "../properties";
+import { updateTestBoard } from "../Testing/testBoard";
 
 // Psuedo will be true when we are not updating the state,
 // This will only be true when we are checking from the AI
@@ -73,4 +74,6 @@ export default async function makeMove(
 
   if (undo) undoPiecePosition(piece, team, from, to, castle, enPassant, promotionPiece, capturedPiece);
   else updatePiecePositions(piece, team, from, to, castle, enPassant, promotionPiece);
+
+  // updateTestBoard({ from, to, castle, enPassant, promoteTo: promotionPiece });
 }
