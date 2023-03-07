@@ -1,5 +1,6 @@
+import React from "react";
 import { useContext, useEffect, useState } from "react";
-import { PieceStyleContext } from "../App";
+import { Store } from "../App";
 import useBoardBound from "../hooks/useBoardBound";
 import properties, { PiecesType, Teams } from "../properties";
 
@@ -13,7 +14,7 @@ type Props = {
 };
 
 export default function Piece({ id, color, piece, display, onClick }: Props) {
-  const pieceStyle = useContext(PieceStyleContext);
+  const { pieceStyle } = useContext(Store);
 
   const c = color === Teams.White ? "0" : "1";
   const src = "./assets/images/styles/" + pieceStyle + "/" + piece.toLowerCase() + c + ".png";

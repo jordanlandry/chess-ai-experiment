@@ -1,4 +1,5 @@
 import { board, Move, pieceValues, Queen, Rook } from "../../board";
+import { minimaxProperties } from "./minimax";
 
 export default function orderMovesTest(moves: Move[], previousBestMove: Move) {
   const orderedMoves = [] as Move[];
@@ -30,7 +31,9 @@ export default function orderMovesTest(moves: Move[], previousBestMove: Move) {
 
   movesWithConfidence.sort((a, b) => b.confidence - a.confidence);
 
-  for (let i = 0; i < movesWithConfidence.length; i++) {
+  const numberOfMovesToReturn = Math.ceil(minimaxProperties.movesPercent * moves.length);
+
+  for (let i = 0; i < numberOfMovesToReturn; i++) {
     orderedMoves.push(movesWithConfidence[i].move);
   }
 

@@ -1,6 +1,5 @@
 import { squareIsAttacked } from "./game/getAvailableMoves";
-import { PiecesType, Teams } from "./properties";
-import { testBoard, updateAvailableMoves } from "./Testing/testBoard";
+import { PiecesType, PieceType, Teams } from "./properties";
 
 // prettier-ignore
 // Keep track of occupied squares so we don't have to loop through the board
@@ -143,8 +142,8 @@ export let enPassant = -1;
 export function getKey() {
   let key = 0;
   for (let i = 0; i < 64; i++) {
-    if (!testBoard[i]) continue;
-    key += boardKeysRand[i] * testBoard[i];
+    if (!board[i]) continue;
+    key += boardKeysRand[i];
   }
 
   // Castling
@@ -303,8 +302,6 @@ export function updatePiecePositions(
   const piecePositions = pieceToPiecePositions[team][piece];
   const pieceIndex = piecePositions.indexOf(from);
 
-  // updateAttackedSquares1({ from, to, castle, enPassant: doEnPassant, promoteTo: promotionPiece }, team);
-
   // Update en passant
   if (updateLastMoveProps.updateLastMove) {
     if (piece === PiecesType.Pawn && Math.abs(from - to) === 16) enPassant = to;
@@ -384,8 +381,6 @@ export function updatePiecePositions(
       if (from === 7 || from === 63) castleWhoHasMoved[team].rightRook = true;
     }
   }
-
-  updateAvailableMoves({ from, to, castle, enPassant: doEnPassant, promoteTo: promotionPiece });
 
   // Update the spots that are attacked
   // We need to update the pieces that were being attacked before the move

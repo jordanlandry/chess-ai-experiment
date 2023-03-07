@@ -1,27 +1,23 @@
+import React from "react";
 import { useContext, useState } from "react";
 import nextId from "react-id-generator";
-import {
-  SetBoardColorContext,
-  BoardColorContext,
-  PieceStyleContext,
-  SetPieceStyleContext,
-  SetChangingStylesContext,
-  ChangingStylesContext,
-} from "../App";
+import { Store } from "../App";
 
 import properties from "../properties";
 import Modal from "./Modal";
 
 export default function Board() {
-  const changingSettings = useContext(ChangingStylesContext);
-  const setChangingSettings = useContext(SetChangingStylesContext);
+  const { changingSettings, setChangingSettings, boardColor, setBoardColor, pieceStyle, setPieceStyle } = useContext(Store);
+
+  // const changingSettings = useContext(ChangingStylesContext);
+  // const setChangingSettings = useContext(SetChangingStylesContext);
 
   // Context Imports
-  const boardColor = useContext(BoardColorContext)!;
-  const setBoardColor = useContext(SetBoardColorContext)!;
+  // const boardColor = useContext(BoardColorContext)!;
+  // const setBoardColor = useContext(SetBoardColorContext)!;
 
-  const pieceStyle = useContext(PieceStyleContext)!;
-  const setPieceStyle = useContext(SetPieceStyleContext)!;
+  // const pieceStyle = useContext(PieceStyleContext)!;
+  // const setPieceStyle = useContext(SetPieceStyleContext)!;
 
   // Colors
   const light = properties.styles[boardColor].light;
@@ -31,7 +27,7 @@ export default function Board() {
   const MAX_SCORE = 20; // Max before the eval bar is full
 
   // Elements
-  const squareElements = [];
+  const squareElements: JSX.Element[] = [];
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
       squareElements.push(

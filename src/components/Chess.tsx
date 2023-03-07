@@ -1,31 +1,32 @@
+import React from "react";
 import { useContext, useState } from "react";
-import { ChangingStylesContext } from "../App";
+import { Store } from "../App";
 import { board, Move, Queen } from "../board";
+import { depthTimes, functionTimes } from "../game/ai/minimax";
 import useAITest from "../hooks/game/useAI";
 import useMoveUpdater from "../hooks/game/useMoveUpdater";
 import usePiecePromotion from "../hooks/game/usePiecePromotion";
 import useMouseDown from "../hooks/mouse/useMouseDown";
 import usePieceCenteringTest from "../hooks/usePieceCentering";
 import { EndGameState, Teams, WinStates } from "../properties";
+import FunctionTimeTable from "./FunctionTimeTable";
 import GameOverScreen from "./GameOverScreen";
 import AvailableCapture from "./overlays/AvailableCapture";
 import AvailableMove from "./overlays/AvailableMove";
 import LastMove from "./overlays/LastMove";
 import SelectedPiece from "./overlays/SelectedPiece";
 import PromotionSelect from "./PromotionSelect";
-import TestElement from "../Testing/TestElement";
 
 export default function Chess() {
   // Imports
-  const changingStyles = useContext(ChangingStylesContext);
+  const { changingStyles } = useContext(Store);
 
   // AI
   const [usingAi, setUsingAi] = useState(true);
   const [aiTeam, setAiTeam] = useState(usingAi ? Teams.Black : Teams.None);
 
   // Game
-  const [availableMoves, setAvailableMoves] = useState<Set<number>>(new Set());
-
+  const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
   const [currentTurn, setCurrentTurn] = useState(Teams.White);
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
 
@@ -66,7 +67,7 @@ export default function Chess() {
   return (
     <div>
       <GameOverScreen winState={winState} aiTeam={aiTeam} open={gameOverOpen} setOpen={setGameOverOpen} />
-      {/* {availableMoves.map((move, i) => {
+      {availableMoves.map((move, i) => {
         // move.promoteTo adds 4 moves, 1 for each piece but they're all in the same spot
         // I don't want to show all 4 moves, because it's transparent and will stack and become opaque
         // So I'm only going to show one move, in this case the queen.
@@ -76,10 +77,11 @@ export default function Chess() {
 
         if (board[move.to] === 0) return <AvailableMove key={i} index={move.to} />;
         else return <AvailableCapture key={i} index={move.to} />;
-      })} */}
+      })}
 
-      {/* <SelectedPiece index={selectedPiece} /> */}
-      {/* <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} /> */}
+      <SelectedPiece index={selectedPiece} />
+
+      <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} />
 
       <PromotionSelect
         index={promotionPosition}
@@ -87,6 +89,8 @@ export default function Chess() {
         setPromotionPosition={setPromotionPosition}
         setPromotionPiece={setPromotionPiece}
       />
+
+      {/* <FunctionTimeTable /> */}
 
       {/* <TestElement /> */}
     </div>

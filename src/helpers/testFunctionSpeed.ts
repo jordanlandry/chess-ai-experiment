@@ -1,10 +1,12 @@
 export default function testFunctionSpeed(callback: Function, name: string) {
-  const start = performance.now();
-  for (let i = 0; i < 5_000_000; i++) {
+  const maxMs = 1000;
+
+  let i = 0;
+  const startTime = performance.now();
+  while (performance.now() - startTime < maxMs) {
     callback();
+    i++;
   }
 
-  const end = performance.now();
-
-  console.log(name, "took", Math.floor(end - start) + "ms");
+  console.log(`${name}: ${i.toLocaleString()} iterations in ${maxMs}ms`);
 }

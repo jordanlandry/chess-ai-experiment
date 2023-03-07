@@ -67,14 +67,14 @@ export function getAvailableMovesNew(pos: number) {
 // Keep track of the min and max x and y values that your pieces are on to limit the search
 // This should theoretically cut down on the number of searches you have to do
 // Starting board position
-interface Boundries {
-  [key: string]: {
-    minX: number;
-    maxX: number;
-    minY: number;
-    maxY: number;
-  };
-}
+// interface Boundries {
+//   [key: string]: {
+//     minX: number;
+//     maxX: number;
+//     minY: number;
+//     maxY: number;
+//   };
+// }
 
 const numToLetter = {
   "0": "-",
@@ -119,20 +119,61 @@ export function printBoard() {
 const getY = (pos: number) => pos % 8;
 const getX = (pos: number) => Math.floor(pos / 8);
 
+// const pieceBoundries = {
+//   [Teams.White]: { minX: 0, maxX: 7, minY: 6, maxY: 7 },
+//   [Teams.Black]: { minX: 0, maxX: 7, minY: 0, maxY: 1 },
+// } as Boundries;
+
+// // TODO Implement this into the search for piece functions
+// function updatePieceBoundries(move: Move, team: Teams) {
+//   const x = getY(move.to);
+//   const y = getX(move.to);
+
+//   pieceBoundries[team].minX = Math.min(pieceBoundries[team].minX, x);
+//   pieceBoundries[team].maxX = Math.max(pieceBoundries[team].maxX, x);
+//   pieceBoundries[team].minY = Math.min(pieceBoundries[team].minY, y);
+//   pieceBoundries[team].maxY = Math.max(pieceBoundries[team].maxY, y);
+// }
+
+interface Boundries {
+  [key: number]: {
+    [key: number]: {
+      minX: number;
+      maxX: number;
+      minY: number;
+      maxY: number;
+    };
+  };
+}
+
 const pieceBoundries = {
-  [Teams.White]: { minX: 0, maxX: 7, minY: 6, maxY: 7 },
-  [Teams.Black]: { minX: 0, maxX: 7, minY: 0, maxY: 1 },
+  [Teams.White]: {
+    [Rook]: { minX: 0, maxX: 7, minY: 7, maxY: 7 },
+    [Knight]: { minX: 1, maxX: 6, minY: 7, maxY: 7 },
+    [Bishop]: { minX: 2, maxX: 5, minY: 7, maxY: 7 },
+    [Queen]: { minX: 3, maxX: 3, minY: 7, maxY: 7 },
+    [King]: { minX: 5, maxX: 5, minY: 7, maxY: 7 },
+    [Pawn]: { minX: 0, maxX: 7, minY: 6, maxY: 6 },
+  },
+  [Teams.Black]: {
+    [Rook]: { minX: 0, maxX: 7, minY: 0, maxY: 0 },
+    [Knight]: { minX: 1, maxX: 6, minY: 0, maxY: 0 },
+    [Bishop]: { minX: 2, maxX: 5, minY: 0, maxY: 0 },
+    [Queen]: { minX: 3, maxX: 3, minY: 0, maxY: 0 },
+    [King]: { minX: 4, maxX: 4, minY: 0, maxY: 0 },
+    [Pawn]: { minX: 0, maxX: 7, minY: 1, maxY: 1 },
+  },
 } as Boundries;
 
-// TODO Implement this into the search for piece functions
-function updatePieceBoundries(move: Move, team: Teams) {
+function updateBoundries(move: Move, team: Teams) {
   const x = getY(move.to);
   const y = getX(move.to);
+  const piece = Math.abs(testBoard[move.from]);
 
-  pieceBoundries[team].minX = Math.min(pieceBoundries[team].minX, x);
-  pieceBoundries[team].maxX = Math.max(pieceBoundries[team].maxX, x);
-  pieceBoundries[team].minY = Math.min(pieceBoundries[team].minY, y);
-  pieceBoundries[team].maxY = Math.max(pieceBoundries[team].maxY, y);
+  pieceBoundries[team][piece].minX = Math.min(pieceBoundries[team][piece].minX, x);
+  pieceBoundries[team][piece].maxX = Math.max(pieceBoundries[team][piece].maxX, x);
+  pieceBoundries[team][piece].minY = Math.min(pieceBoundries[team][piece].minY, y);
+  pieceBoundries[team][piece].maxY = Math.max(pieceBoundries[team][piece].maxY, y);
 }
 
 // prettier-ignore
@@ -160,6 +201,7 @@ function updatePieceCounts(move: Move, capture?: number) {
 }
 
 export function updateTestBoard(move: Move) {
+  // updateBoundries(move, getTeam(testBoard[move.from]));
   updatePieceCounts(move);
 
   const piece = testBoard[move.from];
@@ -171,14 +213,15 @@ export function updateTestBoard(move: Move) {
   lastMoveTest.from = move.from;
   lastMoveTest.to = move.to;
 
-  updatePieceBoundries(move, getTeam(piece));
+  // updatePieceBoundries(move, getTeam(piece));
   updateAvailableMoves(move);
 }
 
-export function undoBoardUpdate(move: Move, capture: number) {
-  updateTestBoard({ ...move, to: move.from, from: move.to });
+export function undoBoardUpdate(move: Move, capture: number, previousAvailableMoves: Move[]) {
   if (capture) testBoard[move.to] = capture;
-  updatePieceCounts(move, capture);
+
+  // if (capture) testBoard[move.to] = capture;
+  // updatePieceCounts(move, capture);
 }
 
 // Called after the board updates

@@ -2,8 +2,8 @@ import { getTeam, Move, pieceType } from "../board";
 import { Teams } from "../properties";
 import { testBoard, undoBoardUpdate, updateAvailableMoves, updateTestBoard } from "../Testing/testBoard";
 
-export function undoMove(move: Move, capturedPiece: number) {
-  undoBoardUpdate(move, capturedPiece);
+export function undoMove(move: Move, capturedPiece: number, previousAvailableMoves: Move[]) {
+  undoBoardUpdate(move, capturedPiece, previousAvailableMoves);
 }
 
 export function makeMoveNew(move: Move, doUpdateScreen = true) {

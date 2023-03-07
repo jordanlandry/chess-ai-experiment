@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { PieceStyleContext } from "../App";
+import { Store } from "../App";
 import { Bishop, Knight, Queen, Rook } from "../board";
 import clamp from "../helpers/clamp";
 import useBoardBound from "../hooks/useBoardBound";
@@ -13,7 +13,7 @@ type Props = {
 };
 
 export default function PromotionSelect({ index, team, setPromotionPiece, setPromotionPosition }: Props) {
-  const pieceStyle = useContext(PieceStyleContext);
+  const { pieceStyle } = useContext(Store);
 
   const c = team === Teams.White ? "0" : "1";
   const base = `./assets/images/styles/${pieceStyle}`;

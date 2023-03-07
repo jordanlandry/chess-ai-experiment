@@ -1,9 +1,9 @@
 import { useEffect } from "react";
+import { Move } from "../../board";
 import getBestMoveTest from "../../game/ai/minimax";
+import { movePiece } from "../../game/movePiece";
 import makeMove from "../../helpers/makeMove";
-import { makeMoveNew } from "../../helpers/makeMoveNew";
 import { Teams } from "../../properties";
-import { printBoard, testBoard } from "../../Testing/testBoard";
 
 export default function useAITest(currentTurn: Teams, aiTeam: Teams, setCurrentTurn: React.Dispatch<React.SetStateAction<Teams>>) {
   useEffect(() => {
@@ -15,20 +15,15 @@ export default function useAITest(currentTurn: Teams, aiTeam: Teams, setCurrentT
     setTimeout(() => {
       const bestMove = getBestMoveTest(aiTeam);
 
+      console.log("Score: " + bestMove.score);
+      console.log("Move: ", bestMove.move);
+
+      // console.log("AI took " + (end - start) + "ms to find best move.");
+
       if (bestMove) {
-        makeMoveNew(bestMove.move);
+        makeMove(bestMove.move.from, bestMove.move.to, bestMove.move.castle, bestMove.move.enPassant, bestMove.move.promoteTo);
         setCurrentTurn((currentTurn) => (currentTurn === Teams.White ? Teams.Black : Teams.White));
       }
-      console.log({ score: bestMove.score });
     }, 500);
-
-    // console.log(bestMove);
-    // printBoard();
-
-    // if (bestMove) {
-    //   makeMove(bestMove.move.from, bestMove.move.to, bestMove.move.castle, bestMove.move.enPassant, bestMove.move.promoteTo);
-    //   setCurrentTurn((currentTurn) => (currentTurn === Teams.White ? Teams.Black : Teams.White));
-    // }
-    // }, );
   }, [currentTurn]);
 }
