@@ -3,6 +3,7 @@ import { BotColor, BotDifficulty } from "./BotMenu";
 
 import "../_scss/mainMenu.scss";
 import Logo from "./Logo";
+import PuzzleMenu from "./PuzzleMenu";
 
 export enum MenuState {
   Main,
@@ -21,7 +22,15 @@ export default function MainMenu() {
     <div className="main-menu-wrapper">
       <SetMenuStateContext.Provider value={setMenuState}>
         <Logo />
-        {menuState === MenuState.Main ? <Main /> : menuState === MenuState.Bot_Difficulty ? <BotDifficulty /> : <BotColor />}
+        {menuState === MenuState.Main ? (
+          <Main />
+        ) : menuState === MenuState.Bot_Difficulty ? (
+          <BotDifficulty />
+        ) : menuState === MenuState.Bot_Color ? (
+          <BotColor />
+        ) : menuState === MenuState.Puzzle ? (
+          <PuzzleMenu />
+        ) : null}
       </SetMenuStateContext.Provider>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Store } from "../../App";
+import { GameState, Store } from "../../App";
 import { difficulties, minimaxProperties } from "../../game/ai/minimax";
 import { Teams } from "../../properties";
 import BackButton from "./BackButton";
@@ -10,7 +10,6 @@ export function BotDifficulty() {
 
   const handleClick = (difficulty: keyof typeof difficulties) => {
     minimaxProperties.maxDepth = difficulties[difficulty].maxDepth;
-    minimaxProperties.movesPercent = difficulties[difficulty].movesPercent;
 
     setMenuState(MenuState.Bot_Color);
   };
@@ -29,11 +28,11 @@ export function BotDifficulty() {
 }
 
 export function BotColor() {
-  const { setGameStarted } = useContext(Store);
+  const { setGameState } = useContext(Store);
 
   const handleClick = (team: Teams) => {
     console.log(team);
-    setGameStarted(true);
+    setGameState(GameState.Bot);
   };
 
   return (

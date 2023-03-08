@@ -6,7 +6,7 @@ import makeMove from "../../helpers/makeMove";
 import testFunctionSpeed from "../../helpers/testFunctionSpeed";
 import { Teams } from "../../properties";
 
-export default function useMouseDownTest(
+export default function useMouseDown(
   changingStyles: boolean,
   promotionPosition: number,
   currentTurn: Teams,

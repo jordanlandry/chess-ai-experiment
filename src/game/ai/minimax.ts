@@ -45,14 +45,24 @@ export const functionTimes = {
 
 export const depthTimes: number[] = [];
 
+interface Diffitulty {
+  maxDepth: number;
+  elo: number;
+}
+
 export const difficulties = {
-  beginner: { elo: 250, maxDepth: 2, movesPercent: 1 },
-  easy: { elo: 500, maxDepth: 3, movesPercent: 0.9 },
-  medium: { elo: 1000, maxDepth: 4, movesPercent: 0.9 },
-  hard: { elo: 1500, maxDepth: 5, movesPercent: 1 },
-  expert: { elo: 2000, maxDepth: 6, movesPercent: 1 },
-  master: { elo: 2500, maxDepth: Infinity, movesPercent: 1 },
-};
+  beginner: { elo: 250, maxDepth: 2 },
+  easy: { elo: 500, maxDepth: 3 },
+  medium: { elo: 1000, maxDepth: 5 },
+  hard: { elo: 1500, maxDepth: 7 },
+  max: { elo: 1700, maxDepth: Infinity },
+
+  // easy: { elo: 500, maxDepth: 3 },
+  // medium: { elo: 1000, maxDepth: 4 },
+  // hard: { elo: 1500, maxDepth: 5 },
+  // expert: { elo: 2000, maxDepth: 6 },
+  // master: { elo: 2500, maxDepth: Infinity },
+} as { [key: string]: Diffitulty };
 
 // When there are less than 10 pieces left, the maxDepth must increase or else it will always repeat moves
 // As is can not see far enough ahead to ever deliver a checkmate

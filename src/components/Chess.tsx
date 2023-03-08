@@ -17,17 +17,24 @@ import LastMove from "./overlays/LastMove";
 import SelectedPiece from "./overlays/SelectedPiece";
 import PromotionSelect from "./PromotionSelect";
 
-export default function Chess() {
+type Props = {
+  turn?: Teams;
+  usingAI?: boolean;
+};
+
+export default function Chess({ turn, usingAI }: Props) {
   // Imports
   const { changingStyles } = useContext(Store);
 
+  // console.log(turn);
+
   // AI
-  const [usingAi, setUsingAi] = useState(true);
+  const [usingAi, setUsingAi] = useState(usingAI ?? true);
   const [aiTeam, setAiTeam] = useState(usingAi ? Teams.Black : Teams.None);
 
   // Game
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
-  const [currentTurn, setCurrentTurn] = useState(Teams.White);
+  const [currentTurn, setCurrentTurn] = useState(turn ?? Teams.White);
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
 
   // Game over
@@ -71,9 +78,7 @@ export default function Chess() {
         // move.promoteTo adds 4 moves, 1 for each piece but they're all in the same spot
         // I don't want to show all 4 moves, because it's transparent and will stack and become opaque
         // So I'm only going to show one move, in this case the queen.
-        if (move.promoteTo) {
-          if (move.promoteTo !== Queen && move.promoteTo !== -Queen) return null;
-        }
+        if (move.promoteTo && move.promoteTo !== Queen && move.promoteTo !== -Queen) return null;
 
         if (board[move.to] === 0) return <AvailableMove key={i} index={move.to} />;
         else return <AvailableCapture key={i} index={move.to} />;
@@ -89,10 +94,6 @@ export default function Chess() {
         setPromotionPosition={setPromotionPosition}
         setPromotionPiece={setPromotionPiece}
       />
-
-      {/* <FunctionTimeTable /> */}
-
-      {/* <TestElement /> */}
     </div>
   );
 }

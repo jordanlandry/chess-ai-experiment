@@ -9,16 +9,6 @@ import Modal from "./Modal";
 export default function Board() {
   const { changingSettings, setChangingSettings, boardColor, setBoardColor, pieceStyle, setPieceStyle } = useContext(Store);
 
-  // const changingSettings = useContext(ChangingStylesContext);
-  // const setChangingSettings = useContext(SetChangingStylesContext);
-
-  // Context Imports
-  // const boardColor = useContext(BoardColorContext)!;
-  // const setBoardColor = useContext(SetBoardColorContext)!;
-
-  // const pieceStyle = useContext(PieceStyleContext)!;
-  // const setPieceStyle = useContext(SetPieceStyleContext)!;
-
   // Colors
   const light = properties.styles[boardColor].light;
   const dark = properties.styles[boardColor].dark;

@@ -98,18 +98,6 @@ export const INITIAL_WHITE_PAWN_Y = 6;
 export const INITIAL_BLACK_PAWN_Y = 1;
 
 // prettier-ignore
-const boardKeys = [
-  0x9D39247E33776D41, 0x2AF7398005AAA5C7, 0x44DB015024623547, 0x9C15F73E62A76AE2, 0x75834465489C0C89, 0x3290AC3A203001BF, 0x0FBBAD1F61042279, 0xE83A908FF2FB60CA,
-  0x0D7E765D58755C10, 0x1A083822CEAFE02D, 0x9605D5F0E25EC3B0, 0xD021FF5CD13A2ED5,0x40BDF15D4A672E32, 0x011355146FD56395, 0x5DB4832046F3D9E5, 0x239F8B2D7FF719CC,
-  0x05D1A1AE85B49AA1, 0x679F848F6E8FC971, 0x7449BBFF801FED0B, 0x7D11CDB1C3B7ADF0, 0x82C7709E781EB7CC, 0xF3218F1C9510786C, 0x331478F3AF51BBE6, 0x4BB38DE5E7219443,
-  0xAA649C6EBCFD50FC, 0x8DBD98A352AFD40B, 0x87D2074B81D79217, 0x19F3C751D3E92AE1, 0xB4AB30F062B19ABF, 0x7B0500AC42047AC4, 0xC9452CA81A09D85D, 0x24AA6C514DA27500,
-  0x4C9F34427501B447, 0x14A68FD73C910841, 0xA71B9B83461CBD93, 0x03488B95B0F1850F, 0x637B2B34FF93C040, 0x09D1BC9A3DD90A94, 0x3575668334A1DD3B, 0x735E2B97A4C45A23,
-  0x18727070F1BD400B, 0x1FCBACD259BF02E7, 0xD310A7C2CE9B6555, 0xBF983FE0FE5D8244, 0x9F74D14F7454A824, 0x51EBDC4AB9BA3035, 0x5C82C505DB9AB0FA, 0xFCF7FE8A3430B241,
-  0x3253A729B9BA3DDE, 0x8C74C368081B3075, 0xB9BC6C87167C33E7, 0x7EF48F2B83024E20, 0x11D505D4C351BD7F, 0x6568FCA92C76A243, 0x4DE0B0F40F32A7B8, 0x96D693460CC37E5D,
-  0x42E240CB63689F2F, 0x6D2BDCDAE2919661, 0x42880B0236E4D951, 0x5F0F4A5898171BB6, 0x39F890F579F92F88, 0x93C5B5F47356388B, 0x63DC359D8D231B78, 0xEC16CA8AEA98AD76,
-]
-
-// prettier-ignore
 const boardKeysRand = [
   Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(),
   Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(),
@@ -180,14 +168,16 @@ export function lookupArrayXY(pos: number) {
   return indexToXYArr[pos];
 }
 
-export const pieceValues = {
-  [PiecesType.Pawn]: 1,
-  [PiecesType.Knight]: 3,
-  [PiecesType.Bishop]: 3,
-  [PiecesType.Rook]: 5,
-  [PiecesType.Queen]: 9,
-  [PiecesType.King]: 20000,
-} as { [key: string]: number };
+export const readableBoard = [
+  ["r", "n", "b", "q", "k", "b", "n", "r"],
+  ["p", "p", "p", "p", "p", "p", "p", "p"],
+  ["", "", "", "", "", "", "", ""],
+  ["", "", "", "", "", "", "", ""],
+  ["", "", "", "", "", "", "", ""],
+  ["", "", "", "", "", "", "", ""],
+  ["P", "P", "P", "P", "P", "P", "P", "P"],
+  ["R", "N", "B", "Q", "K", "B", "N", "R"],
+];
 
 // The reason for this is because this is faster than .length, and we'll need to check this a lot with minimax
 // So this will be updated every time a piece is captured
@@ -267,7 +257,23 @@ export const Queen = 8;
 export const King = 16;
 export const Pawn = 32;
 
-const pieceToPiecePositions = {
+export const letterHelper = {
+  r: { piece: -Rook, piecePositions: BlackRooks },
+  n: { piece: -Knight, piecePositions: BlackKnights },
+  b: { piece: -Bishop, piecePositions: BlackBishops },
+  q: { piece: -Queen, piecePositions: BlackQueens },
+  k: { piece: -King, piecePositions: BlackKing },
+  p: { piece: -Pawn, piecePositions: BlackPawns },
+  R: { piece: Rook, piecePositions: WhiteRooks },
+  N: { piece: Knight, piecePositions: WhiteKnights },
+  B: { piece: Bishop, piecePositions: WhiteBishops },
+  Q: { piece: Queen, piecePositions: WhiteQueens },
+  K: { piece: King, piecePositions: WhiteKing },
+  P: { piece: Pawn, piecePositions: WhitePawns },
+  "": { piece: 0, piecePositions: [] },
+} as { [key: string]: { piece: number; piecePositions: number[] } };
+
+export const pieceToPiecePositions = {
   [Teams.White]: {
     [PiecesType.Pawn]: WhitePawns,
     [PiecesType.Rook]: WhiteRooks,
@@ -288,6 +294,31 @@ const pieceToPiecePositions = {
 } as { [key: number]: { [key: string]: number[] } };
 
 export let lastMove: Move | null = null;
+
+const pieceToFen = {
+  [PiecesType.Pawn]: "p",
+  [PiecesType.Rook]: "r",
+  [PiecesType.Knight]: "n",
+  [PiecesType.Bishop]: "b",
+  [PiecesType.Queen]: "q",
+  [PiecesType.King]: "k",
+} as { [key: string]: string };
+
+export function updateReadableBoard() {
+  for (let i = 0; i < 64; i++) {
+    const piece = board[i];
+    const { x, y } = calcXY(i);
+
+    if (piece === 0) readableBoard[y][x] = "";
+    else {
+      const team = getTeam(piece);
+      const type = pieceType(piece);
+      const fen = pieceToFen[type];
+
+      readableBoard[y][x] = team === Teams.White ? fen.toUpperCase() : fen;
+    }
+  }
+}
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 export function updatePiecePositions(
