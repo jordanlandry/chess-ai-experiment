@@ -1,0 +1,28 @@
+.puzzle-wrapper {
+  h1 {
+    text-align: center;
+  }
+
+  .puzzle-btn-wrapper {
+    display: flex;
+
+    justify-content: center;
+    margin-top: 20px;
+
+    button {
+      cursor: pointer;
+
+      background: none;
+      border: none;
+      font-size: 2.5rem;
+
+      color: white;
+
+      transition: 0.2s;
+
+      &:hover {
+        color: #222;
+      }
+    }
+  }
+}

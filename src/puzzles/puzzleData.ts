@@ -1,3 +1,4 @@
+import { Move } from "../board";
 import { Teams } from "../properties";
 
 export const PuzzleTypes = {
@@ -16,10 +17,25 @@ export const puzzleProps = {
 // I will have a function to convert it over to the 1d array, as performance here doesn't matter like it would in minimax.
 // This is to make it easier for the user to see what team they are playing as.
 
-export const puzzleData = [
+enum PuzzleDifficulties {
+  Easy = "Easy",
+  Medium = "Medium",
+  Hard = "Hard",
+}
+
+interface Puzzle {
+  id: number;
+  difficulty: PuzzleDifficulties;
+  type: keyof typeof PuzzleTypes;
+  board: string[][];
+  solution: Move[];
+  currentTurn: Teams;
+}
+
+export const puzzleData: Puzzle[] = [
   {
     id: 1,
-    difficulty: 1,
+    difficulty: PuzzleDifficulties.Easy,
     type: PuzzleTypes.MateInOne,
     board: [
       ["k", "", "", "b", "", "", "", ""],
@@ -34,48 +50,25 @@ export const puzzleData = [
     solution: [{ from: 58, to: 2 }],
     currentTurn: Teams.White,
   },
-
   {
     id: 2,
-    difficulty: 3,
-    type: PuzzleTypes.MateInOne,
-    board: [
-      ["r", "R", "", "", "Q", "", "r", ""],
-      ["", "", "", "n", "P", "", "", ""],
-      ["q", "", "", "B", "P", "R", "", ""],
-      ["b", "B", "P", "", "", "", "", ""],
-      ["", "", "p", "p", "", "", "", ""],
-      ["", "", "k", "", "", "", "", ""],
-      ["p", "", "N", "", "", "", "", ""],
-      ["n", "", "", "", "", "", "K", ""],
-    ],
-    solution: [
-      { from: 1, to: 2 },
-      { from: 2, to: 3 },
-      { from: 3, to: 4 },
-      { from: 4, to: 5 },
-    ],
-    currentTurn: Teams.White,
-  },
-
-  {
-    id: 3,
-    difficulty: 3,
+    difficulty: PuzzleDifficulties.Easy,
     type: PuzzleTypes.Checkmate,
     board: [
-      ["", "", "b", "B", "", "", "", ""],
-      ["p", "", "p", "", "", "", "", "p"],
-      ["", "", "", "", "", "", "", ""],
-      ["", "", "Q", "", "p", "k", "", ""],
-      ["", "", "", "", "", "P", "", "P"],
-      ["", "", "", "", "", "", "", ""],
-      ["P", "P", "P", "", "", "", "", ""],
-      ["", "K", "R", "", "", "", "", "R"],
+      ["", "r", "", "", "", "", "", "k"],
+      ["", "", "p", "", "P", "", "", "p"],
+      ["", "", "", "", "", "", "p", ""],
+      ["", "", "p", "P", "", "", "", ""],
+      ["p", "", "B", "", "", "P", "", ""],
+      ["", "", "P", "", "Q", "", "", "P"],
+      ["P", "", "", "K", "", "", "", ""],
+      ["", "", "", "", "", "", "", "q"],
     ],
     solution: [
-      { from: 26, to: 28 },
-      { from: 29, to: 38 },
+      { from: 1, to: 49 },
+      { from: 51, to: 43 },
+      { from: 63, to: 57 },
     ],
-    currentTurn: Teams.White,
+    currentTurn: Teams.Black,
   },
 ];

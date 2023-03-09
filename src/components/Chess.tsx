@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useContext, useState } from "react";
 import { Store } from "../App";
 import { board, Move, Queen } from "../board";
@@ -20,9 +20,10 @@ import PromotionSelect from "./PromotionSelect";
 type Props = {
   turn?: Teams;
   usingAI?: boolean;
+  setLastMove?: React.Dispatch<React.SetStateAction<Move | undefined>>;
 };
 
-export default function Chess({ turn, usingAI }: Props) {
+export default function Chess({ turn, usingAI, setLastMove }: Props) {
   // Imports
   const { changingStyles } = useContext(Store);
 
@@ -70,6 +71,14 @@ export default function Chess({ turn, usingAI }: Props) {
 
   // Promotion
   usePiecePromotion(promotion, promotionPiece, setPromotion, setPromotionPiece, setCurrentTurn);
+
+  // Update last move (This is for the puzzle component)
+  useEffect(() => {
+    if (!setLastMove) return;
+    if (moveHistory.length > 0) {
+      setLastMove!(moveHistory[moveHistory.length - 1]);
+    }
+  }, [moveHistory]);
 
   return (
     <div>

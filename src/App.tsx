@@ -7,6 +7,7 @@ import Chess from "./components/Chess";
 import Pieces from "./components/Pieces";
 import MainMenu from "./components/menu/MainMenu";
 import Puzzle from "./components/puzzle/Puzzle";
+import { Teams } from "./properties";
 
 export const Store = createContext<any>(null);
 export enum GameState {
@@ -20,9 +21,12 @@ function App() {
   const [pieceStyle, setPieceStyle] = useLocalStorage("chess_piece_style", "cartoon");
   const [changingStyles, setChangingStyles] = useState(false);
 
-  const [score, setScore] = useState(0);
+  const [gameState, setGameState] = useState(GameState.Menu);
 
-  const [gameState, setGameState] = useState(GameState.Puzzle);
+  const [score, setScore] = useState(0);
+  const [startPuzzle, setStartPuzzle] = useState(false);
+
+  console.log(startPuzzle);
 
   const store = {
     boardColor,
@@ -35,6 +39,8 @@ function App() {
     setGameState,
     score,
     setScore,
+    startPuzzle,
+    setStartPuzzle,
   };
 
   return (
@@ -51,6 +57,12 @@ function App() {
         ) : gameState === GameState.Puzzle ? (
           <>
             <Puzzle />
+            {startPuzzle ? (
+              <>
+                <Board />
+                <Pieces />
+              </>
+            ) : null}
           </>
         ) : null}
       </Store.Provider>
