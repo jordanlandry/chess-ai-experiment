@@ -1,96 +1,49 @@
-import React, { useContext, useEffect, useState } from "react";
-import {
-  ArrowClockwise,
-  ArrowLeft,
-  ArrowLeftCircleFill,
-  ArrowRight,
-  ArrowRightCircleFill,
-  FastForwardBtnFill,
-  RewindBtnFill,
-} from "react-bootstrap-icons";
+import { useContext, useEffect, useState } from "react";
+import { ArrowCounterclockwise, ArrowLeftCircleFill, ArrowRightCircleFill } from "react-bootstrap-icons";
 import { Store } from "../../App";
-import {
-  BlackBishops,
-  BlackKing,
-  BlackKnights,
-  BlackPawns,
-  BlackQueens,
-  BlackRooks,
-  board,
-  letterHelper,
-  Move,
-  occupiedSquares,
-  WhiteBishops,
-  WhiteKing,
-  WhiteKnights,
-  WhitePawns,
-  WhiteQueens,
-  WhiteRooks,
-} from "../../board";
+import { Move, setBoard } from "../../board";
 import centerPieces from "../../helpers/centerPieces";
 import makeMove from "../../helpers/makeMove";
-import useMouseDown from "../../hooks/mouse/useMouseDown";
-import useMouseDownTest from "../../hooks/mouse/useMouseDown";
-import usePieceCentering from "../../hooks/usePieceCentering";
 import { Teams } from "../../properties";
-import { puzzleData, puzzleProps } from "../../puzzles/puzzleData";
-import Board from "../Board";
+import { puzzleData, puzzleProps, PuzzleTypes } from "../../puzzles/puzzleData";
 import Chess from "../Chess";
-import Pieces from "../Pieces";
+import MoveEvaluationIcon, { MoveEvaluationType } from "../MoveEvaluationIcon";
 
 import "../_scss/puzzle.scss";
 
 export default function Puzzle() {
   const { startPuzzle, setStartPuzzle } = useContext(Store);
 
-  function setBoard(b: string[][]) {
-    setStartPuzzle(false);
-
-    // Reset occupied squares and pieces
-    for (let i = 0; i < 64; i++) {
-      occupiedSquares[i] = Teams.None;
-    }
-
-    // Reset white pieces
-    WhitePawns.splice(0, WhitePawns.length);
-    WhiteRooks.splice(0, WhiteRooks.length);
-    WhiteKnights.splice(0, WhiteKnights.length);
-    WhiteBishops.splice(0, WhiteBishops.length);
-    WhiteQueens.splice(0, WhiteQueens.length);
-    WhiteKing.splice(0, WhiteKing.length);
-
-    // Reset black pieces
-    BlackPawns.splice(0, BlackPawns.length);
-    BlackRooks.splice(0, BlackRooks.length);
-    BlackKnights.splice(0, BlackKnights.length);
-    BlackBishops.splice(0, BlackBishops.length);
-    BlackQueens.splice(0, BlackQueens.length);
-    BlackKing.splice(0, BlackKing.length);
-
-    for (let i = 0; i < 64; i++) {
-      const x = i % 8;
-      const y = Math.floor(i / 8);
-
-      const team = b[y][x] === b[y][x].toUpperCase() ? Teams.White : Teams.Black;
-      if (b[y][x] !== "") {
-        occupiedSquares[i] = team;
-        letterHelper[b[y][x]].piecePositions.push(i);
-      }
-
-      board[i] = letterHelper[b[y][x]].piece;
-    }
-
-    setStartPuzzle(true);
+  // Must await so the pieces render after the board is set when resetting the board
+  // because of silly little react updating state asynchroneously... what a silly little guy react is ¯\_(ツ)_/¯
+  async function handleSetBoard(b: string[][]) {
+    await setStartPuzzle(false);
+    await setBoard(b);
+    await setStartPuzzle(true);
   }
 
+  // Get all the puzzles of the current puzzle style
+  const puzzles = puzzleProps.puzzleType === PuzzleTypes.Mixed ? puzzleData : puzzleData.filter((p) => p.type === puzzleProps.puzzleType);
+
+  const [canReset, setCanReset] = useState(false);
+
   const [currentMove, setCurrentMove] = useState(-1);
-  const [index, setIndex] = useState(1);
+  const [index, setIndex] = useState(Math.floor(Math.random() * puzzles.length));
   const [turn, setTurn] = useState(Teams.None);
   const [lastMove, setLastMove] = useState<Move | undefined>(undefined);
 
+  const [numberOfPuzzlesPlayed, setNumberOfPuzzlesPlayed] = useState(0);
+
+  const [puzzleOver, setPuzzleOver] = useState(false);
+
+  async function nextPuzzle() {
+    await setIndex(Math.floor(Math.random() * puzzles.length));
+    handleReset();
+  }
+
   const handleNextMove = () => {
     setCurrentMove((prev) => {
-      const { from, to } = puzzleData[index].solution[prev + 1];
+      const { from, to } = puzzles[index].solution[prev + 1];
 
       makeMove(from, to, undefined, undefined, undefined);
       centerPieces();
@@ -99,44 +52,42 @@ export default function Puzzle() {
     });
   };
 
-  const handlePrevMove = () => {
-    setCurrentMove((prev) => {
-      const { from, to } = puzzleData[index].solution[prev];
-      makeMove(to, from, undefined, undefined, undefined);
-      centerPieces();
+  const handleReset = async () => {
+    await handleSetBoard(puzzles[index].board);
 
-      return prev - 1;
-    });
-  };
-
-  useEffect(() => {
-    setBoard(puzzleData[index].board);
-    setTurn(puzzleData[index].currentTurn);
-  }, [index]);
-
-  const handleReset = () => {
-    setBoard(puzzleData[index].board);
-    setTurn(puzzleData[index].currentTurn);
+    setTurn(puzzles[index].currentTurn);
     setCurrentMove(-1);
+    setCanReset(false);
 
     centerPieces();
   };
 
   useEffect(() => {
-    if (!lastMove) return;
+    handleSetBoard(puzzles[index].board);
+    setTurn(puzzles[index].currentTurn);
+  }, [index]);
 
-    if (lastMove.from === puzzleData[index].solution[currentMove + 1].from && lastMove.to === puzzleData[index].solution[currentMove + 1].to) {
-      console.log("Correct");
+  useEffect(() => {
+    if (!lastMove) return;
+    if (currentMove + 1 === puzzles[index].solution.length - 1) {
+      setPuzzleOver(true);
+      return;
+    }
+
+    // If you made the correct move
+    if (lastMove.from === puzzles[index].solution[currentMove + 1].from && lastMove.to === puzzles[index].solution[currentMove + 1].to) {
       setCurrentMove((prev) => prev + 1);
 
       // Make the next move
-
       setTimeout(() => {
         handleNextMove();
       }, 500);
-    } else {
-      console.log("Incorrect");
-      handleReset();
+    }
+
+    // Made a wrong move
+    else {
+      setCanReset(true);
+      centerPieces();
     }
   }, [lastMove]);
 
@@ -145,20 +96,26 @@ export default function Puzzle() {
       {startPuzzle ? (
         <>
           <h1>{turn === Teams.Black ? "Black" : "White"} to move</h1>
-          <Chess usingAI={false} turn={puzzleData[index].currentTurn} setLastMove={setLastMove} />
+          <Chess usingAI={false} turn={puzzles[index].currentTurn} setLastMove={setLastMove} isPuzzle={true} />
           <div className="puzzle-btn-wrapper">
-            <button onClick={handlePrevMove} disabled={currentMove < 0}>
-              <ArrowLeftCircleFill />
-            </button>
-            <button onClick={handleNextMove} disabled={currentMove === puzzleData[index].solution.length - 1}>
-              <ArrowRightCircleFill />
-            </button>
-            <button onClick={handleReset}>
-              <ArrowClockwise />{" "}
-            </button>
+            {canReset ? (
+              <>
+                <div className="puzzle-reset-wrapper">
+                  <h2>Incorrect</h2>
+                  <button onClick={handleReset}>
+                    <ArrowCounterclockwise />
+                  </button>
+                </div>
+                {lastMove ? <MoveEvaluationIcon evalType={MoveEvaluationType.Blunder} move={lastMove} /> : null}
+              </>
+            ) : lastMove ? (
+              <MoveEvaluationIcon evalType={MoveEvaluationType.Best} move={lastMove} />
+            ) : null}
           </div>
         </>
       ) : null}
+
+      {puzzleOver ? <button onClick={nextPuzzle}>Next Puzzle</button> : null}
     </div>
   );
 }

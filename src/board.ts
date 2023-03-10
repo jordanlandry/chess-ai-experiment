@@ -1,4 +1,4 @@
-import { squareIsAttacked } from "./game/getAvailableMoves";
+import getAvailableMovesTest, { squareIsAttacked } from "./game/getAvailableMoves";
 import { PiecesType, PieceType, Teams } from "./properties";
 
 // prettier-ignore
@@ -14,39 +14,72 @@ export const occupiedSquares = [
   Teams.White, Teams.White, Teams.White, Teams.White, Teams.White, Teams.White, Teams.White, Teams.White,
 ]
 
-// prettier-ignore
-// export const whiteAttacks = [
-//   false, false, false, false, false, false, false, false,
-//   false, false, false, false, false, false, false, false,
-//   false, false, false, false, false, false, false, false,
-//   false, false, false, false, false, false, false, false,
-//   false, false, false, false, false, false, false, false,
-//   true, true, true, true, true, true, true, true,
-//   false, false, false, false, false, false, false, false,
-//   false, false, false, false, false, false, false, false,
-// ]
-
-// // prettier-ignore
-// export const blackAttacks = [
-//   false, false, false, false, false, false, false, false,
-//   false, false, false, false, false, false, false, false,
-//   true, true, true, true, true, true, true, true,
-//   false, false, false, false, false, false, false, false,
-//   false, false, false, false, false, false, false, false,
-//   false, false, false, false, false, false, false, false,
-//   false, false, false, false, false, false, false, false,
-//   false, false, false, false, false, false, false, false,
-// ]
 export const whiteAttacks = [
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-]
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+];
 
 // prettier-ignore
 export const blackAttacks = [
@@ -609,4 +642,58 @@ export interface Move {
   castle?: boolean;
   enPassant?: boolean;
   promoteTo?: number;
+}
+
+export async function setBoard(newBoard: string[][]) {
+  // Reset occupied squares and pieces
+  for (let i = 0; i < 64; i++) {
+    occupiedSquares[i] = Teams.None;
+  }
+
+  // Reset white pieces
+  WhitePawns.splice(0, WhitePawns.length);
+  WhiteRooks.splice(0, WhiteRooks.length);
+  WhiteKnights.splice(0, WhiteKnights.length);
+  WhiteBishops.splice(0, WhiteBishops.length);
+  WhiteQueens.splice(0, WhiteQueens.length);
+  WhiteKing.splice(0, WhiteKing.length);
+
+  // Reset black pieces
+  BlackPawns.splice(0, BlackPawns.length);
+  BlackRooks.splice(0, BlackRooks.length);
+  BlackKnights.splice(0, BlackKnights.length);
+  BlackBishops.splice(0, BlackBishops.length);
+  BlackQueens.splice(0, BlackQueens.length);
+  BlackKing.splice(0, BlackKing.length);
+
+  for (let i = 0; i < 64; i++) {
+    const x = i % 8;
+    const y = Math.floor(i / 8);
+
+    const team = newBoard[y][x] === newBoard[y][x].toUpperCase() ? Teams.White : Teams.Black;
+    if (newBoard[y][x] !== "") {
+      occupiedSquares[i] = team;
+      letterHelper[newBoard[y][x]].piecePositions.push(i);
+    }
+
+    board[i] = letterHelper[newBoard[y][x]].piece;
+  }
+}
+
+// Keep track of the available moves so we can make it faster
+// This holds what spots are effected after each move so we only have to check those to update the available moves
+export const effectedSquareOffsets = {
+  Rook: { x: [1, 2, 3, 4, 5, 6, 7], y: [8, 16, 24, 32, 40, 48, 56] },
+  Bishop: { x: [9, 18, 27, 36, 45, 54, 63], y: [7, 14, 21, 28, 35, 42, 49] },
+  Queen: { x: [1, 2, 3, 4, 5, 6, 7, 9, 18, 27, 36, 45, 54, 63], y: [7, 14, 21, 28, 35, 42, 49, 8, 16, 24, 32, 40, 48, 56] },
+  Knight: { x: [17, 15, 10, 6, -6, -10, -15, -17], y: [0, 0, 0, 0, 0, 0, 0, 0] },
+  King: { x: [1, 9, 8, 7, -1, -9, -8, -7], y: [0, 0, 0, 0, 0, 0, 0, 0] },
+};
+
+export function updateAvailableMoves(move: Move) {
+  // Update the move for the piece that was moved
+  const team = occupiedSquares[move.from];
+  const newMoves = getAvailableMovesTest(move.to, team);
+
+  // Remove the old moves
 }

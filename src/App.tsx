@@ -26,7 +26,7 @@ function App() {
   const [score, setScore] = useState(0);
   const [startPuzzle, setStartPuzzle] = useState(false);
 
-  console.log(startPuzzle);
+  const [rerender, forceRerender] = useState(0);
 
   const store = {
     boardColor,
@@ -41,6 +41,7 @@ function App() {
     setScore,
     startPuzzle,
     setStartPuzzle,
+    forceRerender,
   };
 
   return (

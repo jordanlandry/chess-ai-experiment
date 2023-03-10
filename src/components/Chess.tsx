@@ -21,13 +21,11 @@ type Props = {
   turn?: Teams;
   usingAI?: boolean;
   setLastMove?: React.Dispatch<React.SetStateAction<Move | undefined>>;
+  isPuzzle?: boolean;
 };
 
-export default function Chess({ turn, usingAI, setLastMove }: Props) {
-  // Imports
+export default function Chess({ turn, usingAI, setLastMove, isPuzzle }: Props) {
   const { changingStyles } = useContext(Store);
-
-  // console.log(turn);
 
   // AI
   const [usingAi, setUsingAi] = useState(usingAI ?? true);
@@ -77,16 +75,17 @@ export default function Chess({ turn, usingAI, setLastMove }: Props) {
     if (!setLastMove) return;
     if (moveHistory.length > 0) {
       setLastMove!(moveHistory[moveHistory.length - 1]);
+
+      // This is for the puzzle component, this is to make sure the current turn is correct
+      setCurrentTurn(turn!);
     }
   }, [moveHistory]);
 
   return (
     <div>
-      <GameOverScreen winState={winState} aiTeam={aiTeam} open={gameOverOpen} setOpen={setGameOverOpen} />
+      {!isPuzzle ? <GameOverScreen winState={winState} aiTeam={aiTeam} open={gameOverOpen} setOpen={setGameOverOpen} /> : null}
       {availableMoves.map((move, i) => {
-        // move.promoteTo adds 4 moves, 1 for each piece but they're all in the same spot
-        // I don't want to show all 4 moves, because it's transparent and will stack and become opaque
-        // So I'm only going to show one move, in this case the queen.
+        // Only show one of the promotion moves
         if (move.promoteTo && move.promoteTo !== Queen && move.promoteTo !== -Queen) return null;
 
         if (board[move.to] === 0) return <AvailableMove key={i} index={move.to} />;

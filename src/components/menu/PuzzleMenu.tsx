@@ -10,7 +10,7 @@ export default function PuzzleMenu() {
   const { setGameState } = useContext(Store);
 
   const handleClick = (puzzleType: string) => {
-    puzzleProps.puzzleType = puzzleType;
+    puzzleProps.puzzleType = PuzzleTypes[puzzleType];
     setGameState(GameState.Puzzle);
   };
 

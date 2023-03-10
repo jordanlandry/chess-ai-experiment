@@ -20,9 +20,21 @@
 
       transition: 0.2s;
 
+      display: flex;
+      align-items: center;
+
       &:hover {
         color: #222;
       }
+    }
+
+    .puzzle-reset-wrapper {
+      display: flex;
+      align-items: center;
+
+      position: absolute;
+
+      right: 25%;
     }
   }
 }
