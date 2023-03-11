@@ -6,6 +6,7 @@ export default function useBoardBound() {
   const [boardTop, setBoardTop] = useState(0);
   const [boardWidth, setBoardWidth] = useState(0);
   const [squareSize, setSquareSize] = useState(0);
+  const [boardRight, setBoardRight] = useState(0);
 
   const loaded = useLoad();
 
@@ -14,10 +15,11 @@ export default function useBoardBound() {
     if (!board) return;
 
     const handleResize = () => {
-      const { left, top, width } = board.getBoundingClientRect();
+      const { left, top, width, right } = board.getBoundingClientRect();
       setBoardLeft(left);
       setBoardTop(top);
       setBoardWidth(width);
+      setBoardRight(right);
       setSquareSize(width / 8);
     };
 
@@ -31,10 +33,5 @@ export default function useBoardBound() {
     };
   }, [loaded]);
 
-  return {
-    boardLeft: boardLeft,
-    boardTop: boardTop,
-    boardWidth: boardWidth,
-    squareSize: squareSize,
-  };
+  return { boardLeft, boardTop, boardWidth, squareSize, boardRight };
 }

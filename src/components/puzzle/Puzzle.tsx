@@ -6,6 +6,7 @@ import centerPieces from "../../helpers/centerPieces";
 import makeMove from "../../helpers/makeMove";
 import { Teams } from "../../properties";
 import { puzzleData, puzzleProps, PuzzleTypes } from "../../puzzles/puzzleData";
+import RightTab from "../board/RightTab";
 import Chess from "../Chess";
 import MoveEvaluationIcon, { MoveEvaluationType } from "../MoveEvaluationIcon";
 
@@ -92,30 +93,30 @@ export default function Puzzle() {
   }, [lastMove]);
 
   return (
-    <div className="puzzle-wrapper">
+    <>
+      {startPuzzle ? <Chess usingAI={false} turn={puzzles[index].currentTurn} setLastMove={setLastMove} isPuzzle={true} /> : null}
+
       {startPuzzle ? (
-        <>
+        <RightTab className="puzzle-info-wrapper">
           <h1>{turn === Teams.Black ? "Black" : "White"} to move</h1>
-          <Chess usingAI={false} turn={puzzles[index].currentTurn} setLastMove={setLastMove} isPuzzle={true} />
+          <h2>{puzzles[index].type}</h2>
+
           <div className="puzzle-btn-wrapper">
             {canReset ? (
-              <>
-                <div className="puzzle-reset-wrapper">
-                  <h2>Incorrect</h2>
-                  <button onClick={handleReset}>
-                    <ArrowCounterclockwise />
-                  </button>
-                </div>
-                {lastMove ? <MoveEvaluationIcon evalType={MoveEvaluationType.Blunder} move={lastMove} /> : null}
-              </>
-            ) : lastMove ? (
-              <MoveEvaluationIcon evalType={MoveEvaluationType.Best} move={lastMove} />
+              <div className="puzzle-reset-wrapper">
+                <h2>Incorrect</h2>
+                <button onClick={handleReset}>
+                  <ArrowCounterclockwise />
+                </button>
+              </div>
             ) : null}
           </div>
-        </>
-      ) : null}
 
-      {puzzleOver ? <button onClick={nextPuzzle}>Next Puzzle</button> : null}
-    </div>
+          {puzzleOver ? <button onClick={nextPuzzle}>Next Puzzle</button> : null}
+        </RightTab>
+      ) : null}
+      {lastMove ? "Poop" : null}
+      {lastMove ? <MoveEvaluationIcon evalType={MoveEvaluationType.Blunder} move={lastMove} /> : null}
+    </>
   );
 }

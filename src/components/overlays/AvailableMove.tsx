@@ -21,6 +21,7 @@ export default function AvailableMove({ index }: Props) {
         width: squareSize / 3 + "px",
         height: squareSize / 3 + "px",
         backgroundColor: properties.overlayColors.available,
+        zIndex: 1,
       }}
     />
   );

@@ -19,6 +19,7 @@ export default function SelectedPiece({ index }: Props) {
         width: squareSize + "px",
         height: squareSize + "px",
         backgroundColor: properties.overlayColors.selected,
+        zIndex: 1,
       }}
     />
   );

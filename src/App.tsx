@@ -2,7 +2,7 @@ import { createContext, useState } from "react";
 import useLocalStorage from "./hooks/useLocalStorage";
 
 import React from "react";
-import Board from "./components/Board";
+import Board from "./components/board/Board";
 import Chess from "./components/Chess";
 import Pieces from "./components/Pieces";
 import MainMenu from "./components/menu/MainMenu";
