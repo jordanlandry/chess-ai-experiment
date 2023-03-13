@@ -10,6 +10,8 @@
     justify-content: center;
     margin-top: 20px;
 
+    height: 500px;
+
     button {
       cursor: pointer;
 
@@ -23,6 +25,7 @@
 
       display: flex;
       align-items: center;
+      margin-top: auto;
 
       &:hover {
         color: #222;

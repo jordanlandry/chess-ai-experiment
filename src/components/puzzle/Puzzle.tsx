@@ -1,12 +1,13 @@
 import { useContext, useEffect, useState } from "react";
-import { ArrowCounterclockwise, ArrowLeftCircleFill, ArrowRightCircleFill } from "react-bootstrap-icons";
+import { ArrowCounterclockwise, ArrowLeftCircleFill, ArrowRight, ArrowRightCircleFill } from "react-bootstrap-icons";
 import { Store } from "../../App";
 import { Move, setBoard } from "../../board";
 import centerPieces from "../../helpers/centerPieces";
 import makeMove from "../../helpers/makeMove";
 import { Teams } from "../../properties";
 import { puzzleData, puzzleProps, PuzzleTypes } from "../../puzzles/puzzleData";
-import RightTab from "../board/RightTab";
+import SideTab from "../board/SideTab";
+
 import Chess from "../Chess";
 import MoveEvaluationIcon, { MoveEvaluationType } from "../MoveEvaluationIcon";
 
@@ -31,7 +32,7 @@ export default function Puzzle() {
   const [currentMove, setCurrentMove] = useState(-1);
   const [index, setIndex] = useState(Math.floor(Math.random() * puzzles.length));
   const [turn, setTurn] = useState(Teams.None);
-  const [lastMove, setLastMove] = useState<Move | undefined>(undefined);
+  const [lastMove, setLastMove] = useState<Move>({ from: -1, to: -1 });
 
   const [numberOfPuzzlesPlayed, setNumberOfPuzzlesPlayed] = useState(0);
 
@@ -59,8 +60,13 @@ export default function Puzzle() {
     setTurn(puzzles[index].currentTurn);
     setCurrentMove(-1);
     setCanReset(false);
+    setPuzzleOver(false);
 
     centerPieces();
+
+    setTimeout(() => {
+      setLastMove({ from: -1, to: -1 });
+    }, 1);
   };
 
   useEffect(() => {
@@ -69,11 +75,12 @@ export default function Puzzle() {
   }, [index]);
 
   useEffect(() => {
-    if (!lastMove) return;
-    if (currentMove + 1 === puzzles[index].solution.length - 1) {
-      setPuzzleOver(true);
-      return;
-    }
+    console.log(lastMove);
+    console.log(puzzles[index].solution);
+    console.log(currentMove + 1);
+    if (lastMove.from === -1) return;
+
+    let over = currentMove + 1 === puzzles[index].solution.length - 1;
 
     // If you made the correct move
     if (lastMove.from === puzzles[index].solution[currentMove + 1].from && lastMove.to === puzzles[index].solution[currentMove + 1].to) {
@@ -81,7 +88,7 @@ export default function Puzzle() {
 
       // Make the next move
       setTimeout(() => {
-        handleNextMove();
+        if (!over) handleNextMove();
       }, 500);
     }
 
@@ -89,15 +96,21 @@ export default function Puzzle() {
     else {
       setCanReset(true);
       centerPieces();
+
+      return;
     }
+
+    if (over) setPuzzleOver(true);
   }, [lastMove]);
 
   return (
     <>
-      {startPuzzle ? <Chess usingAI={false} turn={puzzles[index].currentTurn} setLastMove={setLastMove} isPuzzle={true} /> : null}
+      {startPuzzle ? (
+        <Chess usingAI={false} turn={puzzles[index].currentTurn} setLastMove={setLastMove} isPuzzle={true} lastMoveSet={lastMove} />
+      ) : null}
 
       {startPuzzle ? (
-        <RightTab className="puzzle-info-wrapper">
+        <SideTab className="puzzle-info-wrapper" right={true}>
           <h1>{turn === Teams.Black ? "Black" : "White"} to move</h1>
           <h2>{puzzles[index].type}</h2>
 
@@ -112,11 +125,17 @@ export default function Puzzle() {
             ) : null}
           </div>
 
-          {puzzleOver ? <button onClick={nextPuzzle}>Next Puzzle</button> : null}
-        </RightTab>
+          {puzzleOver ? (
+            <button onClick={nextPuzzle} className="button">
+              <ArrowRight /> Next Puzzle
+            </button>
+          ) : null}
+        </SideTab>
       ) : null}
-      {lastMove ? "Poop" : null}
-      {lastMove ? <MoveEvaluationIcon evalType={MoveEvaluationType.Blunder} move={lastMove} /> : null}
+
+      {lastMove.from !== -1 ? (
+        <MoveEvaluationIcon evalType={canReset ? MoveEvaluationType.Blunder : MoveEvaluationType.Best} move={lastMove} />
+      ) : null}
     </>
   );
 }

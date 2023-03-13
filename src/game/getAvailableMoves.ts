@@ -7,7 +7,7 @@ import {
   BlackQueens,
   BlackRooks,
   board,
-  castleWhoHasMoved,
+  castleMoveProperties,
   enPassant,
   INITIAL_BLACK_PAWN_Y,
   INITIAL_WHITE_PAWN_Y,
@@ -81,14 +81,14 @@ function pushIfLegal(moves: Move[], move: Move, team: Teams) {
   // If move is a capture, save the piece so we can undo it later
   const capturedPiece = board[move.to];
   updateLastMoveProps.updateLastMove = false;
-  
+
   // Make the move
   makeMove(move.from, move.to, move.castle, move.enPassant, move.promoteTo, true);
   const kingPosition = team === Teams.White ? WhiteKing[0] : BlackKing[0];
-  
+
   // Push if the king is not in check
   if (!squareIsAttacked(kingPosition, attackingTeam)) moves.push(move);
-  
+
   // Undo move
   makeMove(move.to, move.from, move.castle, move.enPassant, move.promoteTo, true, true, capturedPiece);
   updateLastMoveProps.updateLastMove = true;
@@ -380,14 +380,14 @@ function canCastle(from: number, to: number, team: Teams) {
 
     if (blackAttacks(60)) return false;
 
-    if (castleWhoHasMoved[team].king) return false;
+    if (castleMoveProperties[team].king) return false;
 
     if (from !== 60) return false;
     if (to === 62) {
       if (blackAttacks(61) || blackAttacks(62)) return false;
       if (occupied(61) || occupied(62)) return false;
       if (board[63] !== Rook) return false;
-      if (castleWhoHasMoved[team].rightRook) return false;
+      if (castleMoveProperties[team].rightRook) return false;
 
       return true;
     }
@@ -396,7 +396,7 @@ function canCastle(from: number, to: number, team: Teams) {
       if (blackAttacks(59) || blackAttacks(58) || blackAttacks(57)) return false;
       if (occupied(59) || occupied(58) || occupied(57)) return false;
       if (board[56] !== Rook) return false;
-      if (castleWhoHasMoved[team].leftRook) return false;
+      if (castleMoveProperties[team].leftRook) return false;
 
       return true;
     }
@@ -408,14 +408,14 @@ function canCastle(from: number, to: number, team: Teams) {
   else {
     if (board[4] !== -King) return false;
     if (whiteAttacks(4)) return false;
-    if (castleWhoHasMoved[team].king) return false;
+    if (castleMoveProperties[team].king) return false;
 
     if (from !== 4) return false;
     if (to === 6) {
       if (whiteAttacks(5) || whiteAttacks(6)) return false;
       if (occupied(5) || occupied(6)) return false;
       if (board[7] !== -Rook) return false;
-      if (castleWhoHasMoved[team].rightRook) return false;
+      if (castleMoveProperties[team].rightRook) return false;
 
       return true;
     }
@@ -424,7 +424,7 @@ function canCastle(from: number, to: number, team: Teams) {
       if (whiteAttacks(3) || whiteAttacks(2) || whiteAttacks(1)) return false;
       if (occupied(3) || occupied(2) || occupied(1)) return false;
       if (board[0] !== -Rook) return false;
-      if (castleWhoHasMoved[team].leftRook) return false;
+      if (castleMoveProperties[team].leftRook) return false;
 
       return true;
     }

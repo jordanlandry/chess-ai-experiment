@@ -1,11 +1,9 @@
 import React from "react";
 import { depthTimes, functionTimes } from "../game/ai/minimax";
 
-type Props = {};
-
-export default function FunctionTimeTable({}: Props) {
+export default function FunctionTimeTable() {
   return (
-    <div style={{ position: "absolute" }}>
+    <div>
       <table>
         <thead>
           <tr>

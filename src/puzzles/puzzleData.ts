@@ -127,7 +127,7 @@ export const puzzleData: Puzzle[] = [
       ["P", "P", "", "P", "", "P", "P", "P"],
       ["R", "N", "B", "", "K", "", "R", ""],
     ],
-    solution: [{ from: 53, to: 13 }],
+    solution: [{ from: 45, to: 13 }],
     currentTurn: Teams.White,
   },
 ];

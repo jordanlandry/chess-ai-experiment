@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import useDebounce from "./useDebounce";
 import useLoad from "./useLoad";
 
 export default function useBoardBound() {
@@ -33,5 +34,19 @@ export default function useBoardBound() {
     };
   }, [loaded]);
 
-  return { boardLeft, boardTop, boardWidth, squareSize, boardRight };
+  const debounceTime = 10;
+
+  const debouncedBoardLeft = useDebounce(boardLeft, debounceTime);
+  const debouncedBoardTop = useDebounce(boardTop, debounceTime);
+  const debouncedBoardWidth = useDebounce(boardWidth, debounceTime);
+  const debouncedSquareSize = useDebounce(squareSize, debounceTime);
+  const debouncedBoardRight = useDebounce(boardRight, debounceTime);
+
+  return {
+    boardLeft: debouncedBoardLeft,
+    boardTop: debouncedBoardTop,
+    boardWidth: debouncedBoardWidth,
+    squareSize: debouncedSquareSize,
+    boardRight: debouncedBoardRight,
+  };
 }

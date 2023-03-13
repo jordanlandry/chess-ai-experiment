@@ -8,7 +8,9 @@ import useMoveUpdater from "../hooks/game/useMoveUpdater";
 import usePiecePromotion from "../hooks/game/usePiecePromotion";
 import useMouseDown from "../hooks/mouse/useMouseDown";
 import usePieceCenteringTest from "../hooks/usePieceCentering";
+import useSecretCode from "../hooks/useSecretKey";
 import { EndGameState, Teams, WinStates } from "../properties";
+import SideTab from "./board/SideTab";
 import FunctionTimeTable from "./FunctionTimeTable";
 import GameOverScreen from "./GameOverScreen";
 import AvailableCapture from "./overlays/AvailableCapture";
@@ -20,11 +22,12 @@ import PromotionSelect from "./PromotionSelect";
 type Props = {
   turn?: Teams;
   usingAI?: boolean;
-  setLastMove?: React.Dispatch<React.SetStateAction<Move | undefined>>;
+  setLastMove?: React.Dispatch<React.SetStateAction<Move>>;
   isPuzzle?: boolean;
+  lastMoveSet?: Move;
 };
 
-export default function Chess({ turn, usingAI, setLastMove, isPuzzle }: Props) {
+export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSet }: Props) {
   const { changingStyles } = useContext(Store);
 
   // AI
@@ -81,6 +84,8 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle }: Props) {
     }
   }, [moveHistory]);
 
+  const showDebug = useSecretCode("debug");
+
   return (
     <div>
       {!isPuzzle ? <GameOverScreen winState={winState} aiTeam={aiTeam} open={gameOverOpen} setOpen={setGameOverOpen} /> : null}
@@ -94,7 +99,13 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle }: Props) {
 
       <SelectedPiece index={selectedPiece} />
 
-      <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} />
+      {lastMoveSet ? (
+        lastMoveSet.from !== -1 ? (
+          <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} />
+        ) : null
+      ) : (
+        <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} />
+      )}
 
       <PromotionSelect
         index={promotionPosition}
@@ -102,6 +113,12 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle }: Props) {
         setPromotionPosition={setPromotionPosition}
         setPromotionPiece={setPromotionPiece}
       />
+
+      {showDebug ? (
+        <SideTab right={false}>
+          <FunctionTimeTable />
+        </SideTab>
+      ) : null}
     </div>
   );
 }

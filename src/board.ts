@@ -14,90 +14,7 @@ export const occupiedSquares = [
   Teams.White, Teams.White, Teams.White, Teams.White, Teams.White, Teams.White, Teams.White, Teams.White,
 ]
 
-export const whiteAttacks = [
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-  false,
-];
-
-// prettier-ignore
-export const blackAttacks = [
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false,
-]
-
-interface Piece {
-  [key: number]: number;
-}
-
-export const castleWhoHasMoved = {
+export const castleMoveProperties = {
   [Teams.White]: {
     rightRook: false,
     leftRook: false,
@@ -131,16 +48,7 @@ export const INITIAL_WHITE_PAWN_Y = 6;
 export const INITIAL_BLACK_PAWN_Y = 1;
 
 // prettier-ignore
-const boardKeysRand = [
-  Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(),
-  Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(),
-  Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(),
-  Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(),
-  Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(),
-  Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(),
-  Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(),
-  Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random(),
-]
+const boardKeysRand = Array(64).fill(0).map((_) => Math.random());
 
 export const updateLastMoveProps = {
   updateLastMove: true,
@@ -179,26 +87,11 @@ export function getKey() {
   return key;
 }
 
-// prettier-ignore
-const indexToXYObject = { 0: { x: 0, y: 0 }, 1: { x: 1, y: 0 }, 2: { x: 2, y: 0 }, 3: { x: 3, y: 0 }, 4: { x: 4, y: 0 }, 5: { x: 5, y: 0 }, 6: { x: 6, y: 0 }, 7: { x: 7, y: 0 }, 8: { x: 0, y: 1 }, 9: { x: 1, y: 1 }, 10: { x: 2, y: 1 }, 11: { x: 3, y: 1 }, 12: { x: 4, y: 1 }, 13: { x: 5, y: 1 }, 14: { x: 6, y: 1 }, 15: { x: 7, y: 1 }, 16: { x: 0, y: 2 }, 17: { x: 1, y: 2 }, 18: { x: 2, y: 2 }, 19: { x: 3, y: 2 }, 20: { x: 4, y: 2 }, 21: { x: 5, y: 2 }, 22: { x: 6, y: 2 }, 23: { x: 7, y: 2 }, 24: { x: 0, y: 3 }, 25: { x: 1, y: 3 }, 26: { x: 2, y: 3 }, 27: { x: 3, y: 3 }, 28: { x: 4, y: 3 }, 29: { x: 5, y: 3 }, 30: { x: 6, y: 3 }, 31: { x: 7, y: 3 }, 32: { x: 0, y: 4 }, 33: { x: 1, y: 4 }, 34: { x: 2, y: 4 }, 35: { x: 3, y: 4 }, 36: { x: 4, y: 4 }, 37: { x: 5, y: 4 }, 38: { x: 6, y: 4 }, 39: { x: 7, y: 4 }, 40: { x: 0, y: 5 }, 41: { x: 1, y: 5 }, 42: { x: 2, y: 5 }, 43: { x: 3, y: 5 }, 44: { x: 4, y: 5 }, 45: { x: 5, y: 5 }, 46: { x: 6, y: 5 }, 47: { x: 7, y: 5 }, 48: { x: 0, y: 6 }, 49: { x: 1, y: 6 }, 50: { x: 2, y: 6 }, 51: { x: 3, y: 6 }, 52: { x: 4, y: 6 }, 53: { x: 5, y: 6 }, 54: { x: 6, y: 6 }, 55: { x: 7, y: 6 }, 56: { x: 0, y: 7 }, 57: { x: 1, y: 7 }, 58: { x: 2, y: 7 }, 59: { x: 3, y: 7 }, 60: { x: 4, y: 7 }, 61: { x: 5, y: 7 }, 62: { x: 6, y: 7 }, 63: { x: 7, y: 7 } } as { [key: number]: { x: number; y: number } };
-// prettier-ignore
-const indexToXYArr = [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 }, { x: 5, y: 0 }, { x: 6, y: 0 }, { x: 7, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 }, { x: 5, y: 1 }, { x: 6, y: 1 }, { x: 7, y: 1 }, { x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 }, { x: 5, y: 2 }, { x: 6, y: 2 }, { x: 7, y: 2 }, { x: 0, y: 3 }, { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 }, { x: 4, y: 3 }, { x: 5, y: 3 }, { x: 6, y: 3 }, { x: 7, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 4 }, { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 4, y: 4 }, { x: 5, y: 4 }, { x: 6, y: 4 }, { x: 7, y: 4 }, { x: 0, y: 5 }, { x: 1, y: 5 }, { x: 2, y: 5 }, { x: 3, y: 5 }, { x: 4, y: 5 }, { x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }, { x: 6, y: 6 }, { x: 7, y: 6 }, { x: 0, y: 7 }, { x: 1, y: 7 }, { x: 2, y: 7 }, { x: 3, y: 7 }, { x: 4, y: 7 }, { x: 5, y: 7 }, { x: 6, y: 7 }, { x: 7, y: 7 }];
-
-// For some reason, this is faster on the first call, but then slower on subsequent calls
-// I feel like the array should be the fastest, but it's not but only on the first call... Weird
 export function calcXY(pos: number) {
   const x = pos % 8;
   const y = Math.floor(pos / 8);
 
   return { x, y };
-}
-
-export function lookupObjectXY(pos: number) {
-  return indexToXYObject[pos];
-}
-
-export function lookupArrayXY(pos: number) {
-  return indexToXYArr[pos];
 }
 
 export const readableBoard = [
@@ -214,7 +107,6 @@ export const readableBoard = [
 
 // The reason for this is because this is faster than .length, and we'll need to check this a lot with minimax
 // So this will be updated every time a piece is captured
-// TODO Use this in minimax instead of .length
 export const pieceCounts = {
   [Teams.White]: {
     [PiecesType.Pawn]: 8,
@@ -290,7 +182,7 @@ export const Queen = 8;
 export const King = 16;
 export const Pawn = 32;
 
-export const letterHelper = {
+export const fenToPieceHelper = {
   r: { piece: -Rook, piecePositions: BlackRooks },
   n: { piece: -Knight, piecePositions: BlackKnights },
   b: { piece: -Bishop, piecePositions: BlackBishops },
@@ -414,6 +306,8 @@ export function updatePiecePositions(
     const capturedPieceIndex = capturedPiecePositions.indexOf(to);
     capturedPiecePositions.splice(capturedPieceIndex, 1);
 
+    // Update the counts
+    pieceCounts[team === Teams.White ? Teams.Black : Teams.White][capturedPiece]--;
     totalNumberOfPieces--;
   }
 
@@ -439,19 +333,12 @@ export function updatePiecePositions(
     lastMove = { from, to, castle, enPassant: doEnPassant, promoteTo: promotionPiece };
 
     // Update castling properties
-    if (piece === PiecesType.King) castleWhoHasMoved[team].king = true;
+    if (piece === PiecesType.King) castleMoveProperties[team].king = true;
     if (piece === PiecesType.Rook) {
-      if (from === 0 || from === 56) castleWhoHasMoved[team].leftRook = true;
-      if (from === 7 || from === 63) castleWhoHasMoved[team].rightRook = true;
+      if (from === 0 || from === 56) castleMoveProperties[team].leftRook = true;
+      if (from === 7 || from === 63) castleMoveProperties[team].rightRook = true;
     }
   }
-
-  // Update the spots that are attacked
-  // We need to update the pieces that were being attacked before the move
-  // And the pieces that are being attacked after the move
-  // updateAttackedSquares(from, to, team);
-
-  // updateAttackedSquaresTest();
 }
 
 // When undoing, the from and to are given in reverse order from the move that was actually made
@@ -537,97 +424,6 @@ export function undoPiecePosition(
   occupiedSquares[from] = capturedPiece ? (team === Teams.White ? Teams.Black : Teams.White) : Teams.None;
 }
 
-// This was to test if squareIsAttacked was working correctly,
-// I have a test component that highlights the squares that are attacked
-function updateAttackedSquaresTest() {
-  // Go through the board
-  for (let i = 0; i < 64; i++) {
-    whiteAttacks[i] = squareIsAttacked(i, Teams.White);
-  }
-
-  for (let i = 0; i < 64; i++) {
-    blackAttacks[i] = squareIsAttacked(i, Teams.Black);
-  }
-}
-
-// TODO - This is a bit of a mess, clean it up and also finish it
-// I'll probably need to rework it because if you move a piece there are a lot of
-// Things that will change. You'll need to update multiple pieces and not just the piece
-// That was moved. For now I will update the attacked squares when the move generation is called
-// The more I think about it the more I think I'll need to keep track of what each piece is attacking
-
-function updateAttackedSquares(from: number, to: number, team: Teams) {
-  const attacks = team === Teams.White ? whiteAttacks : blackAttacks;
-
-  // Rook
-  if (board[to] === Rook) {
-    const prevX = from % 8;
-    const prevY = Math.floor(from / 8);
-
-    const newX = to % 8;
-    const newY = Math.floor(to / 8);
-
-    // Up
-    if (prevY === newY) {
-      let blocked = false;
-      for (let i = 1; i < 8; i++) {
-        if (from - i * 8 > 0) attacks[from - i * 8] = false; // No longer attacked
-
-        // Newly attacked
-        const newlyAttacked = to - i * 8;
-        if (!blocked) {
-          if (board[newlyAttacked] === 0) attacks[newlyAttacked] = true; // No piece in the way
-          if (board[newlyAttacked] > 0) blocked = true; // Your own piece is blocking
-
-          // Enemy piece is blocking
-          if (board[newlyAttacked] < 0) {
-            attacks[newlyAttacked] = true;
-            blocked = true;
-          }
-        }
-      }
-
-      // Down
-      for (let i = 1; i < 8; i++) {
-        let blocked = false;
-        if (from + i * 8 < 64) attacks[from + i * 8] = false; // No longer attacked
-
-        // Newly attacked
-        const newlyAttacked = to + i * 8;
-        if (!blocked) {
-          if (board[newlyAttacked] === 0) attacks[newlyAttacked] = true; // No piece in the way
-          if (board[newlyAttacked] > 0) blocked = true; // Your own piece is blocking
-
-          // Enemy piece is blocking
-          if (board[newlyAttacked] < 0) {
-            attacks[newlyAttacked] = true;
-            blocked = true;
-          }
-        }
-      }
-    }
-  }
-
-  // Pawn
-  if (board[to] === Pawn) {
-    const prevX = from % 8;
-    const prevY = Math.floor(from / 8);
-
-    const newX = to % 8;
-    const newY = Math.floor(to / 8);
-
-    // Up
-    // Can attack left and right diagonally
-    // Remove the previous attacks
-    board[from - 7] === 0 && attacks[from - 7] && (attacks[from - 7] = false);
-    board[from - 9] === 0 && attacks[from - 9] && (attacks[from - 9] = false);
-
-    // Add the new attacks
-    board[to - 7] === 0 && (attacks[to - 7] = true);
-    board[to - 9] === 0 && (attacks[to - 9] = true);
-  }
-}
-
 // This will only be called if there are no moves available
 // So I don't need to check for that in this function so
 // I only have to check if the king is attacked
@@ -673,10 +469,10 @@ export async function setBoard(newBoard: string[][]) {
     const team = newBoard[y][x] === newBoard[y][x].toUpperCase() ? Teams.White : Teams.Black;
     if (newBoard[y][x] !== "") {
       occupiedSquares[i] = team;
-      letterHelper[newBoard[y][x]].piecePositions.push(i);
+      fenToPieceHelper[newBoard[y][x]].piecePositions.push(i);
     }
 
-    board[i] = letterHelper[newBoard[y][x]].piece;
+    board[i] = fenToPieceHelper[newBoard[y][x]].piece;
   }
 }
 
@@ -689,6 +485,9 @@ export const effectedSquareOffsets = {
   Knight: { x: [17, 15, 10, 6, -6, -10, -15, -17], y: [0, 0, 0, 0, 0, 0, 0, 0] },
   King: { x: [1, 9, 8, 7, -1, -9, -8, -7], y: [0, 0, 0, 0, 0, 0, 0, 0] },
 };
+
+const whiteAvailableMoves = [];
+const blackAvailableMoves = [];
 
 export function updateAvailableMoves(move: Move) {
   // Update the move for the piece that was moved

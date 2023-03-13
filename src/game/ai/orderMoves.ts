@@ -1,18 +1,28 @@
-import { board, Move, pieceValues, Queen, Rook } from "../../board";
-import { minimaxProperties } from "./minimax";
+import { board, Move, Queen, Rook } from "../../board";
+import { Minimax, minimaxProperties } from "./minimax";
 
-export default function orderMovesTest(moves: Move[], previousBestMove: Move) {
-  const orderedMoves = [] as Move[];
+export default function orderMovesTest(moves: Move[], previousBestMoves: Minimax[]) {
   const movesWithConfidence = [] as { move: Move; confidence: number }[];
 
+  // return test;
+
+  // Sort the moves by the previous best moves scores
+  // const orderedMoves = previousBestMoves.sort((a, b) => b.score - a.score);
+  // console.log(moves.length);
+
+  // if (orderedMoves.length > 0) return orderedMoves;
+
+  // return moves.map((move) => {
+  //   return { move, score: 0 };
+  // });
+  const orderedMoves = [];
+
+  // return orderedMoves;
+
+  // return orderedMoves;
   for (let i = 0; i < moves.length; i++) {
     let confidence = 0;
     const { from, to, castle, enPassant } = moves[i];
-
-    // If the move is the previous best move, give it a high confidence
-    if (from === previousBestMove.from && to === previousBestMove.to) {
-      confidence += 100;
-    }
 
     // increase confidence if the move is a capture
     // Increase more based on the value of the piece being captured
@@ -34,7 +44,7 @@ export default function orderMovesTest(moves: Move[], previousBestMove: Move) {
   const numberOfMovesToReturn = Math.ceil(minimaxProperties.movesPercent * moves.length);
 
   for (let i = 0; i < numberOfMovesToReturn; i++) {
-    orderedMoves.push(movesWithConfidence[i].move);
+    orderedMoves.push({ move: movesWithConfidence[i].move, score: 0 });
   }
 
   return orderedMoves;
