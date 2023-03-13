@@ -19,19 +19,21 @@ export default function MainMenu() {
   const [menuState, setMenuState] = React.useState(MenuState.Main);
 
   return (
-    <div className="main-menu-wrapper">
-      <SetMenuStateContext.Provider value={setMenuState}>
-        <Logo />
-        {menuState === MenuState.Main ? (
-          <Main />
-        ) : menuState === MenuState.Bot_Difficulty ? (
-          <BotDifficulty />
-        ) : menuState === MenuState.Bot_Color ? (
-          <BotColor />
-        ) : menuState === MenuState.Puzzle ? (
-          <PuzzleMenu />
-        ) : null}
-      </SetMenuStateContext.Provider>
+    <div className="main-menu-outter">
+      <div className="main-menu-wrapper">
+        <SetMenuStateContext.Provider value={setMenuState}>
+          <Logo />
+          {menuState === MenuState.Main ? (
+            <Main />
+          ) : menuState === MenuState.Bot_Difficulty ? (
+            <BotDifficulty />
+          ) : menuState === MenuState.Bot_Color ? (
+            <BotColor />
+          ) : menuState === MenuState.Puzzle ? (
+            <PuzzleMenu />
+          ) : null}
+        </SetMenuStateContext.Provider>
+      </div>
     </div>
   );
 }

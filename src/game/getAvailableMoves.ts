@@ -29,8 +29,9 @@ import {
 } from "../board";
 import makeMove from "../helpers/makeMove";
 import { PiecesType, Teams } from "../properties";
+import { callingFromAi } from "./ai/minimax";
 
-export default function getAvailableMovesTest(pos: number, team: Teams) {
+export function getAvailableMoves(pos: number, team: Teams) {
   const moves: Move[] = [];
 
   const pieceFunctions = {
@@ -49,7 +50,7 @@ export default function getAvailableMovesTest(pos: number, team: Teams) {
   return moves;
 }
 
-export function getAllAvailableMovesTest(team: Teams) {
+export function getAvailableMovesFor(team: Teams) {
   const moves: Move[] = [];
 
   // White Team
@@ -76,6 +77,16 @@ export function getAllAvailableMovesTest(team: Teams) {
 }
 
 function pushIfLegal(moves: Move[], move: Move, team: Teams) {
+  // Only run this if not calling from the AI as this is really slow
+  // Instead for the AI, we will make sure the king can never move to a spot where it can be captured next turn
+  // By doing this, we can avoid having to run this function for every single move for the AI, and
+  // only have to prevent illegal moves from being made by the user
+
+  if (callingFromAi.searchForCheck) {
+    moves.push(move);
+    return;
+  }
+
   const attackingTeam = team === Teams.White ? Teams.Black : Teams.White;
 
   // If move is a capture, save the piece so we can undo it later

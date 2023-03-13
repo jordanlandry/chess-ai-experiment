@@ -1,28 +1,37 @@
 import { board, Move, Queen, Rook } from "../../board";
-import { Minimax, minimaxProperties } from "./minimax";
+import { currentDepth, Minimax, minimaxProperties, previousBestMoves } from "./minimax";
 
-export default function orderMovesTest(moves: Move[], previousBestMoves: Minimax[]) {
+export default function orderMovesTest(moves: Move[], previousBestMove: Move, isMax: boolean, depth: number) {
+  // Sort previousBestMoves
+
+  // if (!isMax) {
+  //   if (previousBestMoves.min[currentDepth]) {
+  //     // Remove moves that are not in the moves array
+  //     previousBestMoves.min[currentDepth] = previousBestMoves.min[currentDepth].filter((move) => {
+  //       return moves.some((m) => {
+  //         return m.from === move.move.from && m.to === move.move.to;
+  //       });
+  //     });
+
+  //     previousBestMoves.min[currentDepth].sort((a, b) => {
+  //       return a.score - b.score;
+  //     });
+
+  //     return previousBestMoves.min[currentDepth];
+  //   }
+  // }
+
+  const orderedMoves = [] as Minimax[];
   const movesWithConfidence = [] as { move: Move; confidence: number }[];
 
-  // return test;
-
-  // Sort the moves by the previous best moves scores
-  // const orderedMoves = previousBestMoves.sort((a, b) => b.score - a.score);
-  // console.log(moves.length);
-
-  // if (orderedMoves.length > 0) return orderedMoves;
-
-  // return moves.map((move) => {
-  //   return { move, score: 0 };
-  // });
-  const orderedMoves = [];
-
-  // return orderedMoves;
-
-  // return orderedMoves;
   for (let i = 0; i < moves.length; i++) {
     let confidence = 0;
     const { from, to, castle, enPassant } = moves[i];
+
+    // If the move is the previous best move, give it a high confidence
+    if (from === previousBestMove.from && to === previousBestMove.to) {
+      confidence += 100;
+    }
 
     // increase confidence if the move is a capture
     // Increase more based on the value of the piece being captured

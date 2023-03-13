@@ -1,7 +1,7 @@
-import { board, castleMoveProperties, getKey, inStalemate, King, Move, pieceCounts, Rook, totalNumberOfPieces } from "../../board";
+import { BlackKing, board, castleMoveProperties, getKey, inStalemate, Move, pieceCounts, totalNumberOfPieces, WhiteKing } from "../../board";
 import makeMove from "../../helpers/makeMove";
 import { PiecesType, Teams } from "../../properties";
-import { getAllAvailableMovesTest } from "../getAvailableMoves";
+import { getAvailableMovesFor } from "../getAvailableMoves";
 import orderMovesTest from "./orderMoves";
 
 export interface Minimax {
@@ -13,6 +13,10 @@ export interface Minimax {
 // For example, if the difficulty is easy it won't look at every possible move
 // This is so that it won't play the best move, but should still play an okay move based on the difficulty.
 // Represented in the moves value, which is the percentage of moves to look at
+
+export const callingFromAi = {
+  searchForCheck: false,
+};
 
 export const functionTimes = {
   getMoves: 0,
@@ -32,8 +36,8 @@ interface Diffitulty {
 }
 
 export const difficulties = {
-  beginner: { elo: 250, maxDepth: 2 },
-  easy: { elo: 500, maxDepth: 3 },
+  beginner: { elo: 250, maxDepth: 3 },
+  easy: { elo: 500, maxDepth: 4 },
   medium: { elo: 1000, maxDepth: 5 },
   hard: { elo: 1500, maxDepth: 7 },
   max: { elo: 1700, maxDepth: Infinity },
@@ -85,33 +89,46 @@ const maxTime = 2500;
 let startTime = 0;
 let previousBestMove = { from: -1, to: -1 };
 
-// Search the previous best moves in order from best to worst in move order
-let previousTopMoves = [] as Minimax[];
-let currentTopMoves = [] as Minimax[];
+export interface PreviousEvals {
+  max: {
+    [key: number]: {
+      score: number;
+      move: Move;
+    }[];
+  };
 
-let currentDepth = 1;
+  min: {
+    [key: number]: {
+      score: number;
+      move: Move;
+    }[];
+  };
+}
+
+export let previousBestMoves = {
+  max: {},
+  min: {},
+} as PreviousEvals;
+
+export let currentDepth = 1;
 export default function getBestMoveTest(aiTeam: Teams) {
-  // Reset the times
-  depthTimes.length = 0;
-  Object.keys(functionTimes).forEach((key) => (functionTimes[key] = 0));
-
+  callingFromAi.searchForCheck = true;
   startTime = Date.now();
 
-  previousTopMoves = [];
-  currentTopMoves = [];
+  currentDepth = 1;
 
   if (totalNumberOfPieces < 10) minimaxProperties.maxDepth = Infinity;
+
+  // Reset the times
+  for (const key in functionTimes) {
+    functionTimes[key] = 0;
+  }
+
+  depthTimes.length = 0;
 
   let bestMove: Minimax = { score: 0, move: { from: -1, to: -1 } };
   while (Date.now() - startTime < maxTime) {
     const start = Date.now();
-
-    previousTopMoves = [];
-    currentTopMoves.forEach((move) => {
-      previousTopMoves.push(move);
-    });
-
-    currentTopMoves = [];
 
     table = {};
     const next = minimax(currentDepth, -Infinity, Infinity, aiTeam === Teams.White);
@@ -127,21 +144,22 @@ export default function getBestMoveTest(aiTeam: Teams) {
     if (currentDepth >= minimaxProperties.maxDepth) break;
   }
 
+  console.log(previousBestMoves.min);
   console.log("Depth: " + (currentDepth - 1));
+
+  callingFromAi.searchForCheck = false;
   return bestMove;
 }
 
 // Depth for quiescence search (don't wanna use quiscence in the name of the variable)
-// Cuz stupid word
+// Cuz silly word
 const qDepth = 5;
 
 const nullMoveR = 3;
 const nullMoveAllowed = (isMax: boolean, depth: number) => totalNumberOfPieces > 10 && !isMax && depth > nullMoveR;
 
 function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Minimax | null {
-  if (depth < 1) {
-    return { score: evaluateBoard(), move: { from: -1, to: -1 } };
-  }
+  if (depth < 1) return { score: evaluateBoard(), move: { from: -1, to: -1 } };
 
   if (tableSize > MAX_TABLE_SIZE) {
     table = {};
@@ -152,6 +170,12 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
 
   // Maximizer
   if (isMax) {
+    // Null Move Pruning
+    if (nullMoveAllowed(isMax, depth)) {
+      const score = minimax(depth - nullMoveR - 1, alpha, beta, false)?.score ?? 0;
+      if (score >= beta) return { score, move: { from: -1, to: -1 } };
+    }
+
     const boardHashingStart = Date.now();
     const boardHash = getKey();
     functionTimes.boardHashing += Date.now() - boardHashingStart;
@@ -161,7 +185,7 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
     const bestMove = { score: -Infinity, move: { from: -1, to: -1 } };
 
     const moveStart = Date.now();
-    const moves = getAllAvailableMovesTest(Teams.White);
+    const moves = getAvailableMovesFor(Teams.White);
     functionTimes.getMoves += Date.now() - moveStart;
 
     if (moves.length === 0) {
@@ -170,7 +194,7 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
     }
 
     const orderMovesStart = Date.now();
-    const orderedMoves = orderMovesTest(moves, depth === currentDepth ? previousTopMoves : []);
+    const orderedMoves = orderMovesTest(moves, previousBestMove, isMax, depth);
     functionTimes.orderMoves += Date.now() - orderMovesStart;
 
     bestMove.move = moves[0];
@@ -178,13 +202,14 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
     for (let i = 0; i < orderedMoves.length; i++) {
       const { from, to, castle, enPassant, promoteTo } = orderedMoves[i].move;
 
-      const updateCastle = castle || board[from] === King || board[from] === Rook;
-
       // Save previous inmformation, so we can properly undo the move
       const capturedPiece = board[to];
 
       const castleTimeStart = Date.now();
-      const previousCastleState = updateCastle ? JSON.parse(JSON.stringify(castleMoveProperties)) : null;
+
+      const previousWhiteCastle = { ...castleMoveProperties[Teams.White] };
+      const previousBlackCastle = { ...castleMoveProperties[Teams.Black] };
+
       functionTimes.savingCastleMoves += Date.now() - castleTimeStart;
 
       const makeMoveStart = Date.now();
@@ -198,15 +223,14 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       functionTimes.undoingMove += Date.now() - undoMoveStart;
 
       // Update castle state
-      if (updateCastle) {
-        castleMoveProperties[Teams.White] = previousCastleState[Teams.White];
-        castleMoveProperties[Teams.Black] = previousCastleState[Teams.Black];
-      }
+      castleMoveProperties[Teams.White] = previousWhiteCastle;
+      castleMoveProperties[Teams.Black] = previousBlackCastle;
 
       // Update best move
       if (!nextEval) return null;
 
-      if (depth === currentDepth) currentTopMoves.push({ move: orderedMoves[i].move, score: nextEval.score });
+      // Prevent AI from losing king (it thinks trading kings is an even trade but it's not how it should work)
+      if (WhiteKing.length === 0) continue;
 
       if (nextEval.score > bestMove.score) {
         bestMove.score = nextEval.score;
@@ -223,6 +247,7 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       alpha = Math.max(alpha, bestMove.score);
       if (beta <= alpha) break;
     }
+
     return bestMove;
   }
 
@@ -237,7 +262,8 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
     let bestMove = { score: Infinity, move: { from: -1, to: -1 } };
 
     const moveStart = Date.now();
-    const moves = getAllAvailableMovesTest(Teams.Black);
+    // const moves = getAllAvailableMovesTest(Teams.Black);
+    const moves = getAvailableMovesFor(Teams.Black);
     functionTimes.getMoves += Date.now() - moveStart;
 
     if (moves.length === 0) {
@@ -246,7 +272,7 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
     }
 
     const orderMovesStart = Date.now();
-    const orderedMoves = orderMovesTest(moves, depth === currentDepth ? previousTopMoves : []);
+    const orderedMoves = orderMovesTest(moves, previousBestMove, isMax, depth);
     functionTimes.orderMoves += Date.now() - orderMovesStart;
 
     bestMove.move = moves[0];
@@ -254,13 +280,12 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
     for (let i = 0; i < orderedMoves.length; i++) {
       const { from, to, castle, enPassant, promoteTo } = orderedMoves[i].move;
 
-      const updateCastle = castle || board[from] === King || board[from] === Rook;
-
       // Save the piece that is being captured (if any)
       const capturedPiece = board[to];
 
       const castleTimeStart = Date.now();
-      const previousCastleState = updateCastle ? JSON.parse(JSON.stringify(castleMoveProperties)) : null;
+      const previousWhiteCastle = { ...castleMoveProperties[Teams.White] };
+      const previousBlackCastle = { ...castleMoveProperties[Teams.Black] };
       functionTimes.savingCastleMoves += Date.now() - castleTimeStart;
 
       const makeMoveStart = Date.now();
@@ -274,15 +299,14 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       functionTimes.undoingMove += Date.now() - undoMoveStart;
 
       // Update castle properties
-      if (updateCastle) {
-        castleMoveProperties[Teams.White] = previousCastleState[Teams.White];
-        castleMoveProperties[Teams.Black] = previousCastleState[Teams.Black];
-      }
+      castleMoveProperties[Teams.White] = previousWhiteCastle;
+      castleMoveProperties[Teams.Black] = previousBlackCastle;
 
       // Update best move
       if (!nextEval) return null;
 
-      if (depth === currentDepth) currentTopMoves.push({ move: orderedMoves[i].move, score: nextEval.score });
+      // Prevent AI from losing king (it thinks trading kings is an even trade but it's not how it should work)
+      if (BlackKing.length === 0) continue;
 
       if (nextEval.score < bestMove.score) {
         bestMove.score = nextEval.score;
@@ -300,6 +324,8 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       if (beta <= alpha) break;
     }
 
+    // Sort the moves
+    // moveList.sort((a, b) => a.score - b.score);
     return bestMove;
   }
 }

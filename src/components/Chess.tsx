@@ -1,8 +1,6 @@
-import React, { useEffect } from "react";
-import { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Store } from "../App";
 import { board, Move, Queen } from "../board";
-import { depthTimes, functionTimes } from "../game/ai/minimax";
 import useAITest from "../hooks/game/useAI";
 import useMoveUpdater from "../hooks/game/useMoveUpdater";
 import usePiecePromotion from "../hooks/game/usePiecePromotion";

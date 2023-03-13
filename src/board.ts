@@ -1,5 +1,5 @@
-import getAvailableMovesTest, { squareIsAttacked } from "./game/getAvailableMoves";
-import { PiecesType, PieceType, Teams } from "./properties";
+import { getAvailableMoves, squareIsAttacked } from "./game/getAvailableMoves";
+import { PiecesType, Teams } from "./properties";
 
 // prettier-ignore
 // Keep track of occupied squares so we don't have to loop through the board
@@ -339,6 +339,8 @@ export function updatePiecePositions(
       if (from === 7 || from === 63) castleMoveProperties[team].rightRook = true;
     }
   }
+
+  // updateAvailableMoves({ from, to, castle, enPassant: doEnPassant, promoteTo: promotionPiece });
 }
 
 // When undoing, the from and to are given in reverse order from the move that was actually made
@@ -422,6 +424,8 @@ export function undoPiecePosition(
   // Update the occupied squares
   occupiedSquares[to] = team;
   occupiedSquares[from] = capturedPiece ? (team === Teams.White ? Teams.Black : Teams.White) : Teams.None;
+
+  // updateAvailableMoves({ from, to, castle, enPassant: doEnPassant, promoteTo: promotionPiece });
 }
 
 // This will only be called if there are no moves available
@@ -476,23 +480,20 @@ export async function setBoard(newBoard: string[][]) {
   }
 }
 
-// Keep track of the available moves so we can make it faster
-// This holds what spots are effected after each move so we only have to check those to update the available moves
-export const effectedSquareOffsets = {
-  Rook: { x: [1, 2, 3, 4, 5, 6, 7], y: [8, 16, 24, 32, 40, 48, 56] },
-  Bishop: { x: [9, 18, 27, 36, 45, 54, 63], y: [7, 14, 21, 28, 35, 42, 49] },
-  Queen: { x: [1, 2, 3, 4, 5, 6, 7, 9, 18, 27, 36, 45, 54, 63], y: [7, 14, 21, 28, 35, 42, 49, 8, 16, 24, 32, 40, 48, 56] },
-  Knight: { x: [17, 15, 10, 6, -6, -10, -15, -17], y: [0, 0, 0, 0, 0, 0, 0, 0] },
-  King: { x: [1, 9, 8, 7, -1, -9, -8, -7], y: [0, 0, 0, 0, 0, 0, 0, 0] },
-};
-
-const whiteAvailableMoves = [];
-const blackAvailableMoves = [];
-
-export function updateAvailableMoves(move: Move) {
-  // Update the move for the piece that was moved
-  const team = occupiedSquares[move.from];
-  const newMoves = getAvailableMovesTest(move.to, team);
-
-  // Remove the old moves
+function getInitialAvailableMoves() {
+  const moves = [] as Move[][];
+  new Array(64).fill(0).forEach((_, i) => moves.push(getAvailableMoves(i, occupiedSquares[i])));
+  return moves;
 }
+
+// export function getBlackMoves() {
+//   const moves = [] as Move[];
+//   getBlackPieces().forEach((square) => moves.push(...getAvailableMovesTest(square, Teams.Black)));
+//   return moves;
+// }
+
+// export function getWhiteMoves() {
+//   const moves = [] as Move[];
+//   getWhitePieces().forEach((square) => moves.push(...getAvailableMovesTest(square, Teams.White)));
+//   return moves;
+// }

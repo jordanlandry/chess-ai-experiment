@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { board, getTeam, Move } from "../../board";
-import getAvailableMovesTest, { getAllAvailableMovesTest } from "../../game/getAvailableMoves";
+import { getAvailableMoves, getAvailableMovesFor } from "../../game/getAvailableMoves";
 import getMouseSpot from "../../helpers/getMouseSpot";
 import makeMove from "../../helpers/makeMove";
 import testFunctionSpeed from "../../helpers/testFunctionSpeed";
@@ -34,7 +34,7 @@ export default function useMouseDown(
         const piece = board[position];
         const team = getTeam(piece);
 
-        const moves = getAvailableMovesTest(position, team);
+        const moves = getAvailableMoves(position, team);
         setAvailableMoves(moves);
       }
 
@@ -44,7 +44,7 @@ export default function useMouseDown(
           // Selecting a new piece
           if (getTeam(board[position]) === currentTurn) {
             setSelectedPiece(position);
-            return getAvailableMovesTest(position, getTeam(board[position]));
+            return getAvailableMoves(position, getTeam(board[position]));
           }
 
           // If you selecting a square that's not a piece, deselect the piece, and move the piece if it's a valid move

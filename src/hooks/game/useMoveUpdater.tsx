@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { board, updateLastMoveProps, inStalemate, lastMove, Move } from "../../board";
-import getAvailableMovesTest, { getAllAvailableMovesTest } from "../../game/getAvailableMoves";
+import { getAvailableMovesFor } from "../../game/getAvailableMoves";
 import { EndGameState, Teams, WinStates } from "../../properties";
 
 export default function useMoveUpdater(
@@ -20,7 +20,7 @@ export default function useMoveUpdater(
     // To implement it properly, I'd have to add a paramter to many different functions and it would be a mess
     updateLastMoveProps.updateLastMove = false;
 
-    const availableMoves = getAllAvailableMovesTest(currentTurn);
+    const availableMoves = getAvailableMovesFor(currentTurn);
     if (availableMoves.length === 0) {
       const staleMate = inStalemate(currentTurn);
 

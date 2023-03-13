@@ -1,13 +1,11 @@
 import { createContext, useState } from "react";
 import useLocalStorage from "./hooks/useLocalStorage";
 
-import React from "react";
 import Board from "./components/board/Board";
 import Chess from "./components/Chess";
-import Pieces from "./components/Pieces";
 import MainMenu from "./components/menu/MainMenu";
+import Pieces from "./components/Pieces";
 import Puzzle from "./components/puzzle/Puzzle";
-import { Teams } from "./properties";
 
 export const Store = createContext<any>(null);
 export enum GameState {
@@ -26,8 +24,6 @@ function App() {
   const [score, setScore] = useState(0);
   const [startPuzzle, setStartPuzzle] = useState(false);
 
-  const [rerender, forceRerender] = useState(0);
-
   const store = {
     boardColor,
     setBoardColor,
@@ -41,7 +37,6 @@ function App() {
     setScore,
     startPuzzle,
     setStartPuzzle,
-    forceRerender,
   };
 
   return (

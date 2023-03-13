@@ -31,7 +31,7 @@
 // I need to keep track of what squares are being attacked by each piece in order to determine available moves very quickly
 
 import { Move, pieceType } from "../board";
-import getAvailableMovesTest from "../game/getAvailableMoves";
+import getAvailableMoves from "../game/getAvailableMoves";
 import testFunctionSpeed from "../helpers/testFunctionSpeed";
 import { Teams } from "../properties";
 
@@ -233,7 +233,7 @@ export function updateAvailableMoves(move: Move) {
   availableMoves[move.to] = new Set();
 
   // Get the available moves of the new piece
-  const newAvailableMoves = getAvailableMovesTest(move.to, testBoard[move.to] > 0 ? Teams.White : Teams.Black);
+  const newAvailableMoves = getAvailableMoves(move.to, testBoard[move.to] > 0 ? Teams.White : Teams.Black);
   newAvailableMoves.forEach((pos) => availableMoves[move.to].add(pos.to));
 
   // Update the available moves of the pieces that you unblocked with your move
@@ -245,7 +245,7 @@ export function updateAvailableMoves(move: Move) {
 
   const unblockedPiecesPos = [...unblockedRooksPos, ...unblockedBishopsPos, ...unblockedKnights, ...unblockedKing, ...unblockedPawns];
   for (const pos of unblockedPiecesPos) {
-    const newAvailableMoves = getAvailableMovesTest(pos, testBoard[pos] > 0 ? Teams.White : Teams.Black);
+    const newAvailableMoves = getAvailableMoves(pos, testBoard[pos] > 0 ? Teams.White : Teams.Black);
     newAvailableMoves.forEach((move) => availableMoves[pos].add(move.to));
   }
 
@@ -262,7 +262,7 @@ export function updateAvailableMoves(move: Move) {
     // Reset the old available moves of that piece
     availableMoves[pos] = new Set();
 
-    const newAvailableMoves = getAvailableMovesTest(pos, testBoard[pos] > 0 ? Teams.White : Teams.Black);
+    const newAvailableMoves = getAvailableMoves(pos, testBoard[pos] > 0 ? Teams.White : Teams.Black);
     newAvailableMoves.forEach((move) => availableMoves[pos].add(move.to));
   }
 }

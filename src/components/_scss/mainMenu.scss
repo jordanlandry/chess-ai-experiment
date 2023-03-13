@@ -1,3 +1,9 @@
+.main-menu-outter {
+  // This is to make the menu full width regardless if there's a scrollbar or not
+  // This prevents the width from shifting when the scrollbar appears and disappears
+  width: 100vw;
+}
+
 .main-menu-wrapper {
   margin: 10px auto;
   width: min(80%, 600px);
