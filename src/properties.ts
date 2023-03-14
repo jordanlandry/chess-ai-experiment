@@ -198,3 +198,9 @@ export const kingPositions = {
 } as { [key: string]: { x: number; y: number } };
 
 export default properties;
+
+export enum GameStates {
+  EarlyGame = "early",
+  MidGame = "mid",
+  EndGame = "end",
+}

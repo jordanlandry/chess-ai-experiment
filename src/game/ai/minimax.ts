@@ -1,8 +1,29 @@
-import { BlackKing, board, castleMoveProperties, getKey, inStalemate, Move, pieceCounts, totalNumberOfPieces, WhiteKing } from "../../board";
+import {
+  BlackBishops,
+  BlackKing,
+  BlackKnights,
+  BlackPawns,
+  BlackQueens,
+  BlackRooks,
+  board,
+  castleMoveProperties,
+  getKey,
+  inStalemate,
+  Move,
+  pieceCounts,
+  totalNumberOfPieces,
+  WhiteBishops,
+  WhiteKing,
+  WhiteKnights,
+  WhitePawns,
+  WhiteQueens,
+  WhiteRooks,
+} from "../../board";
 import makeMove from "../../helpers/makeMove";
-import { PiecesType, Teams } from "../../properties";
+import { GameStates, PiecesType, Teams } from "../../properties";
 import { getAvailableMovesFor } from "../getAvailableMoves";
 import orderMovesTest from "./orderMoves";
+import { positionalScoreMaps } from "./positionalScoreMaps";
 
 export interface Minimax {
   score: number;
@@ -52,25 +73,68 @@ export const minimaxProperties = {
   movesPercent: 1,
 };
 
+function findDoubledPawns() {
+  let score = 0;
+
+  BlackPawns.forEach((pos) => {
+    if (BlackPawns.includes(pos - 8)) score += 1;
+  });
+
+  WhitePawns.forEach((pos) => {
+    if (WhitePawns.includes(pos + 8)) score -= 1;
+  });
+
+  return score;
+}
+
+// piece count to gameState
+function getGameState() {
+  if (totalNumberOfPieces > 26) return GameStates.EarlyGame;
+  if (totalNumberOfPieces > 12) return GameStates.MidGame;
+  return GameStates.EndGame;
+}
+
+function getPositionalScore() {
+  let score = findDoubledPawns();
+
+  const gameState = getGameState();
+
+  BlackPawns.forEach((pos) => (score -= positionalScoreMaps[gameState].pawn[63 - pos]));
+  BlackBishops.forEach((pos) => (score -= positionalScoreMaps[gameState].bishop[63 - pos]));
+  BlackQueens.forEach((pos) => (score -= positionalScoreMaps[gameState].queen[63 - pos]));
+  BlackRooks.forEach((pos) => (score -= positionalScoreMaps[gameState].rook[63 - pos]));
+  BlackKnights.forEach((pos) => (score -= positionalScoreMaps[gameState].knight[63 - pos]));
+  BlackKing.forEach((pos) => (score -= positionalScoreMaps[gameState].king[63 - pos]));
+
+  WhitePawns.forEach((pos) => (score += positionalScoreMaps[gameState].pawn[pos]));
+  WhiteBishops.forEach((pos) => (score += positionalScoreMaps[gameState].bishop[pos]));
+  WhiteQueens.forEach((pos) => (score += positionalScoreMaps[gameState].queen[pos]));
+  WhiteRooks.forEach((pos) => (score += positionalScoreMaps[gameState].rook[pos]));
+  WhiteKnights.forEach((pos) => (score += positionalScoreMaps[gameState].knight[pos]));
+  WhiteKing.forEach((pos) => (score += positionalScoreMaps[gameState].king[pos]));
+
+  return score / 10;
+}
+
 function evaluateBoard() {
   const startTime = Date.now();
   let score = 0;
 
   // White Team
-  score += pieceCounts[Teams.White][PiecesType.Pawn] * 10;
-  score += pieceCounts[Teams.White][PiecesType.Knight] * 30;
-  score += pieceCounts[Teams.White][PiecesType.Bishop] * 30;
-  score += pieceCounts[Teams.White][PiecesType.Rook] * 50;
-  score += pieceCounts[Teams.White][PiecesType.Queen] * 90;
-  score += pieceCounts[Teams.White][PiecesType.King] * 900;
+  score += pieceCounts[Teams.White][PiecesType.Pawn] * 1;
+  score += pieceCounts[Teams.White][PiecesType.Knight] * 3;
+  score += pieceCounts[Teams.White][PiecesType.Bishop] * 3;
+  score += pieceCounts[Teams.White][PiecesType.Rook] * 5;
+  score += pieceCounts[Teams.White][PiecesType.Queen] * 9;
 
   // Black Team
-  score -= pieceCounts[Teams.Black][PiecesType.Pawn] * 10;
-  score -= pieceCounts[Teams.Black][PiecesType.Knight] * 30;
-  score -= pieceCounts[Teams.Black][PiecesType.Bishop] * 30;
-  score -= pieceCounts[Teams.Black][PiecesType.Rook] * 50;
-  score -= pieceCounts[Teams.Black][PiecesType.Queen] * 90;
-  score -= pieceCounts[Teams.Black][PiecesType.King] * 900;
+  score -= pieceCounts[Teams.Black][PiecesType.Pawn] * 1;
+  score -= pieceCounts[Teams.Black][PiecesType.Knight] * 3;
+  score -= pieceCounts[Teams.Black][PiecesType.Bishop] * 3;
+  score -= pieceCounts[Teams.Black][PiecesType.Rook] * 5;
+  score -= pieceCounts[Teams.Black][PiecesType.Queen] * 9;
+
+  score += getPositionalScore();
 
   functionTimes.evaluateBoard += Date.now() - startTime;
 
@@ -85,34 +149,33 @@ const MAX_TABLE_SIZE = 128_000;
 let tableSize = 0;
 let table = {} as { [key: string]: Table };
 
-const maxTime = 2500;
+export const maxTime = 3000;
 let startTime = 0;
 let previousBestMove = { from: -1, to: -1 };
 
 export interface PreviousEvals {
-  max: {
-    [key: number]: {
-      score: number;
-      move: Move;
-    }[];
-  };
+  [key: number]: {
+    max: {
+      [key: number]: {
+        score: number;
+        move: Move;
+      }[];
+    };
 
-  min: {
-    [key: number]: {
-      score: number;
-      move: Move;
-    }[];
+    min: {
+      [key: number]: {
+        score: number;
+        move: Move;
+      }[];
+    };
   };
 }
 
-export let previousBestMoves = {
-  max: {},
-  min: {},
-} as PreviousEvals;
+export let previousBestMoves = {} as PreviousEvals;
 
 export let currentDepth = 1;
 export default function getBestMoveTest(aiTeam: Teams) {
-  callingFromAi.searchForCheck = true;
+  callingFromAi.searchForCheck = false;
   startTime = Date.now();
 
   currentDepth = 1;
@@ -131,7 +194,7 @@ export default function getBestMoveTest(aiTeam: Teams) {
     const start = Date.now();
 
     table = {};
-    const next = minimax(currentDepth, -Infinity, Infinity, aiTeam === Teams.White);
+    const next = minimax(currentDepth, -checkMateScore, checkMateScore, aiTeam === Teams.White);
 
     if (!next) break;
 
@@ -144,7 +207,6 @@ export default function getBestMoveTest(aiTeam: Teams) {
     if (currentDepth >= minimaxProperties.maxDepth) break;
   }
 
-  console.log(previousBestMoves.min);
   console.log("Depth: " + (currentDepth - 1));
 
   callingFromAi.searchForCheck = false;
@@ -154,6 +216,10 @@ export default function getBestMoveTest(aiTeam: Teams) {
 // Depth for quiescence search (don't wanna use quiscence in the name of the variable)
 // Cuz silly word
 const qDepth = 5;
+
+// Not infinity so I can set inifinity as illegal move
+const checkMateScore = 100_000_000;
+// const illegalScore = Math.random();
 
 const nullMoveR = 3;
 const nullMoveAllowed = (isMax: boolean, depth: number) => totalNumberOfPieces > 10 && !isMax && depth > nullMoveR;
@@ -170,19 +236,13 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
 
   // Maximizer
   if (isMax) {
-    // Null Move Pruning
-    if (nullMoveAllowed(isMax, depth)) {
-      const score = minimax(depth - nullMoveR - 1, alpha, beta, false)?.score ?? 0;
-      if (score >= beta) return { score, move: { from: -1, to: -1 } };
-    }
-
     const boardHashingStart = Date.now();
     const boardHash = getKey();
     functionTimes.boardHashing += Date.now() - boardHashingStart;
 
     if (table[boardHash] && depth === table[boardHash].depth) return table[boardHash];
 
-    const bestMove = { score: -Infinity, move: { from: -1, to: -1 } };
+    const bestMove = { score: -checkMateScore, move: { from: -1, to: -1 } };
 
     const moveStart = Date.now();
     const moves = getAvailableMovesFor(Teams.White);
@@ -190,7 +250,7 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
 
     if (moves.length === 0) {
       if (inStalemate(Teams.White)) return { score: 0, move: { from: -1, to: -1 } };
-      return bestMove;
+      return { ...bestMove, score: -checkMateScore };
     }
 
     const orderMovesStart = Date.now();
@@ -230,7 +290,8 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
       if (!nextEval) return null;
 
       // Prevent AI from losing king (it thinks trading kings is an even trade but it's not how it should work)
-      if (WhiteKing.length === 0) continue;
+      // if (WhiteKing.length === 0 || BlackKing.length === 0) continue;
+      // if (nextEval.score === illegalScore) continue;
 
       if (nextEval.score > bestMove.score) {
         bestMove.score = nextEval.score;
@@ -242,6 +303,8 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
         table[boardHash] = { ...bestMove, depth };
         tableSize++;
       }
+
+      // previousBestMoves[currentDepth].max[depth].push({ score: nextEval.score, move: orderedMoves[i].move });
 
       // Update alpha
       alpha = Math.max(alpha, bestMove.score);
@@ -259,7 +322,7 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
 
     if (table[boardHash] && depth === table[boardHash].depth) return table[boardHash];
 
-    let bestMove = { score: Infinity, move: { from: -1, to: -1 } };
+    let bestMove = { score: checkMateScore, move: { from: -1, to: -1 } };
 
     const moveStart = Date.now();
     // const moves = getAllAvailableMovesTest(Teams.Black);
@@ -268,7 +331,7 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
 
     if (moves.length === 0) {
       if (inStalemate(Teams.Black)) return { score: 0, move: { from: -1, to: -1 } };
-      return bestMove;
+      return { ...bestMove, score: checkMateScore };
     }
 
     const orderMovesStart = Date.now();
@@ -304,11 +367,12 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
 
       // Update best move
       if (!nextEval) return null;
+      // if (nextEval.score === illegalScore) continue;
 
       // Prevent AI from losing king (it thinks trading kings is an even trade but it's not how it should work)
-      if (BlackKing.length === 0) continue;
+      // if (WhiteKing.length === 0 || BlackKing.length === 0) continue;
 
-      if (nextEval.score < bestMove.score) {
+      if (nextEval.score < bestMove.score || bestMove.move.from === -1 || nextEval.move.from === -1) {
         bestMove.score = nextEval.score;
         bestMove.move = orderedMoves[i].move;
       }
@@ -319,13 +383,25 @@ function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Mi
         tableSize++;
       }
 
+      // Add previous move
+      // if (!previousBestMoves[currentDepth]) {
+      //   previousBestMoves[currentDepth] = {
+      //     max: {},
+      //     min: {},
+      //   };
+      // }
+
+      // if (!previousBestMoves[currentDepth].min[depth]) {
+      //   previousBestMoves[currentDepth].min[depth] = [];
+      // }
+
+      // previousBestMoves[currentDepth].min[depth].push({ score: nextEval.score, move: orderedMoves[i].move });
+
       // Update beta
       beta = Math.min(beta, bestMove.score);
       if (beta <= alpha) break;
     }
 
-    // Sort the moves
-    // moveList.sort((a, b) => a.score - b.score);
     return bestMove;
   }
 }

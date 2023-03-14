@@ -339,8 +339,6 @@ export function updatePiecePositions(
       if (from === 7 || from === 63) castleMoveProperties[team].rightRook = true;
     }
   }
-
-  // updateAvailableMoves({ from, to, castle, enPassant: doEnPassant, promoteTo: promotionPiece });
 }
 
 // When undoing, the from and to are given in reverse order from the move that was actually made

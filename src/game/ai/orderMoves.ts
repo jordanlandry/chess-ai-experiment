@@ -3,22 +3,9 @@ import { currentDepth, Minimax, minimaxProperties, previousBestMoves } from "./m
 
 export default function orderMovesTest(moves: Move[], previousBestMove: Move, isMax: boolean, depth: number) {
   // Sort previousBestMoves
-
-  // if (!isMax) {
-  //   if (previousBestMoves.min[currentDepth]) {
-  //     // Remove moves that are not in the moves array
-  //     previousBestMoves.min[currentDepth] = previousBestMoves.min[currentDepth].filter((move) => {
-  //       return moves.some((m) => {
-  //         return m.from === move.move.from && m.to === move.move.to;
-  //       });
-  //     });
-
-  //     previousBestMoves.min[currentDepth].sort((a, b) => {
-  //       return a.score - b.score;
-  //     });
-
-  //     return previousBestMoves.min[currentDepth];
-  //   }
+  // if (depth === currentDepth - 1) {
+  //   if (isMax) previousBestMoves[currentDepth].max[depth].sort((a, b) => b.score - a.score);
+  //   if (!isMax) previousBestMoves[currentDepth].min[depth].sort((a, b) => a.score - b.score);
   // }
 
   const orderedMoves = [] as Minimax[];

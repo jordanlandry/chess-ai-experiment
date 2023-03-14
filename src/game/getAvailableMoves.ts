@@ -9,6 +9,7 @@ import {
   board,
   castleMoveProperties,
   enPassant,
+  getBlackPieces,
   INITIAL_BLACK_PAWN_Y,
   INITIAL_WHITE_PAWN_Y,
   King,
@@ -29,6 +30,7 @@ import {
 } from "../board";
 import makeMove from "../helpers/makeMove";
 import { PiecesType, Teams } from "../properties";
+import { getPieceType } from "../Testing/testBoard";
 import { callingFromAi } from "./ai/minimax";
 
 export function getAvailableMoves(pos: number, team: Teams) {
@@ -596,4 +598,51 @@ export function squareIsAttacked(pos: number, attackedBy: Teams) {
   }
 
   return false;
+}
+
+export const maxNumberOfMoves = {
+  pawn: 4,
+  knight: 8,
+  bishop: 13,
+  rook: 14,
+  queen: 27,
+  king: 8,
+};
+
+// I want to calculate one move at a time for the AI, so when I prune, it saves more calculations
+export function getNextMove(pieces: number[], index: number) {
+  const move = { from: -1, to: -1 };
+
+  let i = 0;
+  while (move.from === -1 || i < maxNumberOfMoves.pawn) {
+    getPawnMove(Teams.Black, pieces[index], i);
+    i++;
+  }
+
+  return move;
+}
+
+export function getPawnMove(team: Teams, pos: number, index: number) {
+  // For pawns the index goes
+  // 0: look upleft, 1: look upright, 2: look up1, 3: look up2 (direction depends on team)
+
+  if (team === Teams.Black) {
+    if (index === 0) {
+      if (board[pos - 9] === 0) return { from: -1, to: -1 };
+      if (board[pos - 9] > 0) return { from: pos, to: pos - 9 };
+    }
+
+    if (index === 1) {
+      if (board[pos - 7] === 0) return { from: -1, to: -1 };
+      if (board[pos - 7] > 0) return { from: pos, to: pos - 7 };
+    }
+
+    if (index === 2) {
+      if (board[pos - 8] === 0) return { from: pos, to: pos - 8 };
+    }
+
+    if (index === 3) {
+      if (board[pos - 16] === 0) return { from: pos, to: pos - 16 };
+    }
+  }
 }

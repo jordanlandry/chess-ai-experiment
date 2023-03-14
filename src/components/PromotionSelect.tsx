@@ -36,10 +36,6 @@ export default function PromotionSelect({ index, team, setPromotionPiece, setPro
     height: squareSize / 2 + "px",
   };
 
-  // const pieces = ["q", "r", "b", "n"];
-
-  console.log();
-
   const pieces = [
     { name: "q", val: Queen },
     { name: "r", val: Rook },

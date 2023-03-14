@@ -1,5 +1,5 @@
 import React from "react";
-import { depthTimes, functionTimes } from "../game/ai/minimax";
+import { depthTimes, functionTimes, maxTime } from "../game/ai/minimax";
 
 export default function FunctionTimeTable() {
   return (
@@ -18,7 +18,7 @@ export default function FunctionTimeTable() {
               <tr key={i}>
                 <td key={i}>{key}</td>
                 <td>{functionTimes[key]}ms</td>
-                <td>{((functionTimes[key] / 2500) * 100).toLocaleString()}%</td>
+                <td>{((functionTimes[key] / maxTime) * 100).toLocaleString()}%</td>
               </tr>
             );
           })}
@@ -39,7 +39,7 @@ export default function FunctionTimeTable() {
               <tr key={i}>
                 <td>Depth {i + 1}</td>
                 <td>{time}ms</td>
-                <td>{((time / 2500) * 100).toLocaleString()}%</td>
+                <td>{((time / maxTime) * 100).toLocaleString()}%</td>
               </tr>
             );
           })}

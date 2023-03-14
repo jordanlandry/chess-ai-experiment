@@ -82,7 +82,7 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
     }
   }, [moveHistory]);
 
-  const showDebug = useSecretCode("debug");
+  const showDebug = !useSecretCode("debug");
 
   return (
     <div>
