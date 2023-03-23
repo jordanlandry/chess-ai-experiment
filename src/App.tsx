@@ -6,12 +6,14 @@ import Chess from "./components/Chess";
 import MainMenu from "./components/menu/MainMenu";
 import Pieces from "./components/Pieces";
 import Puzzle from "./components/puzzle/Puzzle";
+import TestElement from "./Testing/TestElement";
 
 export const Store = createContext<any>(null);
 export enum GameState {
   Menu,
   Bot,
   Puzzle,
+  Testing,
 }
 
 function App() {
@@ -59,6 +61,10 @@ function App() {
                 <Pieces />
               </>
             ) : null}
+          </>
+        ) : gameState === GameState.Testing ? (
+          <>
+            <TestElement />
           </>
         ) : null}
       </Store.Provider>

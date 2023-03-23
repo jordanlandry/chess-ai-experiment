@@ -84,10 +84,10 @@ function pushIfLegal(moves: Move[], move: Move, team: Teams) {
   // By doing this, we can avoid having to run this function for every single move for the AI, and
   // only have to prevent illegal moves from being made by the user
 
-  if (callingFromAi.searchForCheck) {
-    moves.push(move);
-    return;
-  }
+  // if (callingFromAi.searchForCheck) {
+  // moves.push(move);
+  // return;
+  // }
 
   const attackingTeam = team === Teams.White ? Teams.Black : Teams.White;
 
@@ -117,7 +117,7 @@ function occupiedBy(pos: number, team: Teams) {
 }
 
 // ~~~ PAWNS ~~~ \\
-function whitePawn(moves: Move[], pos: number) {
+export function whitePawn(moves: Move[], pos: number) {
   const x = pos % 8;
   const y = Math.floor(pos / 8);
 
