@@ -5,6 +5,8 @@ import useAITest from "../hooks/game/useAI";
 import useMoveUpdater from "../hooks/game/useMoveUpdater";
 import usePiecePromotion from "../hooks/game/usePiecePromotion";
 import useMouseDown from "../hooks/mouse/useMouseDown";
+import useMouseMove from "../hooks/mouse/useMouseMove";
+import useMouseUp from "../hooks/mouse/useMouseUp3";
 import usePieceCenteringTest from "../hooks/usePieceCentering";
 import useSecretCode from "../hooks/useSecretKey";
 import { EndGameState, Teams, WinStates } from "../properties";
@@ -13,6 +15,7 @@ import FunctionTimeTable from "./FunctionTimeTable";
 import GameOverScreen from "./GameOverScreen";
 import AvailableCapture from "./overlays/AvailableCapture";
 import AvailableMove from "./overlays/AvailableMove";
+import HoveredSquare from "./overlays/HoveredSquare";
 import LastMove from "./overlays/LastMove";
 import SelectedPiece from "./overlays/SelectedPiece";
 import PromotionSelect from "./PromotionSelect";
@@ -51,17 +54,25 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
   const [promotion, setPromotion] = useState<Move | null>(null);
 
   // Mouse hooks
+  const [hoveredPosition, setHoveredPosition] = useState<{ x: number; y: number } | null>(null);
+
   const [mouseDown, setMouseDown] = useState(false);
 
-  const { selectedPiece, setSelectedPiece } = useMouseDown(
-    changingStyles!,
+  const { selectedPiece, setSelectedPiece } = useMouseDown({
+    changingStyles,
     promotionPosition,
     currentTurn,
     setPromotionPosition,
     setAvailableMoves,
     setCurrentTurn,
-    setPromotion
-  );
+    setPromotion,
+    setMouseDown,
+    mouseDown,
+  });
+
+  useMouseUp({ setMouseDown, availableMoves, selectedPiece, setCurrentTurn, setAvailableMoves, setSelectedPiece, mouseDown, setHoveredPosition });
+
+  useMouseMove({ mouseDown, selectedPiece, setHoveredPosition });
 
   useMoveUpdater(currentTurn, setMoveHistory, setWinState, setGameOverOpen);
 
@@ -82,7 +93,7 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
     }
   }, [moveHistory]);
 
-  const showDebug = !useSecretCode("debug");
+  const showDebug = useSecretCode("debug");
 
   return (
     <div>
@@ -111,6 +122,8 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
         setPromotionPosition={setPromotionPosition}
         setPromotionPiece={setPromotionPiece}
       />
+
+      {hoveredPosition !== null ? <HoveredSquare position={hoveredPosition} /> : null}
 
       {showDebug ? (
         <SideTab right={false}>

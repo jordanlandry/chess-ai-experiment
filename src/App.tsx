@@ -21,7 +21,7 @@ function App() {
   const [pieceStyle, setPieceStyle] = useLocalStorage("chess_piece_style", "cartoon");
   const [changingStyles, setChangingStyles] = useState(false);
 
-  const [gameState, setGameState] = useState(GameState.Menu);
+  const [gameState, setGameState] = useState(GameState.Bot);
 
   const [score, setScore] = useState(0);
   const [startPuzzle, setStartPuzzle] = useState(false);

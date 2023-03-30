@@ -1,24 +1,37 @@
 import { useEffect } from "react";
 import clamp from "../../helpers/clamp";
 import getBoardBound from "../../helpers/getBoardBound";
-import { PieceType } from "../../properties";
+import getMouseSpot from "../../helpers/getMouseSpot";
 import useLoad from "../useLoad";
 
-export default function useMouseMove(mouseDown: boolean, selectedPiece: PieceType) {
+type Props = {
+  mouseDown: boolean;
+  selectedPiece: number | null;
+  setHoveredPosition: React.Dispatch<React.SetStateAction<{ x: number; y: number } | null>>;
+};
+export default function useMouseMove({ mouseDown, selectedPiece, setHoveredPosition }: Props) {
   const loaded = useLoad();
+
   useEffect(() => {
     if (!loaded) return;
     const handleMove = (e: MouseEvent) => {
-      // const mouseDown = getCurrentValue(setMouseDown);
       if (!mouseDown) return;
 
-      // const selectedPiece = getCurrentValue(setSelectedPiece) as SelectedPiece;
+      // Can't do !selectedPiece because 0 is a valid piece
+      if (selectedPiece === null) return;
 
-      if (!selectedPiece) return;
+      const position = getMouseSpot(e);
+
+      if (position) {
+        const x = position % 8;
+        const y = Math.floor(position / 8);
+
+        setHoveredPosition({ x, y });
+      }
 
       const { boardLeft, boardTop, boardWidth } = getBoardBound();
 
-      const pieceElement = document.getElementById(selectedPiece.id.toString());
+      const pieceElement = document.getElementById(selectedPiece.toString());
       if (!pieceElement) return;
 
       const left = clamp(
@@ -36,7 +49,7 @@ export default function useMouseMove(mouseDown: boolean, selectedPiece: PieceTyp
       pieceElement.style.transition = "none";
       pieceElement.style.left = `${left}px`;
       pieceElement.style.top = `${top}px`;
-      pieceElement.style.zIndex = "100";
+      pieceElement.style.zIndex = "1000";
     };
 
     document.addEventListener("mousemove", handleMove);

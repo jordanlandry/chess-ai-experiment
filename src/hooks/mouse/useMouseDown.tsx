@@ -1,20 +1,32 @@
 import { useEffect, useState } from "react";
 import { board, getTeam, Move } from "../../board";
-import { getAvailableMoves, getAvailableMovesFor } from "../../game/getAvailableMoves";
+import { getAvailableMoves } from "../../game/getAvailableMoves";
 import getMouseSpot from "../../helpers/getMouseSpot";
 import makeMove from "../../helpers/makeMove";
-import testFunctionSpeed from "../../helpers/testFunctionSpeed";
 import { Teams } from "../../properties";
 
-export default function useMouseDown(
-  changingStyles: boolean,
-  promotionPosition: number,
-  currentTurn: Teams,
-  setPromotionPosition: React.Dispatch<React.SetStateAction<number>>,
-  setAvailableMoves: React.Dispatch<React.SetStateAction<Move[]>>,
-  setCurrentTurn: React.Dispatch<React.SetStateAction<Teams>>,
-  setPromotion: React.Dispatch<React.SetStateAction<Move | null>>
-) {
+type Props = {
+  changingStyles: boolean;
+  promotionPosition: number;
+  currentTurn: Teams;
+  setPromotionPosition: React.Dispatch<React.SetStateAction<number>>;
+  setAvailableMoves: React.Dispatch<React.SetStateAction<Move[]>>;
+  setCurrentTurn: React.Dispatch<React.SetStateAction<Teams>>;
+  setPromotion: React.Dispatch<React.SetStateAction<Move | null>>;
+  setMouseDown: React.Dispatch<React.SetStateAction<boolean>>;
+  mouseDown: boolean;
+};
+export default function useMouseDown({
+  changingStyles,
+  promotionPosition,
+  currentTurn,
+  setPromotionPosition,
+  setAvailableMoves,
+  setCurrentTurn,
+  setPromotion,
+  setMouseDown,
+  mouseDown,
+}: Props) {
   const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
 
   useEffect(() => {
@@ -26,6 +38,7 @@ export default function useMouseDown(
       const position = getMouseSpot(e);
       if (position === null) return; // Have to have === null (instead of !position) because 0 is a valid position
 
+      // Selecting a piece
       if (selectedPiece === null) {
         if (getTeam(board[position]) !== currentTurn) return;
 
@@ -36,6 +49,10 @@ export default function useMouseDown(
 
         const moves = getAvailableMoves(position, team);
         setAvailableMoves(moves);
+
+        // I only want to set the mouse down, when a new piece is selected,
+        // Otherwise it will cause re-renders and other issues
+        setMouseDown(true);
       }
 
       // If you have a piece selected and you click somewhere
@@ -43,6 +60,7 @@ export default function useMouseDown(
         setAvailableMoves((prevMoves) => {
           // Selecting a new piece
           if (getTeam(board[position]) === currentTurn) {
+            setMouseDown(true);
             setSelectedPiece(position);
             return getAvailableMoves(position, getTeam(board[position]));
           }

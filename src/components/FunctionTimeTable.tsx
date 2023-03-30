@@ -34,7 +34,7 @@ export default function FunctionTimeTable() {
           </tr>
         </thead>
         <tbody>
-          {depthTimes.map((time, i) => {
+          {depthTimes.slice(0, 20).map((time, i) => {
             return (
               <tr key={i}>
                 <td>Depth {i + 1}</td>

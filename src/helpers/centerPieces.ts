@@ -19,5 +19,7 @@ export default function centerPieces() {
 
     piece.style.transition = properties.animationTimeMs + "ms";
     piece.style.display = "block";
+
+    piece.style.zIndex = "1";
   });
 }
