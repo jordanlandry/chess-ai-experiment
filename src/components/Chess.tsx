@@ -6,7 +6,7 @@ import useMoveUpdater from "../hooks/game/useMoveUpdater";
 import usePiecePromotion from "../hooks/game/usePiecePromotion";
 import useMouseDown from "../hooks/mouse/useMouseDown";
 import useMouseMove from "../hooks/mouse/useMouseMove";
-import useMouseUp from "../hooks/mouse/useMouseUp3";
+import useMouseUp from "../hooks/mouse/useMouseUp";
 import usePieceCenteringTest from "../hooks/usePieceCentering";
 import useSecretCode from "../hooks/useSecretKey";
 import { EndGameState, Teams, WinStates } from "../properties";
