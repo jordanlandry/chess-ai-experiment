@@ -22,7 +22,7 @@ export default function useMouseMove({ mouseDown, selectedPiece, setHoveredPosit
 
       const position = getMouseSpot(e);
 
-      if (position) {
+      if (position !== null) {
         const x = position % 8;
         const y = Math.floor(position / 8);
 

@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Store } from "../App";
-import { board, Move, Queen } from "../board";
+import { board, Move, Queen, readableBoard } from "../board";
 import useAITest from "../hooks/game/useAI";
 import useMoveUpdater from "../hooks/game/useMoveUpdater";
 import usePiecePromotion from "../hooks/game/usePiecePromotion";
@@ -70,10 +70,20 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
     mouseDown,
   });
 
-  useMouseUp({ setMouseDown, availableMoves, selectedPiece, setCurrentTurn, setAvailableMoves, setSelectedPiece, mouseDown, setHoveredPosition });
+  useMouseUp({
+    setMouseDown,
+    availableMoves,
+    selectedPiece,
+    setCurrentTurn,
+    setAvailableMoves,
+    setSelectedPiece,
+    mouseDown,
+    setHoveredPosition,
+    setPromotion,
+    setPromotionPosition,
+  });
 
   useMouseMove({ mouseDown, selectedPiece, setHoveredPosition });
-
   useMoveUpdater(currentTurn, setMoveHistory, setWinState, setGameOverOpen);
 
   useAITest(currentTurn, aiTeam, setCurrentTurn);

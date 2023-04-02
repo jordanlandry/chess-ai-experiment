@@ -224,6 +224,9 @@ const checkMateScore = 100_000_000;
 const nullMoveR = 3;
 const nullMoveAllowed = (isMax: boolean, depth: number) => totalNumberOfPieces > 10 && !isMax && depth > nullMoveR;
 
+// Number of top moves to save after each depth for the move ordering
+const numberOfTopMoves = 10;
+
 function minimax(depth: number, alpha: number, beta: number, isMax: boolean): Minimax | null {
   if (depth < 1) return { score: evaluateBoard(), move: { from: -1, to: -1 } };
 

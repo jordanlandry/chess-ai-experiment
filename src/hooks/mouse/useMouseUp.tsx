@@ -15,6 +15,8 @@ type Props = {
   setAvailableMoves: React.Dispatch<React.SetStateAction<Move[]>>;
   setSelectedPiece: React.Dispatch<React.SetStateAction<number | null>>;
   setHoveredPosition: React.Dispatch<React.SetStateAction<{ x: number; y: number } | null>>;
+  setPromotionPosition: React.Dispatch<React.SetStateAction<number>>;
+  setPromotion: React.Dispatch<React.SetStateAction<Move | null>>;
 };
 export default function useMouseUp({
   setMouseDown,
@@ -25,6 +27,8 @@ export default function useMouseUp({
   setSelectedPiece,
   mouseDown,
   setHoveredPosition,
+  setPromotionPosition,
+  setPromotion,
 }: Props) {
   useEffect(() => {
     const handleMouseUp = (e: MouseEvent) => {
@@ -41,6 +45,12 @@ export default function useMouseUp({
       const move = availableMoves.find((move) => move.to === index && move.from === selectedPiece);
 
       if (move) {
+        if (move.promoteTo) {
+          setPromotionPosition(move.to);
+          setPromotion(move);
+          return;
+        }
+
         makeMove(move.from, move.to, move.castle, move.enPassant, move.promoteTo);
         setCurrentTurn((prevTurn) => (prevTurn === Teams.White ? Teams.Black : Teams.White));
         setAvailableMoves([]);

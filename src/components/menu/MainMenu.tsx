@@ -44,6 +44,7 @@ function Main() {
   return (
     <>
       <h1>Jannin Chess</h1>
+      {/* <img src="../../assets/images/logo.png"></img> */}
       <button onClick={() => setMenuState(MenuState.Bot_Difficulty)}>Play Bot</button>
       <button onClick={() => setMenuState(MenuState.Puzzle)}>Puzzles</button>
       <button onClick={() => setMenuState(MenuState.Analyze)}>Analyze Moves</button>
