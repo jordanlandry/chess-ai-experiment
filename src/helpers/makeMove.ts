@@ -1,4 +1,15 @@
-import { board, getTeam, Move, pieceType, undoPiecePosition, updateBoard, updateOccupiedSquares, updatePiecePositions } from "../board";
+import {
+  board,
+  getTeam,
+  Move,
+  pieceType,
+  readableBoard,
+  undoPiecePosition,
+  updateBoard,
+  updateOccupiedSquares,
+  updatePiecePositions,
+  updateReadableBoard,
+} from "../board";
 import { Teams } from "../properties";
 
 // Psuedo will be true when we are not updating the state,
@@ -21,6 +32,16 @@ export default async function makeMove(
 
   // This is such a gross way to do this lol pls don't judge me 🙃
   if (!psuedo) {
+    // Play audio
+    // Pick an audio file based on the move made
+    // let file = "";
+    // if (castle) file = "castle.mp3";
+    // else if (board[to]) file = "capture.mp3";
+    // else file = "move-self.mp3";
+
+    // const audio = new Audio(`../assets/sounds/${file}`);
+    // audio.play();
+
     const previousPiece = document.getElementById(to.toString());
     if (previousPiece) previousPiece.remove();
 
@@ -65,4 +86,6 @@ export default async function makeMove(
 
   if (undo) undoPiecePosition(piece, team, from, to, castle, enPassant, promotionPiece, capturedPiece);
   else updatePiecePositions(piece, team, from, to, castle, enPassant, promotionPiece);
+
+  if (!psuedo) updateReadableBoard();
 }

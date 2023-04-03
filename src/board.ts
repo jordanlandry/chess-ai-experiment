@@ -97,10 +97,10 @@ export function calcXY(pos: number) {
 export const readableBoard = [
   ["r", "n", "b", "q", "k", "b", "n", "r"],
   ["p", "p", "p", "p", "p", "p", "p", "p"],
-  ["", "", "", "", "", "", "", ""],
-  ["", "", "", "", "", "", "", ""],
-  ["", "", "", "", "", "", "", ""],
-  ["", "", "", "", "", "", "", ""],
+  [" ", " ", " ", " ", " ", " ", " ", " "],
+  [" ", " ", " ", " ", " ", " ", " ", " "],
+  [" ", " ", " ", " ", " ", " ", " ", " "],
+  [" ", " ", " ", " ", " ", " ", " ", " "],
   ["P", "P", "P", "P", "P", "P", "P", "P"],
   ["R", "N", "B", "Q", "K", "B", "N", "R"],
 ];
@@ -234,7 +234,7 @@ export function updateReadableBoard() {
     const piece = board[i];
     const { x, y } = calcXY(i);
 
-    if (piece === 0) readableBoard[y][x] = "";
+    if (piece === 0) readableBoard[y][x] = " ";
     else {
       const team = getTeam(piece);
       const type = pieceType(piece);
