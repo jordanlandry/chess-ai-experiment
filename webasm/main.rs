@@ -1,5 +1,7 @@
 use minimax::get_best_move;
 
+use crate::{moves::Move, minimax::make_move};
+
 pub mod moves;
 pub mod minimax;
 pub mod bitboard;
@@ -7,7 +9,7 @@ pub mod bitboard;
 fn main() {
     let board: [[char; 8]; 8] = [
         ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
-        ['q', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+        ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -45,6 +47,7 @@ fn main() {
     // let pawn_moves = moves::get_pawn_moves(17, white_to_move, white_pieces, black_pieces);
     // print_bitboard(pawn_moves);
 
+
     let bitboard = bitboard::Bitboard {
         white_pawns,
         white_rooks,
@@ -60,15 +63,10 @@ fn main() {
         black_king,
     };
 
-    let now = std::time::Instant::now();
     let best_move = get_best_move(bitboard, white_to_move);
 
     println!("Score: {:?}", best_move.score);
     println!("from: {:?}, to {:?}", best_move.mv.from, best_move.mv.to);
-
-    println!("Time: {:?}", now.elapsed());
-
-
 }
 
 fn set_bitboard(board: [[char; 8]; 8]) -> (u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64) {

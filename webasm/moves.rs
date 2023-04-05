@@ -378,6 +378,10 @@ pub fn get_queen_moves(queen_pos: usize, white_to_move: bool, white_pieces: u64,
 pub fn get_king_moves(king_pos: usize, white_to_move: bool, white_pieces: u64, black_pieces: u64) -> u64 {
     let mut moves: u64 = 0;
 
+    if king_pos > 63 {
+        return moves;
+    }
+
     let mut i = king_pos;
     if i % 8 != 0 && i > 7 {
         i -= 9;
@@ -448,7 +452,9 @@ pub fn get_king_moves(king_pos: usize, white_to_move: bool, white_pieces: u64, b
         }
     }
 
+    
     i = king_pos;
+
     if i % 8 != 7 {
         i += 1;
         if white_to_move {
