@@ -1,12 +1,13 @@
 use minimax::get_best_move;
 
-use crate::{moves::Move, minimax::make_move};
+use rocket::{*, fairing::{Fairing, Info, Kind}, http::{ Header},};
+use ::serde::Serialize;
 
 pub mod moves;
 pub mod minimax;
 pub mod bitboard;
 
-fn main() {
+fn main1() {
     let board: [[char; 8]; 8] = [
         ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
         ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
@@ -23,7 +24,7 @@ fn main() {
     // let black_king_castle: bool = true;
     // let black_queen_castle: bool = true;
     
-    let white_to_move: bool = true;
+    let white_to_move: bool = false;
     // let en_passant: u64 = 0x0000000000000000;
     
     let white_pawns: u64;
@@ -118,4 +119,57 @@ pub fn print_bitboard(bitboard: u64) {
         }
         println!("");
     }
+}
+
+#[derive(Serialize)]
+struct A {
+    message: &'static str,
+    val: String,
+}
+
+#[get("/test/<val>")]
+fn index(val: String) -> String {
+    let a = A {
+        message: "Hello, world!",
+        val,
+    };
+
+    let json = serde_json::to_string(&a).unwrap();
+    json
+}
+
+#[get("/best_move/<fen>")]
+fn best_move(fen: String) -> String {
+
+    let a = A {
+        message: "Hello, world!",
+        val: fen,
+    };
+
+    let json = serde_json::to_string(&a).unwrap();
+    json
+}
+
+pub struct CORS;
+
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers to responses",
+            kind: Kind::Response
+        }
+    }
+
+    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+        response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Methods", "POST, GET, PATCH, OPTIONS"));
+        response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
+    }
+}
+
+#[launch]
+fn rocket() -> _ {
+    rocket::build().mount("/", routes![index]).attach(CORS)
 }

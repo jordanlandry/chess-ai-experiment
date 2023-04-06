@@ -1,4 +1,4 @@
-use crate::{bitboard::Bitboard, print_bitboard}; 
+use crate::{bitboard::Bitboard}; 
 
 #[derive(Debug, Clone, Copy)]
 pub struct Move {

@@ -86,7 +86,7 @@ fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i3
                 best_move = *m;
                 best_score = next_iter.score;
             }
-                
+            
             new_alpha = alpha.max(next_iter.score);
             
             if beta <= new_alpha {
