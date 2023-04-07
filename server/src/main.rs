@@ -1,76 +1,79 @@
+use bitboard::Bitboard;
 use minimax::get_best_move;
 
+// use moves::Move;
 use rocket::{*, fairing::{Fairing, Info, Kind}, http::{ Header},};
 use ::serde::Serialize;
+use serde_json::Value;
 
 pub mod moves;
 pub mod minimax;
 pub mod bitboard;
 
-fn main1() {
-    let board: [[char; 8]; 8] = [
-        ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
-        ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-        ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
-    ];
+// fn main1() {
+    // let board: [[char; 8]; 8] = [
+    //     ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+    //     ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+    //     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    //     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    //     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    //     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    //     ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+    //     ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
+    // ];
 
-    // let white_king_castle: bool = true;
-    // let white_queen_castle: bool = true;
-    // let black_king_castle: bool = true;
-    // let black_queen_castle: bool = true;
+    // // let white_king_castle: bool = true;
+    // // let white_queen_castle: bool = true;
+    // // let black_king_castle: bool = true;
+    // // let black_queen_castle: bool = true;
     
-    let white_to_move: bool = false;
-    // let en_passant: u64 = 0x0000000000000000;
+    // let white_to_move: bool = false;
+    // // let en_passant: u64 = 0x0000000000000000;
     
-    let white_pawns: u64;
-    let white_rooks: u64;
-    let white_knights: u64;
-    let white_bishops: u64;
-    let white_queens: u64;
-    let white_king: u64;
+    // let white_pawns: u64;
+    // let white_rooks: u64;
+    // let white_knights: u64;
+    // let white_bishops: u64;
+    // let white_queens: u64;
+    // let white_king: u64;
 
-    let black_pawns: u64;
-    let black_rooks: u64;
-    let black_knights: u64;
-    let black_bishops: u64;
-    let black_queens: u64;
-    let black_king: u64;
+    // let black_pawns: u64;
+    // let black_rooks: u64;
+    // let black_knights: u64;
+    // let black_bishops: u64;
+    // let black_queens: u64;
+    // let black_king: u64;
 
-    (white_pawns, white_rooks, white_knights, white_bishops, white_queens, white_king, black_pawns, black_rooks, black_knights, black_bishops, black_queens, black_king) = set_bitboard(board);
-    // let white_pieces: u64 = white_pawns | white_rooks | white_knights | white_bishops | white_queens | white_king;
-    // let black_pieces: u64 = black_pawns | black_rooks | black_knights | black_bishops | black_queens | black_king;
+    // // (white_pawns, white_rooks, white_knights, white_bishops, white_queens, white_king, black_pawns, black_rooks, black_knights, black_bishops, black_queens, black_king) = set_bitboard(board);
+    // // let white_pieces: u64 = white_pawns | white_rooks | white_knights | white_bishops | white_queens | white_king;
+    // // let black_pieces: u64 = black_pawns | black_rooks | black_knights | black_bishops | black_queens | black_king;
 
-    // let pawn_moves = moves::get_pawn_moves(17, white_to_move, white_pieces, black_pieces);
-    // print_bitboard(pawn_moves);
+    // // let pawn_moves = moves::get_pawn_moves(17, white_to_move, white_pieces, black_pieces);
+    // // print_bitboard(pawn_moves);
 
 
-    let bitboard = bitboard::Bitboard {
-        white_pawns,
-        white_rooks,
-        white_knights,
-        white_bishops,
-        white_queens,
-        white_king,
-        black_pawns,
-        black_rooks,
-        black_knights,
-        black_bishops,
-        black_queens,
-        black_king,
-    };
+    // let bitboard = bitboard::Bitboard {
+    //     white_pawns,
+    //     white_rooks,
+    //     white_knights,
+    //     white_bishops,
+    //     white_queens,
+    //     white_king,
+    //     black_pawns,
+    //     black_rooks,
+    //     black_knights,
+    //     black_bishops,
+    //     black_queens,
+    //     black_king,
+    // };
 
-    let best_move = get_best_move(bitboard, white_to_move);
+    // let best_move = get_best_move(bitboard, white_to_move);
 
-    println!("Score: {:?}", best_move.score);
-    println!("from: {:?}, to {:?}", best_move.mv.from, best_move.mv.to);
-}
+    // println!("Score: {:?}", best_move.score);
+    // println!("from: {:?}, to {:?}", best_move.mv.from, best_move.mv.to);
+// }
 
-fn set_bitboard(board: [[char; 8]; 8]) -> (u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64) {
+fn set_bitboard(board: Vec<Vec<char>>) -> (u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64) {
     let mut white_pawns: u64 = 0x0000000000000000;
     let mut white_rooks: u64 = 0x0000000000000000;
     let mut white_knights: u64 = 0x0000000000000000;
@@ -127,6 +130,13 @@ struct A {
     val: String,
 }
 
+#[derive(Serialize)]
+struct MinimaxMove {
+    score: i32,
+    from: u8,
+    to: u8,
+}
+
 #[get("/test/<val>")]
 fn index(val: String) -> String {
     let a = A {
@@ -138,15 +148,109 @@ fn index(val: String) -> String {
     json
 }
 
-#[get("/best_move/<fen>")]
-fn best_move(fen: String) -> String {
+#[get("/best_move/<b>")]
+fn best_move(b: String) -> String {
+    let white_pawns: u64;
+    let white_rooks: u64;
+    let white_knights: u64;
+    let white_bishops: u64;
+    let white_queens: u64;
+    let white_king: u64;
 
-    let a = A {
-        message: "Hello, world!",
-        val: fen,
+    let black_pawns: u64;
+    let black_rooks: u64;
+    let black_knights: u64;
+    let black_bishops: u64;
+    let black_queens: u64;
+    let black_king: u64;
+
+
+
+    let mut readable_board: Vec<Vec<char>> = vec![vec![' '; 8]; 8];
+
+    let parsed_array: Value = serde_json::from_str(&b).unwrap();
+    for i in 0..64 {
+        let x = i % 8;
+        let y = i / 8;
+
+
+
+        let piece = &parsed_array[i];
+        if piece == 1 {
+            readable_board[y][x] = 'R';
+        } else if piece == 2 {
+            readable_board[y][x] = 'N';
+        } else if piece == 4 {
+            readable_board[y][x] = 'B';
+        } else if piece == 8 {
+            readable_board[y][x] = 'Q';
+        } else if piece == 16 {
+            readable_board[y][x] = 'K';
+        } else if piece == 32 {
+            readable_board[y][x] = 'P';
+        } else if piece == -1 {
+            readable_board[y][x] = 'r';
+        } else if piece == -2 {
+            readable_board[y][x] = 'n';
+        } else if piece == -4 {
+            readable_board[y][x] = 'b';
+        } else if piece == -8 {
+            readable_board[y][x] = 'q';
+        } else if piece == -16 {
+            readable_board[y][x] = 'k';
+        } else if piece == -32 {
+            readable_board[y][x] = 'p';
+        } else {
+            readable_board[y][x] = ' ';
+        }
+    }
+
+    for i in 0..8 {
+        for j in 0..8 {
+            print!("{} ", readable_board[i][j]);
+        }
+        println!("");
+    }
+
+    (white_pawns, 
+        white_rooks, 
+        white_knights,
+        white_bishops,
+        white_queens,
+        white_king,
+        black_pawns,
+        black_rooks,
+        black_knights,
+        black_bishops,
+        black_queens,
+        black_king
+    ) = set_bitboard(readable_board);
+
+    let bitboard = Bitboard {
+        white_pawns,
+        white_rooks,
+        white_knights,
+        white_bishops,
+        white_queens,
+        white_king,
+        black_pawns,
+        black_rooks,
+        black_knights,
+        black_bishops,
+        black_queens,
+        black_king,
     };
 
-    let json = serde_json::to_string(&a).unwrap();
+    let best_move = get_best_move(bitboard, false);
+    let mv = MinimaxMove {
+        score: best_move.score,
+        from: best_move.mv.from,
+        to: best_move.mv.to,
+    };
+
+
+
+    let json = serde_json::to_string(&mv).unwrap();
     json
 }
 
@@ -171,5 +275,5 @@ impl Fairing for CORS {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index]).attach(CORS)
+    rocket::build().mount("/", routes![index, best_move]).attach(CORS)
 }

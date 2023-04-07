@@ -27,21 +27,6 @@ function App() {
   const [score, setScore] = useState(0);
   const [startPuzzle, setStartPuzzle] = useState(false);
 
-  const [test, setTest] = useState("loading...");
-
-  useEffect(() => {
-    setTimeout(() => {
-      fetch("http://127.0.0.1:8000/test/Chess")
-        .then((response) => {
-          return response.json();
-        })
-        .then((data) => {
-          setTest(data.val);
-          console.log(data);
-        });
-    }, 800);
-  });
-
   const store = {
     boardColor,
     setBoardColor,
@@ -57,11 +42,8 @@ function App() {
     setStartPuzzle,
   };
 
-  const testValue = useDebounce(test, 1000);
-
   return (
     <div className="App">
-      <h1>{testValue}</h1>
       <Store.Provider value={store}>
         {gameState === GameState.Menu ? (
           <MainMenu />
