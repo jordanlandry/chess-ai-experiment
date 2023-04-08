@@ -1,35 +1,53 @@
-import React from "react";
-import { useContext, useEffect, useState } from "react";
-import { Store } from "../App";
+import { useContext, useEffect, useRef, useState } from "react";
+import { Board, Position, TPiece } from "../types";
 import useBoardBound from "../hooks/useBoardBound";
-import properties, { PiecesType, Teams } from "../properties";
+import { Store } from "../App";
+import getTeam from "../helpers/getTeam";
 
 type Props = {
+  position: Position;
+  piece: TPiece;
+  board: Board;
   id: number;
-  pos: number;
-  piece: PiecesType;
-  color: Teams;
-  onClick?: () => void;
-  display?: "none" | "block";
 };
 
-export default function Piece({ id, color, piece, display, onClick }: Props) {
+export default function Piece({ position, piece, board, id }: Props) {
+  const { squareSize, boardLeft, boardTop } = useBoardBound();
+  const [pixelPosition, setPixelPosition] = useState<Position>(getPosition());
+
   const { pieceStyle } = useContext(Store);
 
-  const c = color === Teams.White ? "0" : "1";
+  const c = getTeam(board, position) === "white" ? "0" : "1";
   const src = "./assets/images/styles/" + pieceStyle + "/" + piece.toLowerCase() + c + ".png";
 
-  const { squareSize } = useBoardBound();
+  function getPosition() {
+    const x = position.x * squareSize + boardLeft;
+    const y = position.y * squareSize + boardTop;
+    return { x, y };
+  }
+
+  useEffect(() => {
+    setPixelPosition(getPosition());
+  }, [position, boardLeft, boardTop, squareSize]);
+
+  if ((pixelPosition.x === 0, pixelPosition.y === 0)) return null;
 
   return (
     <img
-      src={piece ? src : ""}
-      alt={piece}
-      width={squareSize}
-      id={id + ""}
+      loading="lazy"
       draggable={false}
-      style={{ fontSize: "2rem", cursor: "grab", display: display ? display : "none" }}
-      onClick={onClick}
+      src={src}
+      alt={piece}
+      id={id.toString()}
+      style={{
+        position: "absolute",
+        left: pixelPosition.x,
+        top: pixelPosition.y,
+        width: squareSize,
+        height: squareSize,
+        zIndex: 2,
+        cursor: "grab",
+      }}
     />
   );
 }

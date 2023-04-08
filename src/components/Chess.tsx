@@ -1,24 +1,22 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Store } from "../App";
-import { board, Move, Queen, readableBoard } from "../board";
-import useAITest from "../hooks/game/useAI";
-import useMoveUpdater from "../hooks/game/useMoveUpdater";
-import usePiecePromotion from "../hooks/game/usePiecePromotion";
-import useMouseDown from "../hooks/mouse/useMouseDown";
-import useMouseMove from "../hooks/mouse/useMouseMove";
-import useMouseUp from "../hooks/mouse/useMouseUp";
-import usePieceCenteringTest from "../hooks/usePieceCentering";
-import useSecretCode from "../hooks/useSecretKey";
+import React, { useEffect, useState } from "react";
+import useMouseDown from "../hooks/mouse/useClickPiece";
+import useMouseMove from "../hooks/mouse/useDragPiece";
+import useBoardBound from "../hooks/useBoardBound";
+import useGetAvailableMoves from "../hooks/useGetAvailableMoves";
 import { EndGameState, Teams, WinStates } from "../properties";
+import { Board, Move, Team } from "../types";
+import EvaluationBar from "./EvaluationBar";
+import Icon from "./Icon";
+import Pieces from "./Pieces";
 import SideTab from "./board/SideTab";
-import FunctionTimeTable from "./FunctionTimeTable";
-import GameOverScreen from "./GameOverScreen";
 import AvailableCapture from "./overlays/AvailableCapture";
 import AvailableMove from "./overlays/AvailableMove";
 import HoveredSquare from "./overlays/HoveredSquare";
 import LastMove from "./overlays/LastMove";
 import SelectedPiece from "./overlays/SelectedPiece";
-import PromotionSelect from "./PromotionSelect";
+import handleMakeMove from "../makeMove";
+import MoveHistory from "./MoveHistory";
+import useAI from "../hooks/useAI";
 
 type Props = {
   turn?: Teams;
@@ -29,16 +27,33 @@ type Props = {
 };
 
 export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSet }: Props) {
-  const { changingStyles } = useContext(Store);
+  const ANIMATION_TIME_MS = 175;
+  const { squareSize, boardLeft, boardTop } = useBoardBound();
 
   // AI
   const [usingAi, setUsingAi] = useState(usingAI ?? true);
-  const [aiTeam, setAiTeam] = useState(usingAi ? Teams.Black : Teams.None);
+  const [aiTeam, setAiTeam] = useState<Team>("black");
 
   // Game
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
-  const [currentTurn, setCurrentTurn] = useState(turn ?? Teams.White);
+  const [currentTurn, setCurrentTurn] = useState<Team>("white");
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
+
+  // prettier-ignore
+  const STARTING_BOARD: Board = [
+    [{ piece: 'r', id: 0, hasMoved: false}, { piece: 'n', id: 1, hasMoved: false}, { piece: 'b', id: 2, hasMoved: false}, { piece: 'q', id: 3, hasMoved: false}, { piece: 'k', id: 4, hasMoved: false,}, { piece: 'b', id: 5, hasMoved: false}, { piece: 'n', id: 6, hasMoved: false}, { piece: 'r', id: 7, hasMoved: false}],
+    [{ piece: 'p', id: 8, hasMoved: false}, { piece: 'p', id: 9, hasMoved: false}, { piece: 'p', id: 10, hasMoved: false}, { piece: 'p', id: 11, hasMoved: false}, { piece: 'p', id: 12, hasMoved: false,}, { piece: 'p', id: 13, hasMoved: false}, { piece: 'p', id: 14, hasMoved: false}, { piece: 'p', id: 15, hasMoved: false},],
+    [{ piece: ' ', id: 16, hasMoved: false}, { piece: ' ', id: 17, hasMoved: false}, { piece: ' ', id: 18, hasMoved: false}, { piece: ' ', id: 19, hasMoved: false}, { piece: ' ', id: 20, hasMoved: false,}, { piece: ' ', id: 21, hasMoved: false}, { piece: ' ', id: 22, hasMoved: false}, { piece: ' ', id: 23, hasMoved: false},],
+    [{ piece: ' ', id: 24, hasMoved: false}, { piece: ' ', id: 25, hasMoved: false}, { piece: ' ', id: 26, hasMoved: false}, { piece: ' ', id: 27, hasMoved: false}, { piece: ' ', id: 28, hasMoved: false,}, { piece: ' ', id: 29, hasMoved: false}, { piece: ' ', id: 30, hasMoved: false}, { piece: ' ', id: 31, hasMoved: false},],
+    [{ piece: ' ', id: 32, hasMoved: false}, { piece: ' ', id: 33, hasMoved: false}, { piece: ' ', id: 34, hasMoved: false}, { piece: ' ', id: 35, hasMoved: false}, { piece: ' ', id: 36, hasMoved: false,}, { piece: ' ', id: 37, hasMoved: false}, { piece: ' ', id: 38, hasMoved: false}, { piece: ' ', id: 39, hasMoved: false},],
+    [{ piece: ' ', id: 40, hasMoved: false}, { piece: ' ', id: 41, hasMoved: false}, { piece: ' ', id: 42, hasMoved: false}, { piece: ' ', id: 43, hasMoved: false}, { piece: ' ', id: 44, hasMoved: false,}, { piece: ' ', id: 45, hasMoved: false}, { piece: ' ', id: 46, hasMoved: false}, { piece: ' ', id: 47, hasMoved: false},],
+    [{ piece: 'P', id: 48, hasMoved: false}, { piece: 'P', id: 49, hasMoved: false}, { piece: 'P', id: 50, hasMoved: false}, { piece: 'P', id: 51, hasMoved: false}, { piece: 'P', id: 52, hasMoved: false,}, { piece: 'P', id: 53, hasMoved: false}, { piece: 'P', id: 54, hasMoved: false}, { piece: 'P', id: 55, hasMoved: false},],
+    [{ piece: 'R', id: 56, hasMoved: false}, { piece: 'N', id: 57, hasMoved: false}, { piece: 'B', id: 58, hasMoved: false}, { piece: 'Q', id: 59, hasMoved: false}, { piece: 'K', id: 60, hasMoved: false,}, { piece: 'B', id: 61, hasMoved: false}, { piece: 'N', id: 62, hasMoved: false}, { piece: 'R', id: 63, hasMoved: false},]
+  ];
+
+  // prettier-ignore
+  const [board, setBoard] = useState(JSON.parse(JSON.stringify(STARTING_BOARD)) as Board);
+  const [boardHistory, setBoardHistory] = useState<Board[]>([JSON.parse(JSON.stringify(STARTING_BOARD)) as Board]);
 
   // Game over
   const [gameOverOpen, setGameOverOpen] = useState(false);
@@ -55,91 +70,73 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
 
   // Mouse hooks
   const [hoveredPosition, setHoveredPosition] = useState<{ x: number; y: number } | null>(null);
-
   const [mouseDown, setMouseDown] = useState(false);
 
-  const { selectedPiece, setSelectedPiece } = useMouseDown({
-    changingStyles,
-    promotionPosition,
-    currentTurn,
-    setPromotionPosition,
-    setAvailableMoves,
-    setCurrentTurn,
-    setPromotion,
-    setMouseDown,
-    mouseDown,
-  });
+  const makeMove = (move: Move) => {
+    handleMakeMove({
+      move,
+      board,
+      setBoard,
+      setAvailableMoves,
+      setCurrentTurn,
+      setMoveHistory,
+      setBoardHistory,
+      ANIMATION_TIME_MS,
+      squareSize,
+      boardLeft,
+      boardTop,
+    });
+  };
 
-  useMouseUp({
-    setMouseDown,
-    availableMoves,
-    selectedPiece,
-    setCurrentTurn,
-    setAvailableMoves,
-    setSelectedPiece,
-    mouseDown,
-    setHoveredPosition,
-    setPromotion,
-    setPromotionPosition,
-  });
+  const { selectedPosition, setSelectedPosition } = useMouseDown({ board, availableMoves, makeMove, currentTurn });
+  useGetAvailableMoves({ board, selectedPosition, setAvailableMoves, boardHistory });
+  useMouseMove({ board, availableMoves, setSelectedPosition, makeMove, currentTurn });
 
-  useMouseMove({ mouseDown, selectedPiece, setHoveredPosition });
-  useMoveUpdater(currentTurn, setMoveHistory, setWinState, setGameOverOpen);
+  useAI({ board, currentTurn, makeMove, aiTeam });
 
-  useAITest(currentTurn, aiTeam, setCurrentTurn);
-  usePieceCenteringTest(promotionPiece, moveHistory);
+  const [pieceElements, setPieceElements] = useState<JSX.Element>();
 
-  // Promotion
-  usePiecePromotion(promotion, promotionPiece, setPromotion, setPromotionPiece, setCurrentTurn);
-
-  // Update last move (This is for the puzzle component)
+  // This is to only initialize the pieces once, otherwise they will be re-initialized every time the board is updated
+  // Which would cause issues with the animations
   useEffect(() => {
-    if (!setLastMove) return;
-    if (moveHistory.length > 0) {
-      setLastMove!(moveHistory[moveHistory.length - 1]);
+    setPieceElements(<Pieces board={board} />);
+  }, [boardLeft, boardTop, squareSize]);
 
-      // This is for the puzzle component, this is to make sure the current turn is correct
-      setCurrentTurn(turn!);
-    }
-  }, [moveHistory]);
-
-  const showDebug = useSecretCode("debug");
-
+  // --------------------------------------------------
   return (
     <div>
-      {!isPuzzle ? <GameOverScreen winState={winState} aiTeam={aiTeam} open={gameOverOpen} setOpen={setGameOverOpen} /> : null}
-      {availableMoves.map((move, i) => {
-        // Only show one of the promotion moves
-        if (move.promoteTo && move.promoteTo !== Queen && move.promoteTo !== -Queen) return null;
+      {pieceElements}
 
-        if (board[move.to] === 0) return <AvailableMove key={i} index={move.to} />;
-        else return <AvailableCapture key={i} index={move.to} />;
+      {availableMoves.map((move, index) => {
+        if (board[move.to.y][move.to.x].piece === " ") return <AvailableMove key={index} position={move.to} />;
+        return <AvailableCapture key={index} position={move.to} />;
       })}
 
-      <SelectedPiece index={selectedPiece} />
+      <SelectedPiece position={selectedPosition} />
 
-      {lastMoveSet ? (
-        lastMoveSet.from !== -1 ? (
-          <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} />
-        ) : null
-      ) : (
-        <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} />
-      )}
-
-      <PromotionSelect
-        index={promotionPosition}
-        team={currentTurn}
-        setPromotionPosition={setPromotionPosition}
-        setPromotionPiece={setPromotionPiece}
-      />
+      <LastMove from={moveHistory[moveHistory.length - 1]?.from} to={moveHistory[moveHistory.length - 1]?.to} />
 
       {hoveredPosition !== null ? <HoveredSquare position={hoveredPosition} /> : null}
 
-      {showDebug ? (
-        <SideTab right={false}>
-          <FunctionTimeTable />
-        </SideTab>
-      ) : null}
+      <SideTab right={false}>
+        <EvaluationBar />
+      </SideTab>
+      <SideTab right={true}>
+        <MoveHistory moveHistory={moveHistory} board={board} />
+
+        <div>Your estimated ELO is 1500</div>
+        <div>
+          <button>
+            <Icon type="plus" />
+          </button>
+          <button>
+            <Icon type="chevron-left" />
+          </button>
+          <button>
+            <Icon type="chevron-right" />
+          </button>
+        </div>
+      </SideTab>
     </div>
   );
 }

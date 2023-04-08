@@ -1,4 +1,3 @@
-import { board } from "../board";
 import getBoardBound from "./getBoardBound";
 
 export default function getMouseSpot({ x, y }: MouseEvent) {
@@ -12,7 +11,5 @@ export default function getMouseSpot({ x, y }: MouseEvent) {
   const col = Math.floor(boardX / squareSize);
   const row = Math.floor(boardY / squareSize);
 
-  const index = row * 8 + col;
-
-  return index;
+  return { x: col, y: row };
 }

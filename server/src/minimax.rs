@@ -65,7 +65,6 @@ fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i3
     if now.elapsed().as_millis() > MAX_TIME_MS {
         return Score { mv: Move { from: 0, to: 0 }, score: evaluate_board(board) };
     }
-    
 
     let mut best_score: i32;
     let mut best_move: Move = Move { from: 0, to: 0 };
@@ -88,7 +87,6 @@ fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i3
             }
             
             new_alpha = alpha.max(next_iter.score);
-            
             if beta <= new_alpha {
                 break;
             }
@@ -112,7 +110,6 @@ fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i3
             }
 
             new_beta = beta.min(next_iter.score);
-
             if new_beta <= alpha {
                 break;
             }

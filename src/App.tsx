@@ -3,11 +3,12 @@ import useLocalStorage from "./hooks/useLocalStorage";
 
 import Board from "./components/board/Board";
 import Chess from "./components/Chess";
-import MainMenu from "./components/menu/MainMenu";
-import Pieces from "./components/Pieces";
-import Puzzle from "./components/puzzle/Puzzle";
+// import MainMenu from "./components/menu/MainMenu";
+// import Pieces from "./components/Pieces";
+// import Puzzle from "./components/puzzle/Puzzle";
 import TestElement from "./Testing/TestElement";
 import useDebounce from "./hooks/useDebounce";
+import Pieces from "./components/Pieces";
 
 export const Store = createContext<any>(null);
 export enum GameState {
@@ -45,6 +46,10 @@ function App() {
   return (
     <div className="App">
       <Store.Provider value={store}>
+        <Board />
+        <Chess />
+      </Store.Provider>
+      {/* <Store.Provider value={store}>
         {gameState === GameState.Menu ? (
           <MainMenu />
         ) : gameState === GameState.Bot ? (
@@ -68,7 +73,7 @@ function App() {
             <TestElement />
           </>
         ) : null}
-      </Store.Provider>
+      </Store.Provider> */}
     </div>
   );
 }

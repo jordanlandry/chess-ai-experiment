@@ -1,14 +1,14 @@
-import React from "react";
 import useBoardBound from "../../hooks/useBoardBound";
 import properties from "../../properties";
+import { Position } from "../../types";
 
-type Props = { index: number };
+type Props = { position: Position };
 
-export default function AvailableMove({ index }: Props) {
+export default function AvailableMove({ position }: Props) {
   const { boardLeft, boardTop, squareSize } = useBoardBound();
 
-  const x = boardLeft + (index % 8) * squareSize;
-  const y = boardTop + Math.floor(index / 8) * squareSize;
+  const x = boardLeft + position.x * squareSize;
+  const y = boardTop + position.y * squareSize;
 
   return (
     <div

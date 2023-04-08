@@ -1,8 +1,8 @@
-import React from "react";
 import useBoardBound from "../../hooks/useBoardBound";
+import { Position } from "../../types";
 
 type Props = {
-  position: { x: number; y: number };
+  position: Position;
 };
 
 export default function HoveredSquare({ position }: Props) {

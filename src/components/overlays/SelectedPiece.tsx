@@ -1,14 +1,15 @@
 import useBoardBound from "../../hooks/useBoardBound";
 import properties from "../../properties";
+import { Position } from "../../types";
 
-type Props = { index: number | null };
+type Props = { position: Position | null };
 
-export default function SelectedPiece({ index }: Props) {
+export default function SelectedPiece({ position }: Props) {
   const { boardLeft, boardTop, squareSize } = useBoardBound();
-  if (index === null) return null;
+  if (position === null) return null;
 
-  const x = boardLeft + (index % 8) * squareSize;
-  const y = boardTop + Math.floor(index / 8) * squareSize;
+  const x = boardLeft + position.x * squareSize;
+  const y = boardTop + position.y * squareSize;
 
   return (
     <div

@@ -1,11 +1,8 @@
 import properties from "../properties";
+import { Board, Position, Team } from "../types";
 
-export default function getTeam(board: number[][], x: number, y: number) {
-  const numToPiece = properties.aiIsWhite ? properties.numPairWhite : properties.numPairBlack;
-  const piece = numToPiece[board[y][x]];
-
-  if (!piece) return "none";
-
-  // console.log(piece);
-  return piece.toLowerCase() === piece ? "black" : "white";
+export default function getTeam(board: Board, position: Position): Team {
+  const piece = board[position.y][position.x].piece;
+  if (piece.toLowerCase() === piece) return "black";
+  return "white";
 }

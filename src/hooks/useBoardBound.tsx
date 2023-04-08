@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import useDebounce from "./useDebounce";
-import useLoad from "./useLoad";
 
 export default function useBoardBound() {
   const [boardLeft, setBoardLeft] = useState(0);
@@ -9,7 +8,7 @@ export default function useBoardBound() {
   const [squareSize, setSquareSize] = useState(0);
   const [boardRight, setBoardRight] = useState(0);
 
-  const loaded = useLoad();
+  const loaded = false;
 
   useEffect(() => {
     const board = document.getElementById("board");
