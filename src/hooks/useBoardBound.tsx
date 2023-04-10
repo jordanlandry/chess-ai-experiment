@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useDebounce from "./useDebounce";
 
 export default function useBoardBound() {
@@ -7,6 +7,8 @@ export default function useBoardBound() {
   const [boardWidth, setBoardWidth] = useState(0);
   const [squareSize, setSquareSize] = useState(0);
   const [boardRight, setBoardRight] = useState(0);
+
+  const boardRef = useRef<HTMLDivElement>(null);
 
   const loaded = false;
 
@@ -33,19 +35,5 @@ export default function useBoardBound() {
     };
   }, [loaded]);
 
-  const debounceTime = 10;
-
-  const debouncedBoardLeft = useDebounce(boardLeft, debounceTime);
-  const debouncedBoardTop = useDebounce(boardTop, debounceTime);
-  const debouncedBoardWidth = useDebounce(boardWidth, debounceTime);
-  const debouncedSquareSize = useDebounce(squareSize, debounceTime);
-  const debouncedBoardRight = useDebounce(boardRight, debounceTime);
-
-  return {
-    boardLeft: debouncedBoardLeft,
-    boardTop: debouncedBoardTop,
-    boardWidth: debouncedBoardWidth,
-    squareSize: debouncedSquareSize,
-    boardRight: debouncedBoardRight,
-  };
+  return { boardLeft, boardTop, boardWidth, squareSize, boardRight };
 }

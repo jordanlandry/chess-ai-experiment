@@ -20,4 +20,10 @@
 
   background-color: rgb(50, 50, 50);
   border: 1px solid black;
+
+  &[data-no-bg="true"] {
+    background-color: transparent;
+    border: none;
+    margin: 0;
+  }
 }

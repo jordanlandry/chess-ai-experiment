@@ -118,7 +118,7 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
 
       {hoveredPosition !== null ? <HoveredSquare position={hoveredPosition} /> : null}
 
-      <SideTab right={false}>
+      <SideTab right={false} showBackground={false} sideOffset={-10}>
         <EvaluationBar />
       </SideTab>
       <SideTab right={true}>
