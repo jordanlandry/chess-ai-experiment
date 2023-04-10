@@ -2,20 +2,19 @@ use crate::{bitboard::Bitboard};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Move {
-    pub from: u8, 
+    pub from: u8,
     pub to: u8,
 }
 
 pub fn get_pawn_moves(pawn_pos: usize, white_to_move: bool, white_pieces: u64, black_pieces: u64) -> u64 {
     let mut moves: u64 = 0;
-
-
+    
     if white_to_move {
         if pawn_pos > 7 && (white_pieces | black_pieces) & (1 << (pawn_pos - 8)) == 0 {
             moves |= 1 << (pawn_pos - 8);
         }
 
-        if pawn_pos > 15 && (white_pieces | black_pieces) & (1 << (pawn_pos - 16)) == 0 {
+        if pawn_pos >= 48 && pawn_pos <= 55 && (white_pieces | black_pieces) & (1 << (pawn_pos - 8)) == 0 && (white_pieces | black_pieces) & (1 << (pawn_pos - 16)) == 0 {
             moves |= 1 << (pawn_pos - 16);
         }
 
@@ -32,7 +31,7 @@ pub fn get_pawn_moves(pawn_pos: usize, white_to_move: bool, white_pieces: u64, b
             moves |= 1 << (pawn_pos + 8);
         }
 
-        if pawn_pos < 48 && (white_pieces | black_pieces) & (1 << (pawn_pos + 16)) == 0 {
+        if pawn_pos >= 8 && pawn_pos <= 15 && (white_pieces | black_pieces) & (1 << (pawn_pos + 8)) == 0 && (white_pieces | black_pieces) & (1 << (pawn_pos + 16)) == 0 {
             moves |= 1 << (pawn_pos + 16);
         }
 

@@ -1,7 +1,6 @@
 use bitboard::Bitboard;
 use minimax::get_best_move;
 
-// use moves::Move;
 use rocket::{*, fairing::{Fairing, Info, Kind}, http::{ Header},};
 use ::serde::Serialize;
 use serde_json::Value;
@@ -11,19 +10,8 @@ pub mod minimax;
 pub mod bitboard;
 
 fn set_bitboard(board: Vec<Vec<char>>) -> (u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64) {
-    let mut white_pawns: u64 = 0x0000000000000000;
-    let mut white_rooks: u64 = 0x0000000000000000;
-    let mut white_knights: u64 = 0x0000000000000000;
-    let mut white_bishops: u64 = 0x0000000000000000;
-    let mut white_queens: u64 = 0x0000000000000000;
-    let mut white_king: u64 = 0x0000000000000000;
-
-    let mut black_pawns: u64 = 0x0000000000000000;
-    let mut black_rooks: u64 = 0x0000000000000000;
-    let mut black_knights: u64 = 0x0000000000000000;
-    let mut black_bishops: u64 = 0x0000000000000000;
-    let mut black_queens: u64 = 0x0000000000000000;
-    let mut black_king: u64 = 0x0000000000000000;
+    let mut white_pawns: u64 = 0; let mut white_rooks: u64 = 0; let mut white_knights: u64 = 0; let mut white_bishops: u64 = 0; let mut white_queens: u64 = 0; let mut white_king: u64 = 0;
+    let mut black_pawns: u64 = 0; let mut black_rooks: u64 = 0; let mut black_knights: u64 = 0; let mut black_bishops: u64 = 0; let mut black_queens: u64 = 0; let mut black_king: u64 = 0;
 
     for i in 0..8 {
         for j in 0..8 {
@@ -51,21 +39,13 @@ fn set_bitboard(board: Vec<Vec<char>>) -> (u64, u64, u64, u64, u64, u64, u64, u6
 pub fn print_bitboard(bitboard: u64) {
     for i in 0..8 {
         for j in 0..8 {
-            if bitboard & (1 << (i * 8 + j)) != 0 {
-                print!("1");
-            } else {
-                print!("0");
-            }
+            if bitboard & (1 << (i * 8 + j)) != 0 { print!("1"); } 
+            else { print!("0"); }
         }
         println!("");
     }
 }
 
-#[derive(Serialize)]
-struct A {
-    message: &'static str,
-    val: String,
-}
 
 #[derive(Serialize)]
 struct MinimaxMove {
@@ -74,32 +54,10 @@ struct MinimaxMove {
     to: u8,
 }
 
-#[get("/test/<val>")]
-fn index(val: String) -> String {
-    let a = A {
-        message: "Hello, world!",
-        val,
-    };
-
-    let json = serde_json::to_string(&a).unwrap();
-    json
-}
-
 #[get("/best_move/<b>")]
 fn best_move(b: String) -> String {
-    let white_pawns: u64;
-    let white_rooks: u64;
-    let white_knights: u64;
-    let white_bishops: u64;
-    let white_queens: u64;
-    let white_king: u64;
-
-    let black_pawns: u64;
-    let black_rooks: u64;
-    let black_knights: u64;
-    let black_bishops: u64;
-    let black_queens: u64;
-    let black_king: u64;
+    let white_pawns: u64; let white_rooks: u64; let white_knights: u64; let white_bishops: u64; let white_queens: u64; let white_king: u64;
+    let black_pawns: u64; let black_rooks: u64; let black_knights: u64; let black_bishops: u64; let black_queens: u64; let black_king: u64;
 
     let mut readable_board: Vec<Vec<char>> = vec![vec![' '; 8]; 8];
 
@@ -109,63 +67,25 @@ fn best_move(b: String) -> String {
         let y = i / 8;
 
         let piece = &parsed_array[i];
-        if piece == 1 {
-            readable_board[y][x] = 'R';
-        } else if piece == 2 {
-            readable_board[y][x] = 'N';
-        } else if piece == 4 {
-            readable_board[y][x] = 'B';
-        } else if piece == 8 {
-            readable_board[y][x] = 'Q';
-        } else if piece == 16 {
-            readable_board[y][x] = 'K';
-        } else if piece == 32 {
-            readable_board[y][x] = 'P';
-        } else if piece == -1 {
-            readable_board[y][x] = 'r';
-        } else if piece == -2 {
-            readable_board[y][x] = 'n';
-        } else if piece == -4 {
-            readable_board[y][x] = 'b';
-        } else if piece == -8 {
-            readable_board[y][x] = 'q';
-        } else if piece == -16 {
-            readable_board[y][x] = 'k';
-        } else if piece == -32 {
-            readable_board[y][x] = 'p';
-        } else {
-            readable_board[y][x] = ' ';
-        }
+        if piece == 1 { readable_board[y][x] = 'R'; } 
+        else if piece == 2 { readable_board[y][x] = 'N'; }
+        else if piece == 4 { readable_board[y][x] = 'B'; }
+        else if piece == 8 { readable_board[y][x] = 'Q'; }
+        else if piece == 16 { readable_board[y][x] = 'K'; }
+        else if piece == 32 { readable_board[y][x] = 'P'; }
+        else if piece == -1 { readable_board[y][x] = 'r'; }
+        else if piece == -2 { readable_board[y][x] = 'n'; }
+        else if piece == -4 { readable_board[y][x] = 'b'; }
+        else if piece == -8 { readable_board[y][x] = 'q'; }
+        else if piece == -16 { readable_board[y][x] = 'k'; }
+        else if piece == -32 { readable_board[y][x] = 'p'; }
+        else { readable_board[y][x] = ' '; }
     }
 
-    (white_pawns, 
-        white_rooks, 
-        white_knights,
-        white_bishops,
-        white_queens,
-        white_king,
-        black_pawns,
-        black_rooks,
-        black_knights,
-        black_bishops,
-        black_queens,
-        black_king
-    ) = set_bitboard(readable_board);
+    (white_pawns, white_rooks, white_knights,white_bishops,white_queens,white_king,black_pawns,black_rooks,black_knights,black_bishops,black_queens,black_king) 
+        = set_bitboard(readable_board);
 
-    let bitboard = Bitboard {
-        white_pawns,
-        white_rooks,
-        white_knights,
-        white_bishops,
-        white_queens,
-        white_king,
-        black_pawns,
-        black_rooks,
-        black_knights,
-        black_bishops,
-        black_queens,
-        black_king,
-    };
+    let bitboard = Bitboard { white_pawns, white_rooks, white_knights, white_bishops, white_queens, white_king, black_pawns, black_rooks, black_knights, black_bishops, black_queens, black_king,};
 
     let best_move = get_best_move(bitboard, false);
     let mv = MinimaxMove {
@@ -199,5 +119,5 @@ impl Fairing for CORS {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index, best_move]).attach(CORS)
+    rocket::build().mount("/", routes![best_move]).attach(CORS)
 }
