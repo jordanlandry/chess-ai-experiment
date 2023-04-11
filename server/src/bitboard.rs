@@ -1,5 +1,5 @@
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Bitboard {
     pub white_pawns: u64,
     pub white_knights: u64,

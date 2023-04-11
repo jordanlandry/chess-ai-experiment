@@ -1,6 +1,6 @@
 use crate::{bitboard::Bitboard}; 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Move {
     pub from: u8,
     pub to: u8,

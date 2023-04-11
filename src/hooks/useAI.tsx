@@ -1,14 +1,19 @@
-import { useEffect } from "react";
-import { Board, Move, Team } from "../types";
+import { useContext, useEffect } from "react";
+import { Board, Move, MoveEvaluation, Team } from "../types";
+import evaluateMove from "../helpers/evaluateMove";
 
 type Props = {
   board: Board;
   makeMove: (move: Move) => void;
   aiTeam: Team;
   currentTurn: Team;
+  score: number;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
+  setMoveEvaluation: React.Dispatch<React.SetStateAction<MoveEvaluation>>;
+  setDepth: React.Dispatch<React.SetStateAction<number>>;
 };
 
-export default function useAI({ board, makeMove, aiTeam, currentTurn }: Props) {
+export default async function useAI({ board, makeMove, aiTeam, currentTurn, setScore, score, setMoveEvaluation, setDepth }: Props) {
   useEffect(() => {
     if (aiTeam !== currentTurn) return;
 
@@ -35,13 +40,63 @@ export default function useAI({ board, makeMove, aiTeam, currentTurn }: Props) {
 
     const stringBoard = JSON.stringify(formmatedBoard);
 
-    fetch(`${import.meta.env.VITE_SERVER_URI}/best_move/${stringBoard}`).then((res) => {
-      res.json().then((data) => {
-        const from = { x: data.from % 8, y: Math.floor(data.from / 8) };
-        const to = { x: data.to % 8, y: Math.floor(data.to / 8) };
+    const maxTime = 2500;
+    const maxDepth = 8;
+    const startTime = Date.now();
 
-        makeMove({ from, to });
+    const controller = new AbortController();
+
+    // Abort the fetch request if it takes too long
+    // setTimeout(() => {
+    //   controller.abort();
+    // }, maxTime);
+
+    let currentBestMove: Move = { from: { x: 0, y: 0 }, to: { x: 0, y: 0 } };
+    let lastScore = score;
+
+    const evaluationDepth = 6;
+
+    // Getting the best move is gradual so that the move evaluation updates as the search progresses
+    async function fetchData(depth: number) {
+      if (depth > maxDepth) return;
+
+      const lastFromIndex = currentBestMove.from.x + currentBestMove.from.y * 8;
+      const lastToIndex = currentBestMove.to.x + currentBestMove.to.y * 8;
+
+      const URL = `${import.meta.env.VITE_SERVER_URI}/best_move/${stringBoard}/${depth}/${lastFromIndex}/${lastToIndex}`;
+      fetch(URL, { signal: controller.signal }).then((res) => {
+        res
+          .json()
+          .then((data) => {
+            if (depth === evaluationDepth) setMoveEvaluation(evaluateMove(data.score, score, "white"));
+
+            setScore(data.score);
+            setDepth(depth);
+            const from = { x: data.from % 8, y: Math.floor(data.from / 8) };
+            const to = { x: data.to % 8, y: Math.floor(data.to / 8) };
+            currentBestMove = { from, to };
+
+            // if (Date.now() - startTime < maxTime) fetchData(depth + 1);
+
+            if (depth === maxDepth) {
+              makeMove(currentBestMove);
+              console.log(Date.now() - startTime + "ms");
+              return;
+            }
+
+            fetchData(depth + 1);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       });
-    });
+    }
+
+    const startDepth = 1;
+    fetchData(startDepth);
+
+    // setTimeout(() => {
+
+    // }, maxTime);
   }, [currentTurn]);
 }

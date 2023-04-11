@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import useMouseDown from "../hooks/mouse/useClickPiece";
 import useMouseMove from "../hooks/mouse/useDragPiece";
 import useBoardBound from "../hooks/useBoardBound";
 import useGetAvailableMoves from "../hooks/useGetAvailableMoves";
 import { EndGameState, Teams, WinStates } from "../properties";
-import { Board, Move, Team } from "../types";
+import { Board, Move, MoveEvaluation, Team } from "../types";
 import EvaluationBar from "./EvaluationBar";
 import Icon from "./Icon";
 import Pieces from "./Pieces";
@@ -18,6 +18,10 @@ import handleMakeMove from "../makeMove";
 import MoveHistory from "./MoveHistory";
 import useAI from "../hooks/useAI";
 
+import "./_scss/moveEvaluation.scss";
+
+import { Store } from "../App";
+
 type Props = {
   turn?: Teams;
   usingAI?: boolean;
@@ -30,9 +34,12 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
   const ANIMATION_TIME_MS = 175;
   const { squareSize, boardLeft, boardTop } = useBoardBound();
 
+  const { setScore, score } = useContext(Store);
+
   // AI
   const [usingAi, setUsingAi] = useState(usingAI ?? true);
   const [aiTeam, setAiTeam] = useState<Team>("black");
+  const [depth, setDepth] = useState(0);
 
   // Game
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
@@ -54,6 +61,8 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
   // prettier-ignore
   const [board, setBoard] = useState(JSON.parse(JSON.stringify(STARTING_BOARD)) as Board);
   const [boardHistory, setBoardHistory] = useState<Board[]>([JSON.parse(JSON.stringify(STARTING_BOARD)) as Board]);
+
+  const [moveEvalation, setMoveEvaluation] = useState<MoveEvaluation>("");
 
   // Game over
   const [gameOverOpen, setGameOverOpen] = useState(false);
@@ -92,7 +101,7 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
   useGetAvailableMoves({ board, selectedPosition, setAvailableMoves, boardHistory });
   useMouseMove({ board, availableMoves, setSelectedPosition, makeMove, currentTurn });
 
-  useAI({ board, currentTurn, makeMove, aiTeam });
+  useAI({ board, currentTurn, makeMove, aiTeam, setScore, score, setMoveEvaluation, setDepth });
 
   const [pieceElements, setPieceElements] = useState<JSX.Element>();
 
@@ -122,6 +131,9 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
         <EvaluationBar />
       </SideTab>
       <SideTab right={true}>
+        <div className={`move-evaluation ${moveEvalation}`}>{moveEvalation}</div>
+        <div>Depth: {depth ? depth : null}</div>
+
         <MoveHistory moveHistory={moveHistory} board={board} />
 
         <div>Your estimated ELO is 1500</div>

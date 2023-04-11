@@ -1,0 +1,31 @@
+.move-evaluation {
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+
+  text-transform: capitalize;
+
+  &.good {
+    color: rgb(0, 150, 0);
+  }
+
+  &.blunder {
+    color: rgb(200, 50, 50);
+  }
+
+  &.great {
+    color: rgb(50, 200, 92);
+  }
+
+  &.brilliant {
+    color: rgb(0, 200, 200);
+  }
+
+  &.mistake {
+    color: rgb(200, 122, 50);
+  }
+
+  &.inaccuracy {
+    color: rgb(253, 255, 131);
+  }
+}

@@ -1,6 +1,7 @@
 use bitboard::Bitboard;
 use minimax::get_best_move;
 
+use moves::Move;
 use rocket::{*, fairing::{Fairing, Info, Kind}, http::{ Header},};
 use ::serde::Serialize;
 use serde_json::Value;
@@ -54,8 +55,8 @@ struct MinimaxMove {
     to: u8,
 }
 
-#[get("/best_move/<b>")]
-fn best_move(b: String) -> String {
+#[get("/best_move/<b>/<depth>/<last_from>/<last_to>")]
+fn best_move(b: String, depth: String, last_from: String, last_to: String) -> String {
     let white_pawns: u64; let white_rooks: u64; let white_knights: u64; let white_bishops: u64; let white_queens: u64; let white_king: u64;
     let black_pawns: u64; let black_rooks: u64; let black_knights: u64; let black_bishops: u64; let black_queens: u64; let black_king: u64;
 
@@ -82,12 +83,21 @@ fn best_move(b: String) -> String {
         else { readable_board[y][x] = ' '; }
     }
 
+    
     (white_pawns, white_rooks, white_knights,white_bishops,white_queens,white_king,black_pawns,black_rooks,black_knights,black_bishops,black_queens,black_king) 
-        = set_bitboard(readable_board);
-
+    = set_bitboard(readable_board);
+    
     let bitboard = Bitboard { white_pawns, white_rooks, white_knights, white_bishops, white_queens, white_king, black_pawns, black_rooks, black_knights, black_bishops, black_queens, black_king,};
 
-    let best_move = get_best_move(bitboard, false);
+
+
+    let prev_best_move = Move {
+        from: last_from.parse::<u8>().unwrap(),
+        to: last_to.parse::<u8>().unwrap(),
+    };
+
+    let parsed_depth = depth.parse::<u8>().unwrap();
+    let best_move = get_best_move(bitboard, false, parsed_depth, prev_best_move);
     let mv = MinimaxMove {
         score: best_move.score,
         from: best_move.mv.from,

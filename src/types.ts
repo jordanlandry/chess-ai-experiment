@@ -23,4 +23,6 @@ export type Move = {
   enPassant?: Position;
 };
 
+export type MoveEvaluation = "blunder" | "mistake" | "inaccuracy" | "good" | "great" | "brilliant" | "top" | "book" | "";
+
 export type Team = "white" | "black";

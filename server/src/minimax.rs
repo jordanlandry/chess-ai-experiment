@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use std::thread;
 use std::{time::Instant};
 
 use crate::{bitboard::Bitboard, moves::{Move, get_white_moves, get_black_moves}}; 
@@ -7,7 +9,9 @@ const KNIGHT_VALUE: u32 = 3;
 const BISHOP_VALUE: u32 = 3;
 const ROOK_VALUE: u32 = 5;
 const QUEEN_VALUE: u32 = 9;
+const KING_VALUE: u32 = 1000;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Score {
     pub score: i32,
     pub mv: Move,
@@ -16,27 +20,47 @@ pub struct Score {
 const INFINITY: i32 = 9999999;
 const MAX_TIME_MS: u128 = 2500;
 
-pub fn get_best_move(board: Bitboard, white_to_move: bool) -> Score {
-    let mut m = Score { mv: Move { from: 0, to: 0 }, score: 0 };
-    let mut depth = 1;
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+struct BoardHash {
+    board: Bitboard,
+    depth: u8,
+}
 
-    let now = std::time::Instant::now();
-    let mut prev_best_move = Move { from: 0, to: 0 };
-    while now.elapsed().as_millis() < MAX_TIME_MS {
-        let new_move = minimax(board, depth, white_to_move, -INFINITY, INFINITY, now, prev_best_move);
+struct TranspositionTable {
+    table: HashMap<BoardHash, Score>,
+}
 
-        if new_move.mv.from == 0 && new_move.mv.to == 0 {
-            break;
+impl TranspositionTable {
+    fn new() -> TranspositionTable {
+        TranspositionTable {
+            table: HashMap::new(),
         }
-
-        m = new_move;
-        prev_best_move = m.mv;
-        depth += 1;
     }
 
-    println!("Depth: {:?}", depth);
+    fn lookup(&self, board: Bitboard, depth: u8) -> Option<Score> {
+        let hash = BoardHash { board, depth };
+        self.table.get(&hash).cloned()
+    }
 
-    m
+    fn store(&mut self, board: Bitboard, depth: u8, score: Score) {
+        let hash = BoardHash { board, depth };
+        self.table.insert(hash, score);
+    }
+
+    const MAX_SIZE: usize = 512_000;
+
+    fn clear(&mut self) {
+        self.table.clear();
+    }
+}
+
+pub fn get_best_move(board: Bitboard, white_to_move: bool, depth: u8, prev_best_move: Move) -> Score {
+    let now = std::time::Instant::now();
+
+    let mut table = TranspositionTable::new();
+    let new_move = minimax(board, depth, white_to_move, -INFINITY, INFINITY, now, prev_best_move, &mut table);
+
+    new_move
 }
 
 pub fn evaluate_board(board: Bitboard) -> i32 {
@@ -48,6 +72,7 @@ pub fn evaluate_board(board: Bitboard) -> i32 {
     score += (board.white_bishops.count_ones() as u32 * BISHOP_VALUE) as i32;
     score += (board.white_rooks.count_ones() as u32 * ROOK_VALUE) as i32;
     score += (board.white_queens.count_ones() as u32 * QUEEN_VALUE) as i32;
+    score += (board.white_king.count_ones() as u32 * KING_VALUE) as i32;
 
     // Black pieces
     score -= (board.black_pawns.count_ones() as u32 * PAWN_VALUE) as i32;
@@ -55,17 +80,27 @@ pub fn evaluate_board(board: Bitboard) -> i32 {
     score -= (board.black_bishops.count_ones() as u32 * BISHOP_VALUE) as i32;
     score -= (board.black_rooks.count_ones() as u32 * ROOK_VALUE) as i32;
     score -= (board.black_queens.count_ones() as u32 * QUEEN_VALUE) as i32;
+    score -= (board.black_king.count_ones() as u32 * KING_VALUE) as i32;
 
     score
 }
 
-fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i32, now: Instant, prev_best_move: Move) -> Score {
+
+fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i32, now: Instant, prev_best_move: Move, table: &mut TranspositionTable) -> Score {
     if depth == 0 {
         return Score { mv: Move { from: 0, to: 0 }, score: evaluate_board(board) };
     }
 
-    if now.elapsed().as_millis() > MAX_TIME_MS {
-        return Score { mv: Move { from: 0, to: 0 }, score: evaluate_board(board) };
+    // if now.elapsed().as_millis() > MAX_TIME_MS {
+    //     return Score { mv: Move { from: 0, to: 0 }, score: evaluate_board(board) };
+    // }
+
+    if let Some(score) = table.lookup(board, depth) {
+        return score;
+    }
+
+    if table.table.len() > TranspositionTable::MAX_SIZE {
+        table.clear();
     }
 
     let mut best_score: i32;
@@ -81,7 +116,9 @@ fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i3
         for m in ordered_moves.iter() {
             let new_board = make_move(board, *m, true);
 
-            let next_iter = minimax(new_board, depth - 1, false, new_alpha, beta, now, prev_best_move);
+            let next_iter = minimax(new_board, depth - 1, false, new_alpha, beta, now, prev_best_move, table);
+
+            &table.store(new_board, depth - 1, next_iter);
 
             if best_score < next_iter.score {
                 best_move = *m;
@@ -104,7 +141,9 @@ fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i3
         let mut new_beta = beta;
         for m in ordered_moves.iter() {
             let new_board = make_move(board, *m, false);
-            let next_iter = minimax(new_board, depth - 1, true, alpha, new_beta, now, prev_best_move);
+            let next_iter = minimax(new_board, depth - 1, true, alpha, new_beta, now, prev_best_move, table);
+
+            &table.store(new_board, depth - 1, next_iter);
         
             if best_score > next_iter.score {
                 best_move = *m;
@@ -190,6 +229,7 @@ pub fn make_move(board: Bitboard, mv: Move, white_to_move: bool) -> Bitboard {
 
     new_board
 }
+
 
 
 fn order_moves(board: Bitboard, moves: Vec<Move>, white_to_move: bool, prev_best_move: Move) -> Vec<Move> {
