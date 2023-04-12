@@ -112,33 +112,39 @@ function whitePawn(board: Board, moves: Move[], pos: Position, prevBoard: Board)
   const captureLeft = { x: x - 1, y: y - 1 };
   const captureRight = { x: x + 1, y: y - 1 };
 
+  const promotionPieces = ["Q", "R", "B", "N"] as PromotionPiece[];
+
   // Move forward 1
   if (inBounds(move1) && board[move1.y][move1.x].piece === empty) {
-    moves.push({ from: pos, to: move1 });
+    if (y === PROMOTION_ROW + 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: move1, promotionPiece: piece }));
+    else moves.push({ from: pos, to: move1 });
   }
 
   // Move forward 2
   if (y === START_ROW && board[move2.y][move2.x].piece === empty && board[move1.y][move1.x].piece === empty) {
-    moves.push({ from: pos, to: move2 });
+    if (y === PROMOTION_ROW + 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: move2, promotionPiece: piece }));
+    else moves.push({ from: pos, to: move2 });
   }
 
   // Capture left
   if (inBounds(captureLeft) && getTeam(board, captureLeft) !== "white" && board[captureLeft.y][captureLeft.x].piece !== empty) {
-    moves.push({ from: pos, to: captureLeft });
+    if (y === PROMOTION_ROW + 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: captureLeft, promotionPiece: piece }));
+    else moves.push({ from: pos, to: captureLeft });
   }
 
   // Capture right
   if (inBounds(captureRight) && getTeam(board, captureRight) !== "white" && board[captureRight.y][captureRight.x].piece !== empty) {
-    moves.push({ from: pos, to: captureRight });
+    if (y === PROMOTION_ROW + 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: captureRight, promotionPiece: piece }));
+    else moves.push({ from: pos, to: captureRight });
   }
 
   // Promotion
-  if (y === PROMOTION_ROW + 1) {
-    const promotionPieces = ["Q", "R", "B", "N"] as PromotionPiece[];
-    promotionPieces.forEach((piece) => {
-      moves.push({ from: pos, to: { x, y: y - 1 }, promotionPiece: piece });
-    });
-  }
+  // if (y === PROMOTION_ROW + 1) {
+  //   const promotionPieces = ["Q", "R", "B", "N"] as PromotionPiece[];
+  //   promotionPieces.forEach((piece) => {
+  //     moves.push({ from: pos, to: { x, y: y - 1 }, promotionPiece: piece });
+  //   });
+  // }
 
   // En passant
   if (canEnpassant(board, { x: x - 1, y }, "white", prevBoard)) moves.push({ from: pos, to: captureLeft, enPassant: { x: x - 1, y } });
@@ -156,34 +162,39 @@ function blackPawn(board: Board, moves: Move[], pos: Position, prevBoard: Board)
 
   const captureLeft = { x: x - 1, y: y + 1 };
   const captureRight = { x: x + 1, y: y + 1 };
+  const promotionPieces = ["q", "r", "b", "n"] as PromotionPiece[];
 
   // Move forward 1
   if (inBounds(move1) && board[move1.y][move1.x].piece === empty) {
-    moves.push({ from: pos, to: move1 });
+    if (y === PROMOTION_ROW - 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: move1, promotionPiece: piece }));
+    else moves.push({ from: pos, to: move1 });
   }
 
   // Move forward 2
   if (y === START_ROW && board[move2.y][move2.x].piece === empty) {
-    moves.push({ from: pos, to: move2 });
+    if (y === PROMOTION_ROW - 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: move2, promotionPiece: piece }));
+    else moves.push({ from: pos, to: move2 });
   }
 
   // Capture left
   if (inBounds(captureLeft) && getTeam(board, captureLeft) !== "black" && board[captureLeft.y][captureLeft.x].piece !== empty) {
-    moves.push({ from: pos, to: captureLeft });
+    if (y === PROMOTION_ROW - 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: captureLeft, promotionPiece: piece }));
+    else moves.push({ from: pos, to: captureLeft });
   }
 
   // Capture right
   if (inBounds(captureRight) && getTeam(board, captureRight) !== "black" && board[captureRight.y][captureRight.x].piece !== empty) {
-    moves.push({ from: pos, to: captureRight });
+    if (y === PROMOTION_ROW - 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: captureRight, promotionPiece: piece }));
+    else moves.push({ from: pos, to: captureRight });
   }
 
   // Promotion
-  if (y === PROMOTION_ROW - 1) {
-    const promotionPieces = ["q", "r", "b", "n"] as PromotionPiece[];
-    promotionPieces.forEach((piece) => {
-      moves.push({ from: pos, to: { x, y: y + 1 }, promotionPiece: piece });
-    });
-  }
+  // if (y === PROMOTION_ROW - 1) {
+  //   const promotionPieces = ["q", "r", "b", "n"] as PromotionPiece[];
+  //   promotionPieces.forEach((piece) => {
+  //     moves.push({ from: pos, to: { x, y: y + 1 }, promotionPiece: piece });
+  //   });
+  // }
 
   // En passant
   if (canEnpassant(board, { x: x - 1, y }, "black", prevBoard)) moves.push({ from: pos, to: captureLeft, enPassant: { x: x - 1, y } });

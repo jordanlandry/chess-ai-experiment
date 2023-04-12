@@ -11,9 +11,10 @@ type Props = {
   setScore: React.Dispatch<React.SetStateAction<number>>;
   setMoveEvaluation: React.Dispatch<React.SetStateAction<MoveEvaluation>>;
   setDepth: React.Dispatch<React.SetStateAction<number>>;
+  setMateIn: React.Dispatch<React.SetStateAction<number>>;
 };
 
-export default async function useAI({ board, makeMove, aiTeam, currentTurn, setScore, score, setMoveEvaluation, setDepth }: Props) {
+export default async function useAI({ board, makeMove, aiTeam, currentTurn, setScore, score, setMoveEvaluation, setDepth, setMateIn }: Props) {
   useEffect(() => {
     if (aiTeam !== currentTurn) return;
 
@@ -40,63 +41,47 @@ export default async function useAI({ board, makeMove, aiTeam, currentTurn, setS
 
     const stringBoard = JSON.stringify(formmatedBoard);
 
-    const maxTime = 2500;
-    const maxDepth = 8;
-    const startTime = Date.now();
+    const maxTime = 3000;
 
     const controller = new AbortController();
 
-    // Abort the fetch request if it takes too long
-    // setTimeout(() => {
-    //   controller.abort();
-    // }, maxTime);
+    // This is what I set the max score to in the minimax function (server/src/minimax.rs)
+    const maxScore = 9_999_999;
 
     let currentBestMove: Move = { from: { x: 0, y: 0 }, to: { x: 0, y: 0 } };
     let lastScore = score;
 
-    const evaluationDepth = 6;
+    // const evaluationDepth = 6;
+    const evaluationTime = 250; // Amount of time before the evaluation is updated
 
-    // Getting the best move is gradual so that the move evaluation updates as the search progresses
-    async function fetchData(depth: number) {
-      if (depth > maxDepth) return;
+    const fetchData = async (maxTime: number, isEvaluation: boolean) => {
+      await fetch(`${import.meta.env.VITE_SERVER_URI}/best_move/${stringBoard}/${maxTime}`, { signal: controller.signal }).then((res) => {
+        res.json().then((data) => {
+          const from = { x: data.from % 8, y: Math.floor(data.from / 8) };
+          const to = { x: data.to % 8, y: Math.floor(data.to / 8) };
 
-      const lastFromIndex = currentBestMove.from.x + currentBestMove.from.y * 8;
-      const lastToIndex = currentBestMove.to.x + currentBestMove.to.y * 8;
+          currentBestMove = { from, to };
 
-      const URL = `${import.meta.env.VITE_SERVER_URI}/best_move/${stringBoard}/${depth}/${lastFromIndex}/${lastToIndex}`;
-      fetch(URL, { signal: controller.signal }).then((res) => {
-        res
-          .json()
-          .then((data) => {
-            if (depth === evaluationDepth) setMoveEvaluation(evaluateMove(data.score, score, "white"));
+          const depth = data.depth;
+          const score = data.score;
+          const bestMove = currentBestMove;
 
-            setScore(data.score);
-            setDepth(depth);
-            const from = { x: data.from % 8, y: Math.floor(data.from / 8) };
-            const to = { x: data.to % 8, y: Math.floor(data.to / 8) };
-            currentBestMove = { from, to };
+          setMoveEvaluation(evaluateMove(score, lastScore, "white"));
+          setScore(score);
+          setDepth(depth);
 
-            // if (Date.now() - startTime < maxTime) fetchData(depth + 1);
+          if (!isEvaluation) makeMove(bestMove);
+          if (Math.abs(score) === maxScore) setMateIn(depth - 1);
 
-            if (depth === maxDepth) {
-              makeMove(currentBestMove);
-              console.log(Date.now() - startTime + "ms");
-              return;
-            }
-
-            fetchData(depth + 1);
-          })
-          .catch((err) => {
-            console.log(err);
-          });
+          setMateIn((prev) => prev - 1);
+        });
       });
-    }
+    };
 
-    const startDepth = 1;
-    fetchData(startDepth);
+    const getEvaluation = async () => fetchData(evaluationTime, true);
+    const getBestMove = async () => fetchData(maxTime, false);
 
-    // setTimeout(() => {
-
-    // }, maxTime);
+    getEvaluation();
+    getBestMove();
   }, [currentTurn]);
 }

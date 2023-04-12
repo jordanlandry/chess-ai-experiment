@@ -1,4 +1,4 @@
-use crate::{bitboard::Bitboard}; 
+use crate::{bitboard::Bitboard, minimax::make_move}; 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Move {
@@ -72,6 +72,8 @@ pub fn get_rook_moves(rook_pos: usize, white_to_move: bool, white_pieces: u64, b
                 break;
             }
         }
+
+        moves |= 1 << i;
     }
 
     // down
@@ -95,6 +97,8 @@ pub fn get_rook_moves(rook_pos: usize, white_to_move: bool, white_pieces: u64, b
                 break;
             }
         }
+
+        moves |= 1 << i;
     }
 
     // left
@@ -118,6 +122,8 @@ pub fn get_rook_moves(rook_pos: usize, white_to_move: bool, white_pieces: u64, b
                 break;
             }
         }
+
+        moves |= 1 << i;
     }
 
     // right
@@ -141,6 +147,8 @@ pub fn get_rook_moves(rook_pos: usize, white_to_move: bool, white_pieces: u64, b
                 break;
             }
         }
+
+        moves |= 1 << i;
     }
 
     moves
@@ -170,6 +178,8 @@ pub fn get_bishop_moves(bishop_pos: usize, white_to_move: bool, white_pieces: u6
                 break;
             }
         }
+
+        moves |= 1 << i;
     }
 
     // up right
@@ -193,6 +203,8 @@ pub fn get_bishop_moves(bishop_pos: usize, white_to_move: bool, white_pieces: u6
                 break;
             }
         }
+
+        moves |= 1 << i;
     }
 
     // down left
@@ -216,6 +228,8 @@ pub fn get_bishop_moves(bishop_pos: usize, white_to_move: bool, white_pieces: u6
                 break;
             }
         }
+
+        moves |= 1 << i;
     }
 
     // down right
@@ -239,6 +253,8 @@ pub fn get_bishop_moves(bishop_pos: usize, white_to_move: bool, white_pieces: u6
                 break;
             }
         }
+
+        moves |= 1 << i;
     }
 
     moves
@@ -499,7 +515,7 @@ pub fn get_king_moves(king_pos: usize, white_to_move: bool, white_pieces: u64, b
 }
 
 
-pub fn get_white_moves(board: Bitboard) -> Vec<Move> {
+pub fn get_white_moves(board: Bitboard, look_for_checks: bool) -> Vec<Move> {
     let mut moves: Vec<Move> = Vec::new();
 
     let white_pieces = board.white_pawns | board.white_rooks | board.white_knights | board.white_bishops | board.white_queens | board.white_king;
@@ -586,7 +602,6 @@ pub fn get_white_moves(board: Bitboard) -> Vec<Move> {
     for pos in knight_positions.iter() {
         let m = get_knight_moves(*pos as usize, true, white_pieces, black_pieces);
 
-
         // All of the 1 bits in m, are valid moves for the to property of the move, while from is the current position
         let mut i = m;
         while i != 0 {
@@ -635,7 +650,6 @@ pub fn get_white_moves(board: Bitboard) -> Vec<Move> {
         }
     }
 
-
     let king_moves = get_king_moves(king_position as usize, true, white_pieces, black_pieces);
     let mut i = king_moves;
 
@@ -650,10 +664,15 @@ pub fn get_white_moves(board: Bitboard) -> Vec<Move> {
         i &= i - 1;
     }
 
+    // Remove all moves that put the king in check
+    if look_for_checks {
+        moves.retain(|m| !is_king_in_check_after_move(board, *m, true));
+    }
+
     moves
 }
 
-pub fn get_black_moves(board: Bitboard) -> Vec<Move> {
+pub fn get_black_moves(board: Bitboard, look_for_checks: bool) -> Vec<Move> {
     let mut moves: Vec<Move> = Vec::new();
 
     let white_pieces = board.white_pawns | board.white_rooks | board.white_knights | board.white_bishops | board.white_queens | board.white_king;
@@ -751,7 +770,6 @@ pub fn get_black_moves(board: Bitboard) -> Vec<Move> {
             moves.push(m);
             i &= i - 1;
         }
-
     }
 
     for pos in rook_positions.iter() {
@@ -803,5 +821,42 @@ pub fn get_black_moves(board: Bitboard) -> Vec<Move> {
         i &= i - 1;
     }
 
+    // Remove all of the moves that put the king in check
+    if look_for_checks {
+        moves.retain(|m| !is_king_in_check_after_move(board, *m, false));
+    }
+
     moves
+}
+
+fn is_king_in_check_after_move(board: Bitboard, m: Move, is_white: bool) -> bool {
+    let new_board = make_move(board, m, is_white);
+
+    let king_position = if is_white {
+        new_board.white_king.trailing_zeros()
+    } else {
+        new_board.black_king.trailing_zeros()
+    };
+
+    square_is_attacked(new_board, king_position as i8, is_white)
+}
+
+pub fn square_is_attacked(board: Bitboard, pos: i8, is_white: bool) -> bool {
+    let mut moves:Vec<Move> = Vec::new();
+
+    // Get available moves for the opponent
+    if is_white {
+        moves.append(&mut get_black_moves(board, false));
+    } else {
+        moves.append(&mut get_white_moves(board, false));
+    }
+
+    for m in moves.iter() {
+        if m.to == pos as u8 {
+            return true;
+        }
+    }
+
+
+    false
 }

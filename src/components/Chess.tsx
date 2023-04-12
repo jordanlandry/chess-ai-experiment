@@ -31,7 +31,7 @@ type Props = {
 };
 
 export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSet }: Props) {
-  const ANIMATION_TIME_MS = 175;
+  const ANIMATION_TIME_MS = 100;
   const { squareSize, boardLeft, boardTop } = useBoardBound();
 
   const { setScore, score } = useContext(Store);
@@ -40,6 +40,7 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
   const [usingAi, setUsingAi] = useState(usingAI ?? true);
   const [aiTeam, setAiTeam] = useState<Team>("black");
   const [depth, setDepth] = useState(0);
+  const [mateIn, setMateIn] = useState(-1);
 
   // Game
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
@@ -57,6 +58,16 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
     [{ piece: 'P', id: 48, hasMoved: false}, { piece: 'P', id: 49, hasMoved: false}, { piece: 'P', id: 50, hasMoved: false}, { piece: 'P', id: 51, hasMoved: false}, { piece: 'P', id: 52, hasMoved: false,}, { piece: 'P', id: 53, hasMoved: false}, { piece: 'P', id: 54, hasMoved: false}, { piece: 'P', id: 55, hasMoved: false},],
     [{ piece: 'R', id: 56, hasMoved: false}, { piece: 'N', id: 57, hasMoved: false}, { piece: 'B', id: 58, hasMoved: false}, { piece: 'Q', id: 59, hasMoved: false}, { piece: 'K', id: 60, hasMoved: false,}, { piece: 'B', id: 61, hasMoved: false}, { piece: 'N', id: 62, hasMoved: false}, { piece: 'R', id: 63, hasMoved: false},]
   ];
+  // const STARTING_BOARD: Board = [
+  //   [{ piece: 'r', id: 0, hasMoved: false}, { piece: 'n', id: 1, hasMoved: false}, { piece: 'b', id: 2, hasMoved: false}, { piece: 'q', id: 3, hasMoved: false}, { piece: 'k', id: 4, hasMoved: false,}, { piece: 'b', id: 5, hasMoved: false}, { piece: 'n', id: 6, hasMoved: false}, { piece: 'r', id: 7, hasMoved: false}],
+  //   [{ piece: 'r', id: 8, hasMoved: false}, { piece: 'p', id: 9, hasMoved: false}, { piece: 'p', id: 10, hasMoved: false}, { piece: ' ', id: 11, hasMoved: false}, { piece: 'p', id: 12, hasMoved: false,}, { piece: ' ', id: 13, hasMoved: false}, { piece: 'p', id: 14, hasMoved: false}, { piece: 'p', id: 15, hasMoved: false},],
+  //   [{ piece: ' ', id: 16, hasMoved: false}, { piece: ' ', id: 17, hasMoved: false}, { piece: ' ', id: 18, hasMoved: false}, { piece: ' ', id: 19, hasMoved: false}, { piece: ' ', id: 20, hasMoved: false,}, { piece: ' ', id: 21, hasMoved: false}, { piece: ' ', id: 22, hasMoved: false}, { piece: ' ', id: 23, hasMoved: false},],
+  //   [{ piece: ' ', id: 24, hasMoved: false}, { piece: ' ', id: 25, hasMoved: false}, { piece: ' ', id: 26, hasMoved: false}, { piece: ' ', id: 27, hasMoved: false}, { piece: ' ', id: 28, hasMoved: false,}, { piece: ' ', id: 29, hasMoved: false}, { piece: ' ', id: 30, hasMoved: false}, { piece: ' ', id: 31, hasMoved: false},],
+  //   [{ piece: ' ', id: 32, hasMoved: false}, { piece: ' ', id: 33, hasMoved: false}, { piece: ' ', id: 34, hasMoved: false}, { piece: ' ', id: 35, hasMoved: false}, { piece: ' ', id: 36, hasMoved: false,}, { piece: ' ', id: 37, hasMoved: false}, { piece: ' ', id: 38, hasMoved: false}, { piece: ' ', id: 39, hasMoved: false},],
+  //   [{ piece: ' ', id: 40, hasMoved: false}, { piece: ' ', id: 41, hasMoved: false}, { piece: ' ', id: 42, hasMoved: false}, { piece: ' ', id: 43, hasMoved: false}, { piece: ' ', id: 44, hasMoved: false,}, { piece: ' ', id: 45, hasMoved: false}, { piece: ' ', id: 46, hasMoved: false}, { piece: ' ', id: 47, hasMoved: false},],
+  //   [{ piece: ' ', id: 48, hasMoved: false}, { piece: ' ', id: 49, hasMoved: false}, { piece: ' ', id: 50, hasMoved: false}, { piece: ' ', id: 51, hasMoved: false}, { piece: ' ', id: 52, hasMoved: false,}, { piece: ' ', id: 53, hasMoved: false}, { piece: ' ', id: 54, hasMoved: false}, { piece: ' ', id: 55, hasMoved: false},],
+  //   [{ piece: ' ', id: 56, hasMoved: false}, { piece: ' ', id: 57, hasMoved: false}, { piece: 'R', id: 58, hasMoved: false}, { piece: ' ', id: 59, hasMoved: false}, { piece: ' ', id: 60, hasMoved: false,}, { piece: ' ', id: 61, hasMoved: false}, { piece: ' ', id: 62, hasMoved: false}, { piece: 'K', id: 63, hasMoved: false},]
+  // ];
 
   // prettier-ignore
   const [board, setBoard] = useState(JSON.parse(JSON.stringify(STARTING_BOARD)) as Board);
@@ -101,7 +112,7 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
   useGetAvailableMoves({ board, selectedPosition, setAvailableMoves, boardHistory });
   useMouseMove({ board, availableMoves, setSelectedPosition, makeMove, currentTurn });
 
-  useAI({ board, currentTurn, makeMove, aiTeam, setScore, score, setMoveEvaluation, setDepth });
+  useAI({ board, currentTurn, makeMove, aiTeam, setScore, score, setMoveEvaluation, setDepth, setMateIn });
 
   const [pieceElements, setPieceElements] = useState<JSX.Element>();
 
@@ -128,13 +139,13 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
       {hoveredPosition !== null ? <HoveredSquare position={hoveredPosition} /> : null}
 
       <SideTab right={false} showBackground={false} sideOffset={-10}>
-        <EvaluationBar />
+        <EvaluationBar mateIn={mateIn} />
       </SideTab>
       <SideTab right={true}>
         <div className={`move-evaluation ${moveEvalation}`}>{moveEvalation}</div>
         <div>Depth: {depth ? depth : null}</div>
 
-        <MoveHistory moveHistory={moveHistory} board={board} />
+        {/* <MoveHistory moveHistory={moveHistory} board={board} />
 
         <div>Your estimated ELO is 1500</div>
         <div>
@@ -147,7 +158,7 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
           <button>
             <Icon type="chevron-right" />
           </button>
-        </div>
+        </div> */}
       </SideTab>
     </div>
   );

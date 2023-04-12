@@ -1,12 +1,13 @@
 import React, { useContext } from "react";
 import { Store } from "../App";
 import useBoardBound from "../hooks/useBoardBound";
+import clamp from "../helpers/clamp";
 
 type Props = {
-  score: number;
+  mateIn: number;
 };
 
-export default function EvaluationBar() {
+export default function EvaluationBar({ mateIn }: Props) {
   const { boardWidth } = useBoardBound();
 
   const { score } = useContext(Store);
@@ -15,8 +16,11 @@ export default function EvaluationBar() {
   const MAX_SCORE = 25;
   const MIN_SCORE = -25;
 
+  // This is what I set the max score to in the minimax function (server/src/minimax.rs)
+  const maxScore = 9_999_999;
+
   // Calculate the percentage of the bar that should be filled
-  const percentage = (score - MIN_SCORE) / (MAX_SCORE - MIN_SCORE);
+  const percentage = clamp((score - MIN_SCORE) / (MAX_SCORE - MIN_SCORE), 0, 1);
 
   // Width of the bar in px
   const WIDTH = 20;
@@ -27,6 +31,9 @@ export default function EvaluationBar() {
   if (evaluation % 1 === 0) scoreString = Math.abs(score).toFixed(0);
   else if (evaluation < 10) scoreString = Math.abs(score).toFixed(1);
   else scoreString = Math.abs(score).toFixed(0);
+
+  if (mateIn > -1) scoreString = `M${mateIn}`;
+  if (mateIn === 0) scoreString = "Checkmate";
 
   const DARK = "rgb(50, 50, 50)";
   const LIGHT = "rgb(240, 240, 240)";
