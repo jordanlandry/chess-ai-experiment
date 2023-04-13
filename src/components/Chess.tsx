@@ -1,12 +1,13 @@
 import React, { useContext, useEffect, useState } from "react";
-import useMouseDown from "../hooks/mouse/useClickPiece";
-import useMouseMove from "../hooks/mouse/useDragPiece";
+import useClickPiece from "../hooks/mouse/useClickPiece";
+import useDragPiece from "../hooks/mouse/useDragPiece";
+import useAI from "../hooks/useAI";
 import useBoardBound from "../hooks/useBoardBound";
 import useGetAvailableMoves from "../hooks/useGetAvailableMoves";
+import handleMakeMove from "../makeMove";
 import { EndGameState, Teams, WinStates } from "../properties";
 import { Board, Move, MoveEvaluation, Team } from "../types";
 import EvaluationBar from "./EvaluationBar";
-import Icon from "./Icon";
 import Pieces from "./Pieces";
 import SideTab from "./board/SideTab";
 import AvailableCapture from "./overlays/AvailableCapture";
@@ -14,9 +15,6 @@ import AvailableMove from "./overlays/AvailableMove";
 import HoveredSquare from "./overlays/HoveredSquare";
 import LastMove from "./overlays/LastMove";
 import SelectedPiece from "./overlays/SelectedPiece";
-import handleMakeMove from "../makeMove";
-import MoveHistory from "./MoveHistory";
-import useAI from "../hooks/useAI";
 
 import "./_scss/moveEvaluation.scss";
 
@@ -41,6 +39,7 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
   const [aiTeam, setAiTeam] = useState<Team>("black");
   const [depth, setDepth] = useState(0);
   const [mateIn, setMateIn] = useState(-1);
+  const [aiThinking, setAiThinking] = useState(false);
 
   // Game
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
@@ -90,7 +89,6 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
 
   // Mouse hooks
   const [hoveredPosition, setHoveredPosition] = useState<{ x: number; y: number } | null>(null);
-  const [mouseDown, setMouseDown] = useState(false);
 
   const makeMove = (move: Move) => {
     handleMakeMove({
@@ -108,11 +106,11 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
     });
   };
 
-  const { selectedPosition, setSelectedPosition } = useMouseDown({ board, availableMoves, makeMove, currentTurn });
+  const { selectedPosition, setSelectedPosition } = useClickPiece({ board, availableMoves, makeMove, currentTurn, aiThinking });
   useGetAvailableMoves({ board, selectedPosition, setAvailableMoves, boardHistory });
-  useMouseMove({ board, availableMoves, setSelectedPosition, makeMove, currentTurn });
+  useDragPiece({ board, availableMoves, setSelectedPosition, makeMove, currentTurn, aiThinking });
 
-  useAI({ board, currentTurn, makeMove, aiTeam, setScore, score, setMoveEvaluation, setDepth, setMateIn });
+  useAI({ board, currentTurn, makeMove, aiTeam, setScore, score, setMoveEvaluation, setDepth, setMateIn, setAiThinking, setSelectedPosition });
 
   const [pieceElements, setPieceElements] = useState<JSX.Element>();
 

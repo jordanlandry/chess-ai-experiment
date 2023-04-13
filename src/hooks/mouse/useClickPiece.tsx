@@ -8,12 +8,15 @@ type Props = {
   availableMoves: Move[];
   makeMove: (move: Move) => void;
   currentTurn: Team;
+  aiThinking: boolean;
 };
 
-export default function useMouseDown({ board, availableMoves, makeMove, currentTurn }: Props) {
+export default function useClickPiece({ board, availableMoves, makeMove, currentTurn, aiThinking }: Props) {
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
 
   useEffect(() => {
+    if (aiThinking) return;
+
     const handleMouseDown = (e: MouseEvent) => {
       const position = getMouseSpot(e);
       if (!position) return;

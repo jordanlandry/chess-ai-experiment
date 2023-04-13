@@ -1,4 +1,3 @@
-import properties from "../properties";
 import { Board, Position, Team } from "../types";
 
 export default function getTeam(board: Board, position: Position): Team {

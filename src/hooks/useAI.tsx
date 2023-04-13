@@ -1,5 +1,5 @@
 import { useContext, useEffect } from "react";
-import { Board, Move, MoveEvaluation, Team } from "../types";
+import { Board, Move, MoveEvaluation, Position, Team } from "../types";
 import evaluateMove from "../helpers/evaluateMove";
 
 type Props = {
@@ -12,9 +12,23 @@ type Props = {
   setMoveEvaluation: React.Dispatch<React.SetStateAction<MoveEvaluation>>;
   setDepth: React.Dispatch<React.SetStateAction<number>>;
   setMateIn: React.Dispatch<React.SetStateAction<number>>;
+  setAiThinking: React.Dispatch<React.SetStateAction<boolean>>;
+  setSelectedPosition: React.Dispatch<React.SetStateAction<Position | null>>;
 };
 
-export default async function useAI({ board, makeMove, aiTeam, currentTurn, setScore, score, setMoveEvaluation, setDepth, setMateIn }: Props) {
+export default async function useAI({
+  board,
+  makeMove,
+  aiTeam,
+  currentTurn,
+  setScore,
+  score,
+  setMoveEvaluation,
+  setDepth,
+  setMateIn,
+  setAiThinking,
+  setSelectedPosition,
+}: Props) {
   useEffect(() => {
     if (aiTeam !== currentTurn) return;
 
@@ -70,13 +84,20 @@ export default async function useAI({ board, makeMove, aiTeam, currentTurn, setS
           setScore(score);
           setDepth(depth);
 
-          if (!isEvaluation) makeMove(bestMove);
+          if (!isEvaluation) {
+            makeMove(bestMove);
+            setAiThinking(false);
+          }
+
           if (Math.abs(score) === maxScore) setMateIn(depth - 1);
 
           setMateIn((prev) => prev - 1);
         });
       });
     };
+
+    setAiThinking(true);
+    setSelectedPosition(null);
 
     const getEvaluation = async () => fetchData(evaluationTime, true);
     const getBestMove = async () => fetchData(maxTime, false);

@@ -9,8 +9,9 @@ type Props = {
   setSelectedPosition: React.Dispatch<React.SetStateAction<Position | null>>;
   currentTurn: Team;
   makeMove: (move: Move) => void;
+  aiThinking: boolean;
 };
-export default function useMouseMove({ board, availableMoves, setSelectedPosition, makeMove, currentTurn }: Props) {
+export default function useDragPiece({ board, availableMoves, setSelectedPosition, makeMove, aiThinking }: Props) {
   const [clickPosition, setClickPosition] = useState<Position | null>(null);
 
   function revertPiece() {
@@ -29,6 +30,11 @@ export default function useMouseMove({ board, availableMoves, setSelectedPositio
   }
 
   useEffect(() => {
+    if (aiThinking) {
+      setClickPosition(null);
+      return;
+    }
+
     const handleMove = (e: MouseEvent) => {
       if (!clickPosition) return;
 
@@ -71,5 +77,5 @@ export default function useMouseMove({ board, availableMoves, setSelectedPositio
       window.removeEventListener("mousedown", handleDown);
       window.removeEventListener("mouseup", handleUp);
     };
-  }, [clickPosition, board, availableMoves]);
+  }, [clickPosition, board, availableMoves, aiThinking]);
 }
