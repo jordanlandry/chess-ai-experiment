@@ -110,7 +110,21 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
   useGetAvailableMoves({ board, selectedPosition, setAvailableMoves, boardHistory });
   useDragPiece({ board, availableMoves, setSelectedPosition, makeMove, currentTurn, aiThinking });
 
-  useAI({ board, currentTurn, makeMove, aiTeam, setScore, score, setMoveEvaluation, setDepth, setMateIn, setAiThinking, setSelectedPosition });
+  const [threadCount, setThreadCount] = useState(1);
+  useAI({
+    board,
+    currentTurn,
+    makeMove,
+    aiTeam,
+    setScore,
+    score,
+    setMoveEvaluation,
+    setDepth,
+    setMateIn,
+    setAiThinking,
+    setSelectedPosition,
+    threadCount,
+  });
 
   const [pieceElements, setPieceElements] = useState<JSX.Element>();
 
@@ -142,6 +156,8 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
       <SideTab right={true}>
         <div className={`move-evaluation ${moveEvalation}`}>{moveEvalation}</div>
         <div>Depth: {depth ? depth : null}</div>
+
+        <input type="number" onChange={(e) => setThreadCount(parseInt(e.target.value))} value={threadCount}></input>
 
         {/* <MoveHistory moveHistory={moveHistory} board={board} />
 

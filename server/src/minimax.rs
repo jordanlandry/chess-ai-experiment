@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use std::thread;
 use std::{time::Instant};
 
 use crate::moves::square_is_attacked;
@@ -27,6 +28,7 @@ struct BoardHash {
     depth: u8,
 }
 
+#[derive(Clone)]
 struct TranspositionTable {
     table: HashMap<BoardHash, Score>,
 }
@@ -55,16 +57,17 @@ impl TranspositionTable {
     }
 }
 
-pub fn get_best_move(board: Bitboard, white_to_move: bool, max_time_ms: u128) -> Score {
+pub fn get_best_move(board: Bitboard, white_to_move: bool, max_time_ms: u128, thread_count: usize) -> Score {
     let now = std::time::Instant::now();
 
     let mut table = TranspositionTable::new();
     let mut best_move: Score = Score { score: 0, mv: Move { from: 0, to: 0 }, depth: 0 };
 
-    let mut depth = 1;
+    let mut depth = 2;
 
     while now.elapsed().as_millis() < max_time_ms {
-        let new_move = minimax(board, depth, white_to_move, -INFINITY, INFINITY, now, max_time_ms, best_move.mv, &mut table);
+        // let new_move = minimax(board, depth, white_to_move, -INFINITY, INFINITY, now, max_time_ms, best_move.mv, &mut table);
+        let new_move = parallel_search(board, depth, white_to_move, -INFINITY, INFINITY, now, max_time_ms, best_move.mv, &mut table, thread_count);
 
         if new_move.mv.from == 0 && new_move.mv.to == 0 {
             break;
@@ -82,8 +85,6 @@ pub fn get_best_move(board: Bitboard, white_to_move: bool, max_time_ms: u128) ->
 
         depth += 1;
     }
-
-    // let new_move = minimax(board, depth, white_to_move, -INFINITY, INFINITY, now, prev_best_move, &mut table);
 
     best_move
 }
@@ -108,55 +109,51 @@ pub fn evaluate_board(board: Bitboard) -> i32 {
     score
 }
 
-// fn minimax_multithread(board: Bitboard, depth: u8, white_to_move: bool, prev_best_move: Move, num_of_threads: usize) -> Score {
-//     let moves = if white_to_move { get_white_moves(board, true) } else { get_black_moves(board, true) };
+// The steps to do this in multi-threading are as follows:
+// 1. Generate the possible moves
+// 2. Assign each move to a thread
+// 3. Make the move on a copy of the board
+// 4. Run minimax on each copy of the board
+// 5. Pick the best move from the results
+// This way we don't initialize new threads on each minimax iteration, just on the first call
+fn parallel_search(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i32, now: Instant, max_time_ms: u128, prev_best_move: Move, table: &mut TranspositionTable, thread_count: usize) -> Score {
+    let mut results: Vec<Score> = Vec::new();
+    let possible_moves = if white_to_move { get_white_moves(board, true) } else { get_black_moves(board, true) };
+    let possible_moves_copy: Vec<Move> = possible_moves.clone(); // make a copy that lives for 'static
 
-//     let scores = Arc::new(Mutex::new(vec![None; moves.len()]));
+    let chunks = possible_moves_copy.chunks((possible_moves_copy.len() / thread_count).max(1));
+    let mut handles = Vec::new();
 
-//     let mut threads = Vec::with_capacity(num_of_threads);
+    for chunk in chunks {
 
-//     // Assign a thread to each chunk of moves
-//     let mut chunk_size = (moves.len() / num_of_threads - 1) / num_of_threads;
+        for mv in chunk {
+            let board_copy = board.clone();
+            let mut table = table.clone();
+            let mv = mv.clone();
 
-//     if chunk_size == 0 {
-//         chunk_size = 1;
-//     }
+            let handle = thread::spawn(move || {
+                // Make the move
+                let new_board = make_move(board_copy, mv, white_to_move.clone());
 
-//     // if chunk_size == 0 {
-//     //     return minimax_1(board, depth, white_to_move, -INFINITY, INFINITY, prev_best_move);
-//     // }
+                // Run minimax on the new board
+                let result = minimax(new_board, depth - 1, !white_to_move, alpha, beta, now, max_time_ms, prev_best_move, &mut table);
 
-//     for (i, chunk) in moves.chunks(chunk_size).enumerate() {
-//         let board_clone = board.clone();
-//         let white_to_move_clone = white_to_move;
-//         let depth_clone = depth;
-//         let thread_moves = chunk.to_vec();
-//         let scores_clone = scores.clone();
+                Score { mv, score: result.score, depth }
+            });
 
-//         threads.push(std::thread::spawn(move || {
-//             let mut scores = scores_clone.lock().unwrap();
+            handles.push(handle);
+        }
+    }
 
-//             for (j, mv) in thread_moves.iter().enumerate() {
-//                 let new_board = make_move(board, *mv, white_to_move);
+    for handle in handles {
+        results.push(handle.join().unwrap());
+    }
 
-//                 let score = minimax_1(new_board, depth_clone - 1, !white_to_move_clone, -INFINITY, INFINITY, prev_best_move);
-
-//                 scores[i * chunk_size + j] = Some(score);
-//             }
-//         }));
-//     }
-
-
-//     // Wait for all threads to finish
-//     for thread in threads {
-//         thread.join().unwrap();
-//     }
-
-//     let scores = scores.lock().unwrap();
-//     let best_score = scores.iter().max_by_key(|score| score.unwrap().score).unwrap().unwrap();
-
-//     best_score
-// }
+    let best_score = if white_to_move {results.iter().map(|x| x.score).max().unwrap() } else { results.iter().map(|x| x.score).min().unwrap() };
+    let best_move = results.iter().find(|x| x.score == best_score).unwrap().mv.clone();
+    
+    Score { mv: best_move, score: best_score, depth }
+}
 
 fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i32, now: Instant, max_time_ms: u128, prev_best_move: Move, table: &mut TranspositionTable) -> Score {
     if depth == 0 {
@@ -245,90 +242,6 @@ fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i3
     Score { mv: best_move, score: best_score, depth: depth }
 }
 
-// fn minimax_1(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i32, prev_best_move: Move) -> Score {
-//     if depth == 0 {
-//         return Score { mv: Move { from: 0, to: 0 }, score: evaluate_board(board) };
-//     }
-
-//     // if let Some(score) = table.lookup(board, depth) {
-//     //     return score;
-//     // }
-
-//     // if table.table.len() > TranspositionTable::MAX_SIZE {
-//     //     table.clear();
-//     // }
-
-//     let mut best_score: i32;
-//     let mut best_move: Move = Move { from: 0, to: 0 };
-
-//     if white_to_move {
-//         best_score = -INFINITY;
-
-//         let moves = get_white_moves(board, true);
-//         let ordered_moves = order_moves(board, moves, white_to_move, prev_best_move);
-
-//         if ordered_moves.len() == 0 {
-//             return if in_stalemate(board, white_to_move) { Score { mv: Move { from: 0, to: 0 }, score: 0 } } 
-//             else { Score { mv: Move { from: 0, to: 0 }, score: -INFINITY } };
-//         }
-
-//         let mut new_alpha = alpha;
-//         for m in ordered_moves.iter() {
-//             let new_board = make_move(board, *m, true);
-
-//             let next_iter = minimax_1(new_board, depth - 1, false, new_alpha, beta, prev_best_move);
-
-//             // Add move to table
-//             // table.store(new_board, depth - 1, next_iter);
-
-//             // Update best move
-//             if best_score < next_iter.score {
-//                 best_move = *m;
-//                 best_score = next_iter.score;
-//             }
-
-//             // Update alpha-beta
-//             new_alpha = alpha.max(next_iter.score);
-//             if beta <= new_alpha {
-//                 break;
-//             }
-//         }
-//     }
-
-//     else {
-//         best_score = INFINITY;
-
-//         let moves = get_black_moves(board, true);
-//         let ordered_moves = order_moves(board, moves, white_to_move, prev_best_move);
-
-//         if ordered_moves.len() == 0 {
-//             return if in_stalemate(board, white_to_move) { Score { mv: Move { from: 0, to: 0 }, score: 0 } } 
-//             else { Score { mv: Move { from: 0, to: 0 }, score: INFINITY } };
-//         }
-
-//         let mut new_beta = beta;
-//         for m in ordered_moves.iter() {
-//             let new_board = make_move(board, *m, false);
-//             let next_iter = minimax_1(new_board, depth - 1, true, alpha, new_beta, prev_best_move);
-
-//             // table.store(new_board, depth - 1, next_iter);
-        
-//             if best_score > next_iter.score {
-//                 best_move = *m;
-//                 best_score = next_iter.score;
-//             }
-
-//             new_beta = beta.min(next_iter.score);
-//             if new_beta <= alpha {
-//                 break;
-//             }
-//         }
-//     }
-
-//     Score { mv: best_move, score: best_score }
-// }
-
-
 fn get_bitboard_at_pos(board: Bitboard, pos: u8) -> u64 {
     let mut bitboard: u64 = 0;
 
@@ -407,7 +320,6 @@ pub fn make_move(board: Bitboard, mv: Move, white_to_move: bool) -> Bitboard {
 }
 
 fn order_moves(board: Bitboard, moves: Vec<Move>, white_to_move: bool, prev_best_move: Move) -> Vec<Move> {
-
     let mut ordered_moves = Vec::new();
 
     // If you capture a piece, increase the score

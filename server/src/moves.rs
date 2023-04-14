@@ -1,4 +1,4 @@
-use crate::{bitboard::Bitboard, minimax::make_move}; 
+use crate::{bitboard::{Bitboard, FILE_H, RANK_8, FILE_A, RANK_5, RANK_4, RANK_1}, minimax::make_move }; 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Move {
@@ -6,46 +6,46 @@ pub struct Move {
     pub to: u8,
 }
 
-pub fn get_pawn_moves(pawn_pos: usize, white_to_move: bool, white_pieces: u64, black_pieces: u64) -> u64 {
-    let mut moves: u64 = 0;
+// pub fn get_pawn_moves(pawn_pos: usize, white_to_move: bool, white_pieces: u64, black_pieces: u64) -> u64 {
+//     let mut moves: u64 = 0;
     
-    if white_to_move {
-        if pawn_pos > 7 && (white_pieces | black_pieces) & (1 << (pawn_pos - 8)) == 0 {
-            moves |= 1 << (pawn_pos - 8);
-        }
+//     if white_to_move {
+//         if pawn_pos > 7 && (white_pieces | black_pieces) & (1 << (pawn_pos - 8)) == 0 {
+//             moves |= 1 << (pawn_pos - 8);
+//         }
 
-        if pawn_pos >= 48 && pawn_pos <= 55 && (white_pieces | black_pieces) & (1 << (pawn_pos - 8)) == 0 && (white_pieces | black_pieces) & (1 << (pawn_pos - 16)) == 0 {
-            moves |= 1 << (pawn_pos - 16);
-        }
+//         if pawn_pos >= 48 && pawn_pos <= 55 && (white_pieces | black_pieces) & (1 << (pawn_pos - 8)) == 0 && (white_pieces | black_pieces) & (1 << (pawn_pos - 16)) == 0 {
+//             moves |= 1 << (pawn_pos - 16);
+//         }
 
-        if pawn_pos > 7 && pawn_pos % 8 != 0 && (black_pieces & (1 << (pawn_pos - 9))) != 0 {
-            moves |= 1 << (pawn_pos - 9);
-        }
+//         if pawn_pos > 7 && pawn_pos % 8 != 0 && (black_pieces & (1 << (pawn_pos - 9))) != 0 {
+//             moves |= 1 << (pawn_pos - 9);
+//         }
 
-        if pawn_pos > 7 && pawn_pos % 8 != 7 && (black_pieces & (1 << (pawn_pos - 7))) != 0 {
-            moves |= 1 << (pawn_pos - 7);
-        }
+//         if pawn_pos > 7 && pawn_pos % 8 != 7 && (black_pieces & (1 << (pawn_pos - 7))) != 0 {
+//             moves |= 1 << (pawn_pos - 7);
+//         }
 
-    } else {
-        if pawn_pos < 56 && (white_pieces | black_pieces) & (1 << (pawn_pos + 8)) == 0 {
-            moves |= 1 << (pawn_pos + 8);
-        }
+//     } else {
+//         if pawn_pos < 56 && (white_pieces | black_pieces) & (1 << (pawn_pos + 8)) == 0 {
+//             moves |= 1 << (pawn_pos + 8);
+//         }
 
-        if pawn_pos >= 8 && pawn_pos <= 15 && (white_pieces | black_pieces) & (1 << (pawn_pos + 8)) == 0 && (white_pieces | black_pieces) & (1 << (pawn_pos + 16)) == 0 {
-            moves |= 1 << (pawn_pos + 16);
-        }
+//         if pawn_pos >= 8 && pawn_pos <= 15 && (white_pieces | black_pieces) & (1 << (pawn_pos + 8)) == 0 && (white_pieces | black_pieces) & (1 << (pawn_pos + 16)) == 0 {
+//             moves |= 1 << (pawn_pos + 16);
+//         }
 
-        if pawn_pos < 56 && pawn_pos % 8 != 0 && (white_pieces & (1 << (pawn_pos + 7))) != 0 {
-            moves |= 1 << (pawn_pos + 7);
-        }
+//         if pawn_pos < 56 && pawn_pos % 8 != 0 && (white_pieces & (1 << (pawn_pos + 7))) != 0 {
+//             moves |= 1 << (pawn_pos + 7);
+//         }
 
-        if pawn_pos < 56 && pawn_pos % 8 != 7 && (white_pieces & (1 << (pawn_pos + 9))) != 0 {
-            moves |= 1 << (pawn_pos + 9);
-        }
-    }
+//         if pawn_pos < 56 && pawn_pos % 8 != 7 && (white_pieces & (1 << (pawn_pos + 9))) != 0 {
+//             moves |= 1 << (pawn_pos + 9);
+//         }
+//     }
 
-    moves
-}
+//     moves
+// }
 
 
 pub fn get_rook_moves(rook_pos: usize, white_to_move: bool, white_pieces: u64, black_pieces: u64) -> u64 {
@@ -515,13 +515,92 @@ pub fn get_king_moves(king_pos: usize, white_to_move: bool, white_pieces: u64, b
 }
 
 
-pub fn get_white_moves(board: Bitboard, look_for_checks: bool) -> Vec<Move> {
+
+pub fn get_white_pawn_moves(bb: Bitboard, other_team: u64, empty: u64) -> Vec<Move> {
     let mut moves: Vec<Move> = Vec::new();
 
+    // Capture left
+    let mut pawn_moves = (bb.white_pawns >> 7) & other_team &! RANK_8 & !FILE_A;
+    for i in pawn_moves.trailing_zeros()..64 - pawn_moves.leading_zeros() {
+        if ((pawn_moves >> i) &1) == 1 {
+            moves.push( Move { to: i as u8, from: i as u8 + 7 as u8 });
+        }
+    }
+
+    // Capture right
+    pawn_moves = (bb.white_pawns >> 9) & other_team &! RANK_8 & !FILE_H;
+    for i in pawn_moves.trailing_zeros()..64 - pawn_moves.leading_zeros() {
+        if ((pawn_moves >> i) &1) == 1 {
+            moves.push( Move { to: i as u8, from: i as u8 + 9 as u8 });
+        }
+    }
+
+    // Move forward
+    pawn_moves = (bb.white_pawns >> 8) & empty &! RANK_8;
+    for i in pawn_moves.trailing_zeros()..64 - pawn_moves.leading_zeros() {
+        if ((pawn_moves >> i) &1) == 1 {
+            moves.push( Move { to: i as u8, from: i as u8 + 8 as u8 });
+        }
+    }
+
+    pawn_moves = (bb.white_pawns >> 16) & empty & (empty >> 8) & RANK_5;
+    for i in pawn_moves.trailing_zeros()..64 - pawn_moves.leading_zeros() {
+        if ((pawn_moves >> i) &1) == 1 {
+            moves.push( Move { to: i as u8, from: i as u8 + 16 as u8 });
+        }
+    }
+
+    moves
+}
+
+// TODO Fix the RANK_1 and RANK_8 and En passant
+pub fn get_black_pawn_moves(bb: Bitboard, other_team: u64, empty: u64) -> Vec<Move> {
+    let mut moves: Vec<Move> = Vec::new();
+
+    // Capture left
+    let mut pawn_moves = (bb.black_pawns << 9) & other_team &! RANK_1 & !FILE_A;
+    for i in pawn_moves.trailing_zeros()..64 - pawn_moves.leading_zeros() {
+        if ((pawn_moves >> i) &1) == 1 {
+            moves.push( Move { to: i as u8, from: i as u8 - 9 as u8 });
+        }
+    }
+
+    // Capture right
+    pawn_moves = (bb.black_pawns << 7) & other_team &! RANK_1 & !FILE_H;
+    for i in pawn_moves.trailing_zeros()..64 - pawn_moves.leading_zeros() {
+        if ((pawn_moves >> i) &1) == 1 {
+            moves.push( Move { to: i as u8, from: i as u8 - 7 as u8 });
+        }
+    }
+
+    // Move forward
+    pawn_moves = (bb.black_pawns << 8) & empty &! RANK_1;
+    for i in pawn_moves.trailing_zeros()..64 - pawn_moves.leading_zeros() {
+        if ((pawn_moves >> i) &1) == 1 {
+            moves.push( Move { to: i as u8, from: i as u8 - 8 as u8 });
+        }
+    }
+
+    pawn_moves = (bb.black_pawns << 16) & empty & (empty << 8) & RANK_4;
+    for i in pawn_moves.trailing_zeros()..64 - pawn_moves.leading_zeros() {
+        if ((pawn_moves >> i) &1) == 1 {
+            moves.push( Move { to: i as u8, from: i as u8 - 16 as u8 });
+        }
+    }
+
+    moves
+}
+
+
+pub fn get_white_moves(board: Bitboard, look_for_checks: bool) -> Vec<Move> {
+    
     let white_pieces = board.white_pawns | board.white_rooks | board.white_knights | board.white_bishops | board.white_queens | board.white_king;
     let black_pieces = board.black_pawns | board.black_rooks | board.black_knights | board.black_bishops | board.black_queens | board.black_king;
+    let empty = !black_pieces & !white_pieces;
 
-    let mut pawn_positions: Vec<u32> = Vec::new();
+    let mut moves: Vec<Move> = get_white_pawn_moves(board, black_pieces, empty);
+
+
     let mut bishop_positions: Vec<u32> = Vec::new();
     let mut knight_positions: Vec<u32> = Vec::new();
     let mut rook_positions: Vec<u32> = Vec::new();
@@ -529,11 +608,6 @@ pub fn get_white_moves(board: Bitboard, look_for_checks: bool) -> Vec<Move> {
     let king_position = board.white_king.trailing_zeros();
 
     let mut bb = board;
-    while bb.white_pawns != 0 {
-        let pos = bb.white_pawns.trailing_zeros();
-        pawn_positions.push(pos);
-        bb.white_pawns &= bb.white_pawns - 1;
-    }
 
     while bb.white_bishops != 0 {
         let pos = bb.white_bishops.trailing_zeros();
@@ -562,24 +636,6 @@ pub fn get_white_moves(board: Bitboard, look_for_checks: bool) -> Vec<Move> {
     
     if bb.white_king != 0 {
         bb.white_king &= bb.white_king - 1;
-    }
-
-
-    for pos in pawn_positions.iter() {
-        let m = get_pawn_moves(*pos as usize, true, white_pieces, black_pieces);
-
-        // All of the 1 bits in m, are valid moves for the to property of the move, while from is the current position
-        let mut i = m;
-        while i != 0 {
-            let to = i.trailing_zeros();
-            let m = Move {
-                from: *pos as u8,
-                to: to as u8,
-            };
-
-            moves.push(m);
-            i &= i - 1;
-        }
     }
 
     for pos in bishop_positions.iter() {
@@ -673,12 +729,14 @@ pub fn get_white_moves(board: Bitboard, look_for_checks: bool) -> Vec<Move> {
 }
 
 pub fn get_black_moves(board: Bitboard, look_for_checks: bool) -> Vec<Move> {
-    let mut moves: Vec<Move> = Vec::new();
-
+    
     let white_pieces = board.white_pawns | board.white_rooks | board.white_knights | board.white_bishops | board.white_queens | board.white_king;
     let black_pieces = board.black_pawns | board.black_rooks | board.black_knights | board.black_bishops | board.black_queens | board.black_king;
+    let empty = !black_pieces & !white_pieces;
 
-    let mut pawn_positions: Vec<u32> = Vec::new();
+    let mut moves: Vec<Move> = get_black_pawn_moves(board, white_pieces, empty);
+
+    // let mut pawn_positions: Vec<u32> = Vec::new();
     let mut bishop_positions: Vec<u32> = Vec::new();
     let mut knight_positions: Vec<u32> = Vec::new();
     let mut rook_positions: Vec<u32> = Vec::new();
@@ -686,13 +744,6 @@ pub fn get_black_moves(board: Bitboard, look_for_checks: bool) -> Vec<Move> {
     let king_position = board.black_king.trailing_zeros();
 
     let mut bb = board;
-
-    // Get all of the positions of the pieces
-    while bb.black_pawns != 0 {
-        let pos = bb.black_pawns.trailing_zeros();
-        pawn_positions.push(pos);
-        bb.black_pawns &= bb.black_pawns - 1;
-    }
 
     while bb.black_bishops != 0 {
         let pos = bb.black_bishops.trailing_zeros();
@@ -721,22 +772,22 @@ pub fn get_black_moves(board: Bitboard, look_for_checks: bool) -> Vec<Move> {
     // bb.black_king &= bb.black_king - 1;
 
     // Get the moves for each position
-    for pos in pawn_positions.iter() {
-        let m = get_pawn_moves(*pos as usize, false,white_pieces, black_pieces);
+    // for pos in pawn_positions.iter() {
+    //     let m = get_pawn_moves(*pos as usize, false,white_pieces, black_pieces);
 
-        // All of the 1 bits in m, are valid moves for the to property of the move, while from is the current position
-        let mut i = m;
-        while i != 0 {
-            let to = i.trailing_zeros();
-            let m = Move {
-                from: *pos as u8,
-                to: to as u8,
-            };
+    //     // All of the 1 bits in m, are valid moves for the to property of the move, while from is the current position
+    //     let mut i = m;
+    //     while i != 0 {
+    //         let to = i.trailing_zeros();
+    //         let m = Move {
+    //             from: *pos as u8,
+    //             to: to as u8,
+    //         };
 
-            moves.push(m);
-            i &= i - 1;
-        }
-    }
+    //         moves.push(m);
+    //         i &= i - 1;
+    //     }
+    // }
 
     for pos in bishop_positions.iter() {
         let m = get_bishop_moves(*pos as usize, false, white_pieces, black_pieces);
@@ -822,6 +873,7 @@ pub fn get_black_moves(board: Bitboard, look_for_checks: bool) -> Vec<Move> {
     }
 
     // Remove all of the moves that put the king in check
+    // TODO Change this
     if look_for_checks {
         moves.retain(|m| !is_king_in_check_after_move(board, *m, false));
     }

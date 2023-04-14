@@ -105,6 +105,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c70beb79cbb5ce9c4f8e20849978f34225931f665bb49efa6982875a4d5facb3"
 
 [[package]]
+name = "bitintr"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ba5a5c4df8ac8673f22698f443ef1ce3853d7f22d5a15ebf66b9a7553b173dd"
+
+[[package]]
 name = "byteorder"
 version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -692,6 +698,7 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 name = "minimax-rust"
 version = "0.1.0"
 dependencies = [
+ "bitintr",
  "rocket 0.5.0-rc.3",
  "rocket_cors",
  "serde",

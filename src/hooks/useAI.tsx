@@ -14,6 +14,7 @@ type Props = {
   setMateIn: React.Dispatch<React.SetStateAction<number>>;
   setAiThinking: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedPosition: React.Dispatch<React.SetStateAction<Position | null>>;
+  threadCount: number;
 };
 
 export default async function useAI({
@@ -28,6 +29,7 @@ export default async function useAI({
   setMateIn,
   setAiThinking,
   setSelectedPosition,
+  threadCount,
 }: Props) {
   useEffect(() => {
     if (aiTeam !== currentTurn) return;
@@ -68,32 +70,36 @@ export default async function useAI({
     // const evaluationDepth = 6;
     const evaluationTime = 250; // Amount of time before the evaluation is updated
 
+    const startTime = Date.now();
     const fetchData = async (maxTime: number, isEvaluation: boolean) => {
-      await fetch(`${import.meta.env.VITE_SERVER_URI}/best_move/${stringBoard}/${maxTime}`, { signal: controller.signal }).then((res) => {
-        res.json().then((data) => {
-          const from = { x: data.from % 8, y: Math.floor(data.from / 8) };
-          const to = { x: data.to % 8, y: Math.floor(data.to / 8) };
+      await fetch(`${import.meta.env.VITE_SERVER_URI}/best_move/${stringBoard}/${maxTime}/${threadCount}`, { signal: controller.signal }).then(
+        (res) => {
+          res.json().then((data) => {
+            const from = { x: data.from % 8, y: Math.floor(data.from / 8) };
+            const to = { x: data.to % 8, y: Math.floor(data.to / 8) };
 
-          currentBestMove = { from, to };
+            currentBestMove = { from, to };
 
-          const depth = data.depth;
-          const score = data.score;
-          const bestMove = currentBestMove;
+            const depth = data.depth;
+            const score = data.score;
+            const bestMove = currentBestMove;
 
-          setMoveEvaluation(evaluateMove(score, lastScore, "white"));
-          setScore(score);
-          setDepth(depth);
+            setMoveEvaluation(evaluateMove(score, lastScore, "white"));
+            setScore(score);
+            setDepth(depth);
 
-          if (!isEvaluation) {
-            makeMove(bestMove);
-            setAiThinking(false);
-          }
+            if (!isEvaluation) {
+              makeMove(bestMove);
+              setAiThinking(false);
+            }
 
-          if (Math.abs(score) === maxScore) setMateIn(depth - 1);
+            if (Math.abs(score) === maxScore) setMateIn(depth - 1);
 
-          setMateIn((prev) => prev - 1);
-        });
-      });
+            setMateIn((prev) => prev - 1);
+            console.log(Date.now() - startTime + "ms");
+          });
+        }
+      );
     };
 
     setAiThinking(true);
