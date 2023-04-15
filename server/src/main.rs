@@ -1,7 +1,7 @@
 use bitboard::{Bitboard};
 use minimax::get_best_move;
 
-use moves::get_white_pawn_moves;
+use moves::{init_slider_attacks, init_magics};
 use rocket::{*, fairing::{Fairing, Info, Kind}, http::{ Header},};
 use ::serde::Serialize;
 use serde_json::Value;

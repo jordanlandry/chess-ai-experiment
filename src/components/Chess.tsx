@@ -16,9 +16,10 @@ import HoveredSquare from "./overlays/HoveredSquare";
 import LastMove from "./overlays/LastMove";
 import SelectedPiece from "./overlays/SelectedPiece";
 
-import "./_scss/moveEvaluation.scss";
-
 import { Store } from "../App";
+import MoveEvaluationComponent from "./MoveEvaluationComponent";
+import getTeam from "../helpers/getTeam";
+import MoveHistory from "./MoveHistory";
 
 type Props = {
   turn?: Teams;
@@ -134,6 +135,18 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
     setPieceElements(<Pieces board={board} />);
   }, [boardLeft, boardTop, squareSize]);
 
+  const [playerMoves, setPlayerMoves] = useState<Move[]>([]);
+
+  // Update the player moves when the move history changes
+  useEffect(() => {
+    if (moveHistory.length === 0) return;
+
+    const lastMove = moveHistory[moveHistory.length - 1];
+
+    if (lastMove.team === aiTeam) return;
+    setPlayerMoves((prev) => [...prev, lastMove]);
+  }, [moveHistory]);
+
   // --------------------------------------------------
   return (
     <div>
@@ -153,26 +166,10 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
       <SideTab right={false} showBackground={false} sideOffset={-10}>
         <EvaluationBar mateIn={mateIn} />
       </SideTab>
-      <SideTab right={true}>
-        <div className={`move-evaluation ${moveEvalation}`}>{moveEvalation}</div>
-        <div>Depth: {depth ? depth : null}</div>
-
-        <input type="number" onChange={(e) => setThreadCount(parseInt(e.target.value))} value={threadCount}></input>
-
-        {/* <MoveHistory moveHistory={moveHistory} board={board} />
-
-        <div>Your estimated ELO is 1500</div>
-        <div>
-          <button>
-            <Icon type="plus" />
-          </button>
-          <button>
-            <Icon type="chevron-left" />
-          </button>
-          <button>
-            <Icon type="chevron-right" />
-          </button>
-        </div> */}
+      <SideTab right={true} fixedWidth="10%">
+        <div style={{ textAlign: "center" }}>Depth: {depth ? depth : null}</div>
+        <MoveEvaluationComponent lastMove={playerMoves[playerMoves.length - 1]} board={board} moveEvaluation={moveEvalation} aiTeam={aiTeam} />
+        <MoveHistory boardHistory={boardHistory} moveHistory={moveHistory} />
       </SideTab>
     </div>
   );

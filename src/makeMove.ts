@@ -47,6 +47,7 @@ export default function handleMakeMove({
       }
     }
 
+    // Remove transition syles after animation is done
     setTimeout(() => {
       piece.style.transition = "none";
       piece.style.zIndex = "2";

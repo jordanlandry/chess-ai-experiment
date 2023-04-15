@@ -1,4 +1,29 @@
 .move-history-wrapper {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+
+  align-items: start;
+
+  overflow-y: auto;
+
+  max-height: 100%;
+  font-size: 0.75rem;
+
+  div {
+    width: 50%;
+  }
+
+  &::-webkit-scrollbar {
+    width: 0.5em;
+    height: 0.5em;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
 }

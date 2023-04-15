@@ -57,7 +57,7 @@ export default async function useAI({
 
     const stringBoard = JSON.stringify(formmatedBoard);
 
-    const maxTime = 3000;
+    const maxTime = 30;
 
     const controller = new AbortController();
 
@@ -89,7 +89,7 @@ export default async function useAI({
             setDepth(depth);
 
             if (!isEvaluation) {
-              makeMove(bestMove);
+              makeMove({ ...bestMove, team: aiTeam, capture: board[bestMove.to.y][bestMove.to.x].piece !== " " });
               setAiThinking(false);
             }
 

@@ -1,28 +1,28 @@
-import React from "react";
+import getNameOfMove from "../helpers/getNameOfMove";
+import useBoardBound from "../hooks/useBoardBound";
 import { Board, Move } from "../types";
 import "./_scss/moveHistory.scss";
 
 type Props = {
-  board: Board;
+  boardHistory: Board[];
   moveHistory: Move[];
 };
 
-export default function MoveHistory({ board, moveHistory }: Props) {
-  const getNameOfMove = (move: Move) => {
-    let piece = board[move.to.y][move.to.x].piece.toUpperCase();
-    let from = `${String.fromCharCode(move.from.x + 97)}${move.from.y + 1}`;
-    let to = `${String.fromCharCode(move.to.x + 97)}${move.to.y + 1}`;
-
-    if (piece === "P") piece = "";
-    return `${piece}${to}`;
-  };
+export default function MoveHistory({ boardHistory, moveHistory }: Props) {
+  const { boardWidth } = useBoardBound();
 
   return (
-    <div className="move-history-wrapper">
-      Not implemented yet
-      {/* {moveHistory.map((move, index) => {
-        return <div key={index}>{getNameOfMove(move)}</div>;
-      })} */}
+    <div style={{ height: `${boardWidth * 0.75}px` }}>
+      <div className="move-history-wrapper">
+        {moveHistory.map((move, index) => {
+          return (
+            <div key={index}>
+              {index % 2 === 0 ? `${index / 2 + 1}. ` : ""}
+              {getNameOfMove(move, boardHistory[index])}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

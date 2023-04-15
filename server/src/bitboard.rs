@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Bitboard {
@@ -43,4 +45,35 @@ pub const RANK_7: u64 = 71776119061217280;
 pub const RANK_8: u64 = 18374686479671623680;
 
 
+// Generate all rook attacks for each square to use as a lookup table instead of calculating them each time
 
+// The way I'm going to index them, is by getting all of the relevant bits for each square, then indexing into a hashmap
+// with the key being the relevant bits and the value being the attack bitboard
+// fn get_relevant_bits(board: Bitboard, square: usize) -> u64 {
+//     let mut relevant_bits: u64 = 0;
+// }
+
+// pub fn generate_rook_moves() {
+//     let mut vertical_moves: HashMap<u64, u64> = HashMap::new();
+//     let mut horizontal_moves: HashMap<u64, u64> = HashMap::new();
+
+
+//     // Generate all vertical moves
+//     for rook_bit in 0..64 {
+//         for occupied_bit in 0..8 {
+//             let mut relevant_bits: u64 = 0;
+//             let mut attack_bitboard: u64 = 0;
+
+//             // Get the relevant bits for the rook
+//             for i in 0..8 {
+//                 relevant_bits |= 1 << (occupied_bit + (i * 8));
+//             }
+
+
+
+//             vertical_moves.insert(relevant_bits, attack_bitboard);
+//         }
+//     }
+
+//     println!("{:?}", vertical_moves);
+// }

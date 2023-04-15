@@ -18,9 +18,11 @@ export type PromotionPiece = "q" | "r" | "b" | "n" | "Q" | "R" | "B" | "N";
 export type Move = {
   from: Position;
   to: Position;
+  capture?: boolean;
   castle?: { rookFrom: Position; rookTo: Position };
   promotionPiece?: PromotionPiece;
   enPassant?: Position;
+  team?: Team;
 };
 
 export type MoveEvaluation = "blunder" | "mistake" | "inaccuracy" | "good" | "great" | "brilliant" | "top" | "book" | "";

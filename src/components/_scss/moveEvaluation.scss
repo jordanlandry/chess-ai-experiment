@@ -1,8 +1,16 @@
-.move-evaluation {
-  font-size: 2rem;
-  font-weight: bold;
+.move-evaluation-wrapper {
   text-align: center;
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.5rem;
+}
+
+.move-evaluation-eval {
+  font-size: 1.25rem;
+  font-weight: bold;
   text-transform: capitalize;
 
   &.good {

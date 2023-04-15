@@ -18,6 +18,11 @@ export function getAvailableMoves(board: Board, pos: Position, prevBoard: Board,
   if (piece) pieceFunctions[piece](board, moves, pos, prevBoard, isPsuedo);
 
   if (isPsuedo) return moves;
+
+  // Add team property to each move (this way because it is much easier than to type it in every single time when adding a move)
+  const team = getTeam(board, pos);
+  moves.forEach((move) => (move.team = team));
+
   return removeIllegalMoves(board, moves, pos);
 }
 
@@ -129,13 +134,13 @@ function whitePawn(board: Board, moves: Move[], pos: Position, prevBoard: Board)
   // Capture left
   if (inBounds(captureLeft) && getTeam(board, captureLeft) !== "white" && board[captureLeft.y][captureLeft.x].piece !== empty) {
     if (y === PROMOTION_ROW + 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: captureLeft, promotionPiece: piece }));
-    else moves.push({ from: pos, to: captureLeft });
+    else moves.push({ from: pos, to: captureLeft, capture: true });
   }
 
   // Capture right
   if (inBounds(captureRight) && getTeam(board, captureRight) !== "white" && board[captureRight.y][captureRight.x].piece !== empty) {
     if (y === PROMOTION_ROW + 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: captureRight, promotionPiece: piece }));
-    else moves.push({ from: pos, to: captureRight });
+    else moves.push({ from: pos, to: captureRight, capture: true });
   }
 
   // Promotion
@@ -179,13 +184,13 @@ function blackPawn(board: Board, moves: Move[], pos: Position, prevBoard: Board)
   // Capture left
   if (inBounds(captureLeft) && getTeam(board, captureLeft) !== "black" && board[captureLeft.y][captureLeft.x].piece !== empty) {
     if (y === PROMOTION_ROW - 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: captureLeft, promotionPiece: piece }));
-    else moves.push({ from: pos, to: captureLeft });
+    else moves.push({ from: pos, to: captureLeft, capture: true });
   }
 
   // Capture right
   if (inBounds(captureRight) && getTeam(board, captureRight) !== "black" && board[captureRight.y][captureRight.x].piece !== empty) {
     if (y === PROMOTION_ROW - 1) promotionPieces.forEach((piece) => moves.push({ from: pos, to: captureRight, promotionPiece: piece }));
-    else moves.push({ from: pos, to: captureRight });
+    else moves.push({ from: pos, to: captureRight, capture: true });
   }
 
   // Promotion
@@ -211,7 +216,7 @@ function rook(board: Board, moves: Move[], pos: Position) {
     if (board[i][x].piece === empty) {
       moves.push({ from: pos, to: move });
     } else {
-      if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move });
+      if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move, capture: true });
       break;
     }
   }
@@ -222,7 +227,7 @@ function rook(board: Board, moves: Move[], pos: Position) {
     if (board[i][x].piece === empty) {
       moves.push({ from: pos, to: move });
     } else {
-      if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move });
+      if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move, capture: true });
       break;
     }
   }
@@ -233,7 +238,7 @@ function rook(board: Board, moves: Move[], pos: Position) {
     if (board[y][i].piece === empty) {
       moves.push({ from: pos, to: move });
     } else {
-      if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move });
+      if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move, capture: true });
       break;
     }
   }
@@ -244,7 +249,7 @@ function rook(board: Board, moves: Move[], pos: Position) {
     if (board[y][i].piece === empty) {
       moves.push({ from: pos, to: move });
     } else {
-      if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move });
+      if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move, capture: true });
       break;
     }
   }
@@ -266,8 +271,9 @@ function knight(board: Board, moves: Move[], pos: Position) {
   ];
 
   movesArr.forEach((move) => {
-    if (inBounds(move) && (board[move.y][move.x].piece === empty || getTeam(board, move) !== getTeam(board, pos))) {
-      moves.push({ from: pos, to: move });
+    if (inBounds(move)) {
+      if (board[move.y][move.x].piece === empty) moves.push({ from: pos, to: move });
+      else if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move, capture: true });
     }
   });
 }
@@ -283,7 +289,7 @@ function bishop(board: Board, moves: Move[], pos: Position) {
       if (board[move.y][move.x].piece === empty) {
         moves.push({ from: pos, to: move });
       } else {
-        if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move });
+        if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move, capture: true });
         break;
       }
     } else break;
@@ -296,7 +302,7 @@ function bishop(board: Board, moves: Move[], pos: Position) {
       if (board[move.y][move.x].piece === empty) {
         moves.push({ from: pos, to: move });
       } else {
-        if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move });
+        if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move, capture: true });
         break;
       }
     } else break;
@@ -309,7 +315,7 @@ function bishop(board: Board, moves: Move[], pos: Position) {
       if (board[move.y][move.x].piece === empty) {
         moves.push({ from: pos, to: move });
       } else {
-        if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move });
+        if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move, capture: true });
         break;
       }
     } else break;
@@ -322,7 +328,7 @@ function bishop(board: Board, moves: Move[], pos: Position) {
       if (board[move.y][move.x].piece === empty) {
         moves.push({ from: pos, to: move });
       } else {
-        if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move });
+        if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move, capture: true });
         break;
       }
     } else break;
@@ -350,8 +356,9 @@ function king(board: Board, moves: Move[], pos: Position, _: Board, isPsuedo: bo
   ];
 
   movesArr.forEach((move) => {
-    if (inBounds(move) && (board[move.y][move.x].piece === empty || getTeam(board, move) !== getTeam(board, pos))) {
-      moves.push({ from: pos, to: move });
+    if (inBounds(move)) {
+      if (board[move.y][move.x].piece === empty) moves.push({ from: pos, to: move });
+      else if (getTeam(board, move) !== getTeam(board, pos)) moves.push({ from: pos, to: move, capture: true });
     }
   });
 
