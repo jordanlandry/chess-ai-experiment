@@ -1,7 +1,7 @@
-use bitboard::{Bitboard};
+use bitboard::{Bitboard, rook_moves, init_rook_moves};
 use minimax::get_best_move;
 
-use moves::{init_slider_attacks, init_magics};
+// use moves::{init_slider_attacks, init_magics};
 use rocket::{*, fairing::{Fairing, Info, Kind}, http::{ Header},};
 use ::serde::Serialize;
 use serde_json::Value;
@@ -124,5 +124,8 @@ impl Fairing for CORS {
 
 #[launch]
 fn rocket() -> _ {
+    let occupancy: u64 = 0;
+    init_rook_moves();
+    print_bitboard(rook_moves(occupancy, 0));
     rocket::build().mount("/", routes![best_move]).attach(CORS)
 }
