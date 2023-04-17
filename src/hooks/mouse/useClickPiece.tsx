@@ -18,6 +18,7 @@ export default function useClickPiece({ board, availableMoves, makeMove, current
     if (aiThinking) return;
 
     const handleMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return; // 0 = left click
       const position = getMouseSpot(e);
       if (!position) return;
 

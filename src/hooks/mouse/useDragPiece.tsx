@@ -48,7 +48,11 @@ export default function useDragPiece({ board, availableMoves, setSelectedPositio
       piece.style.top = e.clientY - piece.clientHeight / 2 + "px";
     };
 
-    const handleDown = (e: MouseEvent) => setClickPosition(getMouseSpot(e));
+    const handleDown = (e: MouseEvent) => {
+      if (e.button !== 0) return; // 0 = left click
+      setClickPosition(getMouseSpot(e));
+    };
+
     const handleUp = (e: MouseEvent) => {
       const position = getMouseSpot(e);
       if (!position) {

@@ -67,7 +67,10 @@ pub fn get_best_move(board: Bitboard, white_to_move: bool, max_time_ms: u128, th
 
     while now.elapsed().as_millis() < max_time_ms {
         // let new_move = minimax(board, depth, white_to_move, -INFINITY, INFINITY, now, max_time_ms, best_move.mv, &mut table);
-        let new_move = parallel_search(board, depth, white_to_move, -INFINITY, INFINITY, now, max_time_ms, best_move.mv, &mut table, thread_count);
+        // let new_move = parallel_search(board, depth, white_to_move, -INFINITY, INFINITY, now, max_time_ms, best_move.mv, &mut table, thread_count);
+
+
+        let new_move = minimax(board, depth, white_to_move, -INFINITY, INFINITY, now, max_time_ms, best_move.mv, &mut table);
 
         if new_move.mv.from == 0 && new_move.mv.to == 0 {
             break;

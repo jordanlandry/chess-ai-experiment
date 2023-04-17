@@ -1,10 +1,13 @@
 use bitboard::{Bitboard, rook_moves, init_rook_moves};
 use minimax::get_best_move;
 
+use moves::get_black_moves;
 // use moves::{init_slider_attacks, init_magics};
 use rocket::{*, fairing::{Fairing, Info, Kind}, http::{ Header},};
 use ::serde::Serialize;
 use serde_json::Value;
+
+use crate::moves::get_white_moves;
 
 pub mod moves;
 pub mod minimax;
@@ -40,8 +43,8 @@ fn set_bitboard(board: Vec<Vec<char>>) -> (u64, u64, u64, u64, u64, u64, u64, u6
 pub fn print_bitboard(bitboard: u64) {
     for i in 0..8 {
         for j in 0..8 {
-            if bitboard & (1 << (i * 8 + j)) != 0 { print!("1"); } 
-            else { print!("0"); }
+            if bitboard & (1 << (i * 8 + j)) != 0 { print!("1 "); } 
+            else { print!("0 "); }
         }
         println!("");
     }
@@ -99,6 +102,17 @@ fn best_move(b: String, max_time: String, thread_count: String) -> String {
         depth: best_move.depth,
     };
 
+
+    // print_bitboard(get_black_moves(bitboard, false));
+
+    // let black_moves = get_black_moves(bitboard, false);
+    // println!("Black moves: {:?}", black_moves);
+    
+    let white_moves = get_white_moves(bitboard, false);
+    println!("White moves: {:?}", white_moves);
+
+    // println!("{}", get_black_moves(bitboard, false));
+
     let json = serde_json::to_string(&mv).unwrap();
     json
 }
@@ -124,8 +138,8 @@ impl Fairing for CORS {
 
 #[launch]
 fn rocket() -> _ {
-    let occupancy: u64 = 0;
-    init_rook_moves();
-    print_bitboard(rook_moves(occupancy, 0));
+    // let occupancy: u64 = 0;
+    // init_rook_moves();
+    // print_bitboard(rook_moves(occupancy, 1));
     rocket::build().mount("/", routes![best_move]).attach(CORS)
 }

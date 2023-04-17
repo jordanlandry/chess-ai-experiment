@@ -57,7 +57,7 @@ export default async function useAI({
 
     const stringBoard = JSON.stringify(formmatedBoard);
 
-    const maxTime = 30;
+    const maxTime = 3000;
 
     const controller = new AbortController();
 
