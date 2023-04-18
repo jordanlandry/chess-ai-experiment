@@ -54,6 +54,7 @@ export default function useDragPiece({ board, availableMoves, setSelectedPositio
     };
 
     const handleUp = (e: MouseEvent) => {
+      if (e.button !== 0) return; // 0 = left click
       const position = getMouseSpot(e);
       if (!position) {
         setClickPosition(null);

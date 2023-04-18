@@ -6,7 +6,7 @@ import useBoardBound from "../hooks/useBoardBound";
 import useGetAvailableMoves from "../hooks/useGetAvailableMoves";
 import handleMakeMove from "../makeMove";
 import { EndGameState, Teams, WinStates } from "../properties";
-import { Board, Move, MoveEvaluation, Team } from "../types";
+import { Board, Move, MoveEvaluation, Position, Team } from "../types";
 import EvaluationBar from "./EvaluationBar";
 import Pieces from "./Pieces";
 import SideTab from "./board/SideTab";
@@ -21,6 +21,8 @@ import MoveEvaluationComponent from "./MoveEvaluationComponent";
 import getTeam from "../helpers/getTeam";
 import MoveHistory from "./MoveHistory";
 import Arrow from "./board/Arrow";
+import getMouseSpot from "../helpers/getMouseSpot";
+import HighlightedSquare from "./overlays/HighlightedSquare";
 
 type Props = {
   turn?: Teams;
@@ -148,11 +150,58 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
     setPlayerMoves((prev) => [...prev, lastMove]);
   }, [moveHistory]);
 
+  // Get highlighted squares on right click
+  const [highlightedSquares, setHighlightedSquares] = useState<Position[]>([]);
+  useEffect(() => {
+    let mouseDownPos: Position;
+    const onMouseUp = (e: MouseEvent) => {
+      if (e.button === 0) {
+        setHighlightedSquares([]);
+        return;
+      }
+
+      if (e.button !== 2) return;
+      const position = getMouseSpot(e);
+      if (!position) return;
+
+      const { x, y } = position;
+
+      if (position.x !== mouseDownPos.x || position.y !== mouseDownPos.y) return;
+
+      setHighlightedSquares((prev) => {
+        const newSquares = [...prev];
+        const index = newSquares.findIndex((s) => s.x === x && s.y === y);
+        if (index === -1) newSquares.push({ x, y });
+        else newSquares.splice(index, 1);
+        return newSquares;
+      });
+    };
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 2) return;
+
+      const position = getMouseSpot(e);
+      if (position) mouseDownPos = position;
+    };
+
+    window.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mouseup", onMouseUp);
+
+    return () => {
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("mousedown", onMouseDown);
+    };
+  }, []);
+
   // --------------------------------------------------
   return (
     <div>
       <Arrow />
       {pieceElements}
+
+      {highlightedSquares.map((square, index) => {
+        return <HighlightedSquare key={index} position={square} />;
+      })}
 
       {availableMoves.map((move, index) => {
         if (board[move.to.y][move.to.x].piece === " ") return <AvailableMove key={index} position={move.to} />;
