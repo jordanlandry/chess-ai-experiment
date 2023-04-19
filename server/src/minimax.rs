@@ -57,7 +57,7 @@ impl TranspositionTable {
     }
 }
 
-pub fn get_best_move(board: Bitboard, white_to_move: bool, max_time_ms: u128, thread_count: usize) -> Score {
+pub fn get_best_move(board: Bitboard, white_to_move: bool, max_time_ms: u128) -> Score {
     let now = std::time::Instant::now();
 
     let mut table = TranspositionTable::new();
@@ -119,7 +119,7 @@ pub fn evaluate_board(board: Bitboard) -> i32 {
 // 4. Run minimax on each copy of the board
 // 5. Pick the best move from the results
 // This way we don't initialize new threads on each minimax iteration, just on the first call
-fn parallel_search(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i32, now: Instant, max_time_ms: u128, prev_best_move: Move, table: &mut TranspositionTable, thread_count: usize) -> Score {
+fn _parallel_search(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i32, now: Instant, max_time_ms: u128, prev_best_move: Move, table: &mut TranspositionTable, thread_count: usize) -> Score {
     let mut results: Vec<Score> = Vec::new();
     let possible_moves = if white_to_move { get_white_moves(board, true) } else { get_black_moves(board, true) };
     let possible_moves_copy: Vec<Move> = possible_moves.clone(); // make a copy that lives for 'static

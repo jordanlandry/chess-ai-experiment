@@ -1,13 +1,10 @@
-use bitboard::{Bitboard, rook_moves, init_rook_moves};
+use bitboard::{Bitboard};
 use minimax::get_best_move;
 
-use moves::get_black_moves;
-// use moves::{init_slider_attacks, init_magics};
 use rocket::{*, fairing::{Fairing, Info, Kind}, http::{ Header},};
 use ::serde::Serialize;
 use serde_json::Value;
 
-use crate::moves::get_white_moves;
 
 pub mod moves;
 pub mod minimax;
@@ -59,8 +56,8 @@ struct MinimaxMove {
     depth: u8,
 }
 
-#[get("/best_move/<b>/<max_time>/<thread_count>")]
-fn best_move(b: String, max_time: String, thread_count: String) -> String {
+#[get("/best_move/<b>/<max_time>")]
+fn best_move(b: String, max_time: String) -> String {
     let white_pawns: u64; let white_rooks: u64; let white_knights: u64; let white_bishops: u64; let white_queens: u64; let white_king: u64;
     let black_pawns: u64; let black_rooks: u64; let black_knights: u64; let black_bishops: u64; let black_queens: u64; let black_king: u64;
 
@@ -91,27 +88,15 @@ fn best_move(b: String, max_time: String, thread_count: String) -> String {
     = set_bitboard(readable_board);
     
     let bitboard = Bitboard { white_pawns, white_rooks, white_knights, white_bishops, white_queens, white_king, black_pawns, black_rooks, black_knights, black_bishops, black_queens, black_king};
-    let parsed_thread_count = thread_count.parse::<usize>().unwrap();
-
+    
     // let parsed_depth = depth.parse::<u8>().unwrap();
-    let best_move = get_best_move(bitboard, false, max_time.parse::<u64>().unwrap() as u128, parsed_thread_count);
+    let best_move = get_best_move(bitboard, false, max_time.parse::<u64>().unwrap() as u128);
     let mv = MinimaxMove {
         score: best_move.score,
         from: best_move.mv.from,
         to: best_move.mv.to,
         depth: best_move.depth,
     };
-
-
-    // print_bitboard(get_black_moves(bitboard, false));
-
-    // let black_moves = get_black_moves(bitboard, false);
-    // println!("Black moves: {:?}", black_moves);
-    
-    let white_moves = get_white_moves(bitboard, false);
-    println!("White moves: {:?}", white_moves);
-
-    // println!("{}", get_black_moves(bitboard, false));
 
     let json = serde_json::to_string(&mv).unwrap();
     json

@@ -1,5 +1,4 @@
 import useBoardBound from "../../hooks/useBoardBound";
-import properties from "../../properties";
 import { Position } from "../../types";
 
 type Props = { position: Position | null };
@@ -11,6 +10,8 @@ export default function SelectedPiece({ position }: Props) {
   const x = boardLeft + position.x * squareSize;
   const y = boardTop + position.y * squareSize;
 
+  const color = "rgba(255, 255, 0, 0.5)";
+
   return (
     <div
       style={{
@@ -19,7 +20,7 @@ export default function SelectedPiece({ position }: Props) {
         top: y + "px",
         width: squareSize + "px",
         height: squareSize + "px",
-        backgroundColor: properties.overlayColors.selected,
+        backgroundColor: color,
         zIndex: 1,
       }}
     />

@@ -1,5 +1,4 @@
 import useBoardBound from "../../hooks/useBoardBound";
-import properties from "../../properties";
 import { Position } from "../../types";
 
 type Props = { position: Position };
@@ -9,6 +8,8 @@ export default function AvailableMove({ position }: Props) {
 
   const x = boardLeft + position.x * squareSize;
   const y = boardTop + position.y * squareSize;
+
+  const color = "rgba(0, 0, 0, 0.15)";
 
   return (
     <div
@@ -20,7 +21,7 @@ export default function AvailableMove({ position }: Props) {
         borderRadius: "50%",
         width: squareSize / 3 + "px",
         height: squareSize / 3 + "px",
-        backgroundColor: properties.overlayColors.available,
+        backgroundColor: color,
         zIndex: 1,
       }}
     />

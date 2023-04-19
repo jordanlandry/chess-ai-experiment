@@ -1,8 +1,5 @@
 use std::collections::HashMap;
 
-use crate::print_bitboard;
-
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Bitboard {
     pub white_pawns: u64,

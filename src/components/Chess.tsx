@@ -4,8 +4,7 @@ import useDragPiece from "../hooks/mouse/useDragPiece";
 import useAI from "../hooks/useAI";
 import useBoardBound from "../hooks/useBoardBound";
 import useGetAvailableMoves from "../hooks/useGetAvailableMoves";
-import handleMakeMove from "../makeMove";
-import { EndGameState, Teams, WinStates } from "../properties";
+import handleMakeMove from "../handleMakeMove";
 import { Board, Move, MoveEvaluation, Position, Team } from "../types";
 import EvaluationBar from "./EvaluationBar";
 import Pieces from "./Pieces";
@@ -24,22 +23,14 @@ import Arrow from "./board/Arrow";
 import getMouseSpot from "../helpers/getMouseSpot";
 import HighlightedSquare from "./overlays/HighlightedSquare";
 
-type Props = {
-  turn?: Teams;
-  usingAI?: boolean;
-  setLastMove?: React.Dispatch<React.SetStateAction<Move>>;
-  isPuzzle?: boolean;
-  lastMoveSet?: Move;
-};
-
-export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSet }: Props) {
+export default function Chess() {
   const ANIMATION_TIME_MS = 100;
   const { squareSize, boardLeft, boardTop } = useBoardBound();
 
   const { setScore, score } = useContext(Store);
 
   // AI
-  const [usingAi, setUsingAi] = useState(usingAI ?? true);
+  const [usingAi, setUsingAi] = useState(true);
   const [aiTeam, setAiTeam] = useState<Team>("black");
   const [depth, setDepth] = useState(0);
   const [mateIn, setMateIn] = useState(-1);
@@ -80,11 +71,6 @@ export default function Chess({ turn, usingAI, setLastMove, isPuzzle, lastMoveSe
 
   // Game over
   const [gameOverOpen, setGameOverOpen] = useState(false);
-  const [winState, setWinState] = useState<EndGameState>({
-    isOver: false,
-    winningTeam: Teams.None,
-    wonBy: WinStates.None,
-  });
 
   // Promotion
   const [promotionPosition, setPromotionPosition] = useState(-1);

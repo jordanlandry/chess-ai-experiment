@@ -1,6 +1,4 @@
-use std::vec;
-
-use crate::{bitboard::{Bitboard, FILE_H, RANK_8, FILE_A, RANK_5, RANK_4, RANK_1, rook_moves}, minimax::make_move, print_bitboard }; 
+use crate::{bitboard::{Bitboard, FILE_H, RANK_8, FILE_A, RANK_5, RANK_4, RANK_1, rook_moves}, minimax::make_move }; 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Move {

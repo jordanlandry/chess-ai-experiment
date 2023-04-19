@@ -1,6 +1,5 @@
 import React from "react";
 import useBoardBound from "../../hooks/useBoardBound";
-import properties from "../../properties";
 import { Position } from "../../types";
 
 type Props = { position: Position };
@@ -13,6 +12,8 @@ export default function AvailableCapture({ position }: Props) {
 
   const borderSize = Math.ceil(squareSize * 0.1);
 
+  const color = "rgba(255, 0, 0, 0.5)";
+
   return (
     <div
       style={{
@@ -21,7 +22,7 @@ export default function AvailableCapture({ position }: Props) {
         top: y + borderSize + "px",
         width: squareSize - borderSize * 2 + "px",
         height: squareSize - borderSize * 2 + "px",
-        outline: `${borderSize}px solid ${properties.overlayColors.capture}`,
+        outline: `${borderSize}px solid ${color}`,
         borderRadius: "50%",
         zIndex: 1,
       }}

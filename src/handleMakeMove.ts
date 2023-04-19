@@ -14,6 +14,15 @@ type Props = {
   boardTop: number;
 };
 
+type TypeOfMove = "capture" | "castle" | "normal" | "check" | "checkmate" | "draw";
+
+const BASE_AUDIO_PATH = "assets/sounds/";
+const audioPathMap = {
+  capture: "capture.mp3",
+  castle: "castle.mp3",
+  normal: "move-self.mp3",
+} as { [key in TypeOfMove]: string };
+
 export default function handleMakeMove({
   move,
   board,
@@ -27,6 +36,16 @@ export default function handleMakeMove({
   boardLeft,
   boardTop,
 }: Props) {
+  function playAudio(move: Move) {
+    // TODO - Add check, checkmate, and draw sounds
+    let typeOfMove: TypeOfMove = "normal";
+    if (move.capture) typeOfMove = "capture";
+    else if (move.castle) typeOfMove = "castle";
+
+    const audio = new Audio(BASE_AUDIO_PATH + audioPathMap[typeOfMove]);
+    audio.play();
+  }
+
   function animatePiece(move: Move) {
     const piece = document.getElementById(board[move.from.y][move.from.x].id.toString());
     if (!piece) return;
@@ -59,6 +78,7 @@ export default function handleMakeMove({
     }, ANIMATION_TIME_MS);
   }
 
+  playAudio(move);
   animatePiece(move);
 
   setBoard((prevBoard) => {
