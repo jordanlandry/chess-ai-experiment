@@ -196,7 +196,7 @@ fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i3
             let next_iter = minimax(new_board, depth - 1, false, new_alpha, beta, now, max_time_ms, prev_best_move, table);
 
             // Add move to table
-            table.store(new_board, depth - 1, next_iter);
+            // table.store(new_board, depth - 1, next_iter);
 
             // Update best move
             if best_score < next_iter.score {
@@ -228,7 +228,7 @@ fn minimax(board: Bitboard, depth: u8, white_to_move: bool, alpha: i32, beta: i3
             let new_board = make_move(board, *m, false);
             let next_iter = minimax(new_board, depth - 1, true, alpha, new_beta, now, max_time_ms, prev_best_move, table);
 
-            table.store(new_board, depth - 1, next_iter);
+            // table.store(new_board, depth - 1, next_iter);
         
             if best_score > next_iter.score {
                 best_move = *m;

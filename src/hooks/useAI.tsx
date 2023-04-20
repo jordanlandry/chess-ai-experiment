@@ -14,7 +14,7 @@ type Props = {
   setMateIn: React.Dispatch<React.SetStateAction<number>>;
   setAiThinking: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedPosition: React.Dispatch<React.SetStateAction<Position | null>>;
-  threadCount: number;
+  usingAi: boolean;
 };
 
 export default async function useAI({
@@ -29,10 +29,11 @@ export default async function useAI({
   setMateIn,
   setAiThinking,
   setSelectedPosition,
-  threadCount,
+  usingAi,
 }: Props) {
   useEffect(() => {
     if (aiTeam !== currentTurn) return;
+    if (!usingAi) return;
 
     const formmatedBoard = new Array(64);
     for (let i = 0; i < 8; i++) {
@@ -95,7 +96,6 @@ export default async function useAI({
           if (Math.abs(score) === maxScore) setMateIn(depth - 1);
 
           setMateIn((prev) => prev - 1);
-          console.log(Date.now() - startTime + "ms");
         });
       });
     };

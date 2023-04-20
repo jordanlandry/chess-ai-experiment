@@ -10,7 +10,7 @@ type Props = {
 };
 
 export default function Modal({ children, open, onClose, className, customStyles }: Props) {
-  useKeybind("Escape", () => (open ? onClose() : null));
+  // useKeybind("Escape", () => (open ? onClose() : null));
 
   const MODAL_STYLES: React.CSSProperties = {
     position: "fixed",
@@ -34,32 +34,12 @@ export default function Modal({ children, open, onClose, className, customStyles
     zIndex: 1000,
   };
 
-  const X_STYLES: React.CSSProperties = {
-    position: "absolute",
-    cursor: "pointer",
-    color: "white",
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    fontSize: "1.25rem",
-    borderRadius: "50%",
-    width: "24px",
-    height: "24px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "0.25rem",
-    top: "0.5rem",
-    right: "0.5rem",
-  };
-
   if (!open) return null;
   return createPortal(
     <>
-      <div style={OVERLAY_STYLES} onClick={onClose}></div>
+      <div style={OVERLAY_STYLES}></div>
       <div className="modal" style={MODAL_STYLES}>
         {children}
-        <div style={X_STYLES} color="white" onClick={onClose}>
-          X
-        </div>
       </div>
     </>,
     document.getElementById("portal")!

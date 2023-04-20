@@ -1,11 +1,11 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import handleMakeMove from "../handleMakeMove";
 import useClickPiece from "../hooks/mouse/useClickPiece";
 import useDragPiece from "../hooks/mouse/useDragPiece";
 import useAI from "../hooks/useAI";
 import useBoardBound from "../hooks/useBoardBound";
 import useGetAvailableMoves from "../hooks/useGetAvailableMoves";
-import handleMakeMove from "../handleMakeMove";
-import { Board, Move, MoveEvaluation, Position, Team } from "../types";
+import { Board, Move, MoveEvaluation, Position, PromotionPiece, Team } from "../types";
 import EvaluationBar from "./EvaluationBar";
 import Pieces from "./Pieces";
 import SideTab from "./board/SideTab";
@@ -16,11 +16,11 @@ import LastMove from "./overlays/LastMove";
 import SelectedPiece from "./overlays/SelectedPiece";
 
 import { Store } from "../App";
-import MoveEvaluationComponent from "./MoveEvaluationComponent";
-import getTeam from "../helpers/getTeam";
-import MoveHistory from "./MoveHistory";
-import Arrow from "./board/Arrow";
 import getMouseSpot from "../helpers/getMouseSpot";
+import MoveEvaluationComponent from "./MoveEvaluationComponent";
+import MoveHistory from "./MoveHistory";
+import PromotionSelect from "./PromotionSelect";
+import Arrow from "./board/Arrow";
 import HighlightedSquare from "./overlays/HighlightedSquare";
 
 export default function Chess() {
@@ -30,7 +30,7 @@ export default function Chess() {
   const { setScore, score } = useContext(Store);
 
   // AI
-  const [usingAi, setUsingAi] = useState(true);
+  const [usingAi, setUsingAi] = useState(false);
   const [aiTeam, setAiTeam] = useState<Team>("black");
   const [depth, setDepth] = useState(0);
   const [mateIn, setMateIn] = useState(-1);
@@ -42,26 +42,26 @@ export default function Chess() {
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
 
   // prettier-ignore
-  const STARTING_BOARD: Board = [
-    [{ piece: 'r', id: 0, hasMoved: false}, { piece: 'n', id: 1, hasMoved: false}, { piece: 'b', id: 2, hasMoved: false}, { piece: 'q', id: 3, hasMoved: false}, { piece: 'k', id: 4, hasMoved: false,}, { piece: 'b', id: 5, hasMoved: false}, { piece: 'n', id: 6, hasMoved: false}, { piece: 'r', id: 7, hasMoved: false}],
-    [{ piece: 'p', id: 8, hasMoved: false}, { piece: 'p', id: 9, hasMoved: false}, { piece: 'p', id: 10, hasMoved: false}, { piece: 'p', id: 11, hasMoved: false}, { piece: 'p', id: 12, hasMoved: false,}, { piece: 'p', id: 13, hasMoved: false}, { piece: 'p', id: 14, hasMoved: false}, { piece: 'p', id: 15, hasMoved: false},],
-    [{ piece: ' ', id: 16, hasMoved: false}, { piece: ' ', id: 17, hasMoved: false}, { piece: ' ', id: 18, hasMoved: false}, { piece: ' ', id: 19, hasMoved: false}, { piece: ' ', id: 20, hasMoved: false,}, { piece: ' ', id: 21, hasMoved: false}, { piece: ' ', id: 22, hasMoved: false}, { piece: ' ', id: 23, hasMoved: false},],
-    [{ piece: ' ', id: 24, hasMoved: false}, { piece: ' ', id: 25, hasMoved: false}, { piece: ' ', id: 26, hasMoved: false}, { piece: ' ', id: 27, hasMoved: false}, { piece: ' ', id: 28, hasMoved: false,}, { piece: ' ', id: 29, hasMoved: false}, { piece: ' ', id: 30, hasMoved: false}, { piece: ' ', id: 31, hasMoved: false},],
-    [{ piece: ' ', id: 32, hasMoved: false}, { piece: ' ', id: 33, hasMoved: false}, { piece: ' ', id: 34, hasMoved: false}, { piece: ' ', id: 35, hasMoved: false}, { piece: ' ', id: 36, hasMoved: false,}, { piece: ' ', id: 37, hasMoved: false}, { piece: ' ', id: 38, hasMoved: false}, { piece: ' ', id: 39, hasMoved: false},],
-    [{ piece: ' ', id: 40, hasMoved: false}, { piece: ' ', id: 41, hasMoved: false}, { piece: ' ', id: 42, hasMoved: false}, { piece: ' ', id: 43, hasMoved: false}, { piece: ' ', id: 44, hasMoved: false,}, { piece: ' ', id: 45, hasMoved: false}, { piece: ' ', id: 46, hasMoved: false}, { piece: ' ', id: 47, hasMoved: false},],
-    [{ piece: 'P', id: 48, hasMoved: false}, { piece: 'P', id: 49, hasMoved: false}, { piece: 'P', id: 50, hasMoved: false}, { piece: 'P', id: 51, hasMoved: false}, { piece: 'P', id: 52, hasMoved: false,}, { piece: 'P', id: 53, hasMoved: false}, { piece: 'P', id: 54, hasMoved: false}, { piece: 'P', id: 55, hasMoved: false},],
-    [{ piece: 'R', id: 56, hasMoved: false}, { piece: 'N', id: 57, hasMoved: false}, { piece: 'B', id: 58, hasMoved: false}, { piece: 'Q', id: 59, hasMoved: false}, { piece: 'K', id: 60, hasMoved: false,}, { piece: 'B', id: 61, hasMoved: false}, { piece: 'N', id: 62, hasMoved: false}, { piece: 'R', id: 63, hasMoved: false},]
-  ];
   // const STARTING_BOARD: Board = [
-  //   [{ piece: 'r', id: 0, hasMoved: false}, { piece: 'n', id: 1, hasMoved: false}, { piece: 'b', id: 2, hasMoved: false}, { piece: ' ', id: 3, hasMoved: false}, { piece: 'k', id: 4, hasMoved: false,}, { piece: 'b', id: 5, hasMoved: false}, { piece: 'n', id: 6, hasMoved: false}, { piece: 'r', id: 7, hasMoved: false}],
-  //   [{ piece: 'p', id: 8, hasMoved: false}, { piece: 'p', id: 9, hasMoved: false}, { piece: 'p', id: 10, hasMoved: false}, { piece: 'p', id: 11, hasMoved: false}, { piece: ' ', id: 12, hasMoved: false,}, { piece: 'p', id: 13, hasMoved: false}, { piece: 'p', id: 14, hasMoved: false}, { piece: 'p', id: 15, hasMoved: false},],
-  //   [{ piece: ' ', id: 16, hasMoved: false}, { piece: ' ', id: 17, hasMoved: false}, { piece: ' ', id: 18, hasMoved: false}, { piece: 'q', id: 19, hasMoved: false}, { piece: 'p', id: 20, hasMoved: false,}, { piece: ' ', id: 21, hasMoved: false}, { piece: ' ', id: 22, hasMoved: false}, { piece: ' ', id: 23, hasMoved: false},],
+  //   [{ piece: 'r', id: 0, hasMoved: false}, { piece: 'n', id: 1, hasMoved: false}, { piece: 'b', id: 2, hasMoved: false}, { piece: 'q', id: 3, hasMoved: false}, { piece: 'k', id: 4, hasMoved: false,}, { piece: 'b', id: 5, hasMoved: false}, { piece: 'n', id: 6, hasMoved: false}, { piece: 'r', id: 7, hasMoved: false}],
+  //   [{ piece: 'p', id: 8, hasMoved: false}, { piece: 'p', id: 9, hasMoved: false}, { piece: 'p', id: 10, hasMoved: false}, { piece: 'p', id: 11, hasMoved: false}, { piece: 'p', id: 12, hasMoved: false,}, { piece: 'p', id: 13, hasMoved: false}, { piece: 'p', id: 14, hasMoved: false}, { piece: 'p', id: 15, hasMoved: false},],
+  //   [{ piece: ' ', id: 16, hasMoved: false}, { piece: ' ', id: 17, hasMoved: false}, { piece: ' ', id: 18, hasMoved: false}, { piece: ' ', id: 19, hasMoved: false}, { piece: ' ', id: 20, hasMoved: false,}, { piece: ' ', id: 21, hasMoved: false}, { piece: ' ', id: 22, hasMoved: false}, { piece: ' ', id: 23, hasMoved: false},],
   //   [{ piece: ' ', id: 24, hasMoved: false}, { piece: ' ', id: 25, hasMoved: false}, { piece: ' ', id: 26, hasMoved: false}, { piece: ' ', id: 27, hasMoved: false}, { piece: ' ', id: 28, hasMoved: false,}, { piece: ' ', id: 29, hasMoved: false}, { piece: ' ', id: 30, hasMoved: false}, { piece: ' ', id: 31, hasMoved: false},],
-  //   [{ piece: ' ', id: 32, hasMoved: false}, { piece: ' ', id: 33, hasMoved: false}, { piece: 'B', id: 34, hasMoved: false}, { piece: ' ', id: 35, hasMoved: false}, { piece: 'P', id: 36, hasMoved: false,}, { piece: ' ', id: 37, hasMoved: false}, { piece: ' ', id: 38, hasMoved: false}, { piece: ' ', id: 39, hasMoved: false},],
-  //   [{ piece: ' ', id: 40, hasMoved: false}, { piece: ' ', id: 41, hasMoved: false}, { piece: ' ', id: 42, hasMoved: false}, { piece: ' ', id: 43, hasMoved: false}, { piece: ' ', id: 44, hasMoved: false,}, { piece: 'N', id: 45, hasMoved: false}, { piece: ' ', id: 46, hasMoved: false}, { piece: ' ', id: 47, hasMoved: false},],
-  //   [{ piece: 'P', id: 48, hasMoved: false}, { piece: 'P', id: 49, hasMoved: false}, { piece: 'P', id: 50, hasMoved: false}, { piece: 'P', id: 51, hasMoved: false}, { piece: ' ', id: 52, hasMoved: false,}, { piece: 'P', id: 53, hasMoved: false}, { piece: 'P', id: 54, hasMoved: false}, { piece: 'P', id: 55, hasMoved: false},],
-  //   [{ piece: 'R', id: 56, hasMoved: false}, { piece: 'N', id: 57, hasMoved: false}, { piece: 'B', id: 58, hasMoved: false}, { piece: 'Q', id: 59, hasMoved: false}, { piece: 'K', id: 60, hasMoved: false,}, { piece: ' ', id: 61, hasMoved: false}, { piece: ' ', id: 62, hasMoved: false}, { piece: 'R', id: 63, hasMoved: false},]
+  //   [{ piece: ' ', id: 32, hasMoved: false}, { piece: ' ', id: 33, hasMoved: false}, { piece: ' ', id: 34, hasMoved: false}, { piece: ' ', id: 35, hasMoved: false}, { piece: ' ', id: 36, hasMoved: false,}, { piece: ' ', id: 37, hasMoved: false}, { piece: ' ', id: 38, hasMoved: false}, { piece: ' ', id: 39, hasMoved: false},],
+  //   [{ piece: ' ', id: 40, hasMoved: false}, { piece: ' ', id: 41, hasMoved: false}, { piece: ' ', id: 42, hasMoved: false}, { piece: ' ', id: 43, hasMoved: false}, { piece: ' ', id: 44, hasMoved: false,}, { piece: ' ', id: 45, hasMoved: false}, { piece: ' ', id: 46, hasMoved: false}, { piece: ' ', id: 47, hasMoved: false},],
+  //   [{ piece: 'P', id: 48, hasMoved: false}, { piece: 'P', id: 49, hasMoved: false}, { piece: 'P', id: 50, hasMoved: false}, { piece: 'P', id: 51, hasMoved: false}, { piece: 'P', id: 52, hasMoved: false,}, { piece: 'P', id: 53, hasMoved: false}, { piece: 'P', id: 54, hasMoved: false}, { piece: 'P', id: 55, hasMoved: false},],
+  //   [{ piece: 'R', id: 56, hasMoved: false}, { piece: 'N', id: 57, hasMoved: false}, { piece: 'B', id: 58, hasMoved: false}, { piece: 'Q', id: 59, hasMoved: false}, { piece: 'K', id: 60, hasMoved: false,}, { piece: 'B', id: 61, hasMoved: false}, { piece: 'N', id: 62, hasMoved: false}, { piece: 'R', id: 63, hasMoved: false},]
   // ];
+  const STARTING_BOARD: Board = [
+    [{ piece: ' ', id: 0, hasMoved: false}, { piece: 'n', id: 1, hasMoved: false}, { piece: ' ', id: 2, hasMoved: false}, { piece: ' ', id: 3, hasMoved: false}, { piece: 'k', id: 4, hasMoved: false,}, { piece: 'b', id: 5, hasMoved: false}, { piece: 'n', id: 6, hasMoved: false}, { piece: 'r', id: 7, hasMoved: false}],
+    [{ piece: 'P', id: 8, hasMoved: false}, { piece: ' ', id: 9, hasMoved: false}, { piece: ' ', id: 10, hasMoved: false}, { piece: ' ', id: 11, hasMoved: false}, { piece: ' ', id: 12, hasMoved: false,}, { piece: ' ', id: 13, hasMoved: false}, { piece: ' ', id: 14, hasMoved: false}, { piece: 'p', id: 15, hasMoved: false},],
+    [{ piece: ' ', id: 16, hasMoved: false}, { piece: 'p', id: 17, hasMoved: false}, { piece: 'p', id: 18, hasMoved: false}, { piece: 'b', id: 19, hasMoved: false}, { piece: 'p', id: 20, hasMoved: false,}, { piece: ' ', id: 21, hasMoved: false}, { piece: 'p', id: 22, hasMoved: false}, { piece: ' ', id: 23, hasMoved: false},],
+    [{ piece: ' ', id: 24, hasMoved: false}, { piece: ' ', id: 25, hasMoved: false}, { piece: ' ', id: 26, hasMoved: false}, { piece: ' ', id: 27, hasMoved: false}, { piece: ' ', id: 28, hasMoved: false,}, { piece: 'p', id: 29, hasMoved: false}, { piece: ' ', id: 30, hasMoved: false}, { piece: ' ', id: 31, hasMoved: false},],
+    [{ piece: ' ', id: 32, hasMoved: false}, { piece: ' ', id: 33, hasMoved: false}, { piece: 'B', id: 34, hasMoved: false}, { piece: ' ', id: 35, hasMoved: false}, { piece: 'P', id: 36, hasMoved: false,}, { piece: ' ', id: 37, hasMoved: false}, { piece: ' ', id: 38, hasMoved: false}, { piece: ' ', id: 39, hasMoved: false},],
+    [{ piece: ' ', id: 40, hasMoved: false}, { piece: ' ', id: 41, hasMoved: false}, { piece: ' ', id: 42, hasMoved: false}, { piece: 'P', id: 43, hasMoved: false}, { piece: ' ', id: 44, hasMoved: false,}, { piece: 'P', id: 45, hasMoved: false}, { piece: ' ', id: 46, hasMoved: false}, { piece: ' ', id: 47, hasMoved: false},],
+    [{ piece: 'P', id: 48, hasMoved: false}, { piece: 'P', id: 49, hasMoved: false}, { piece: 'P', id: 50, hasMoved: false}, { piece: ' ', id: 51, hasMoved: false}, { piece: ' ', id: 52, hasMoved: false,}, { piece: ' ', id: 53, hasMoved: false}, { piece: 'P', id: 54, hasMoved: false}, { piece: 'P', id: 55, hasMoved: false},],
+    [{ piece: 'R', id: 56, hasMoved: false}, { piece: 'N', id: 57, hasMoved: false}, { piece: ' ', id: 58, hasMoved: false}, { piece: ' ', id: 59, hasMoved: false}, { piece: ' ', id: 60, hasMoved: false,}, { piece: ' ', id: 61, hasMoved: false}, { piece: 'K', id: 62, hasMoved: false}, { piece: ' ', id: 63, hasMoved: false},]
+  ];
 
   // prettier-ignore
   const [board, setBoard] = useState(JSON.parse(JSON.stringify(STARTING_BOARD)) as Board);
@@ -73,12 +73,14 @@ export default function Chess() {
   const [gameOverOpen, setGameOverOpen] = useState(false);
 
   // Promotion
-  const [promotionPosition, setPromotionPosition] = useState(-1);
-  const [promotionPiece, setPromotionPiece] = useState(0);
-  const [promotion, setPromotion] = useState<Move | null>(null);
+  const [promotionPosition, setPromotionPosition] = useState<Position>({ x: -1, y: -1 });
+  const [promotionPiece, setPromotionPiece] = useState<PromotionPiece | null>(null);
+  // const [promotion, setPromotion] = useState<Move | null>(null);
 
   // Mouse hooks
   const [hoveredPosition, setHoveredPosition] = useState<{ x: number; y: number } | null>(null);
+
+  const [promotionPieceId, setPromotionPieceId] = useState(-1);
 
   const makeMove = (move: Move) => {
     handleMakeMove({
@@ -93,14 +95,16 @@ export default function Chess() {
       squareSize,
       boardLeft,
       boardTop,
+      setPromotionPieceId,
+      setPromotionPosition,
+      setPromotionMove,
     });
   };
 
-  const { selectedPosition, setSelectedPosition } = useClickPiece({ board, availableMoves, makeMove, currentTurn, aiThinking });
+  const { selectedPosition, setSelectedPosition } = useClickPiece({ board, availableMoves, makeMove, currentTurn, aiThinking, promotionPieceId });
   useGetAvailableMoves({ board, selectedPosition, setAvailableMoves, boardHistory });
-  useDragPiece({ board, availableMoves, setSelectedPosition, makeMove, currentTurn, aiThinking });
+  useDragPiece({ board, availableMoves, setSelectedPosition, makeMove, currentTurn, aiThinking, promotionPieceId });
 
-  const [threadCount, setThreadCount] = useState(1);
   useAI({
     board,
     currentTurn,
@@ -113,7 +117,7 @@ export default function Chess() {
     setMateIn,
     setAiThinking,
     setSelectedPosition,
-    threadCount,
+    usingAi,
   });
 
   const [pieceElements, setPieceElements] = useState<JSX.Element>();
@@ -122,7 +126,7 @@ export default function Chess() {
   // Which would cause issues with the animations
   useEffect(() => {
     setPieceElements(<Pieces board={board} />);
-  }, [boardLeft, boardTop, squareSize]);
+  }, [boardLeft, boardTop, squareSize, promotionPieceId]);
 
   const [playerMoves, setPlayerMoves] = useState<Move[]>([]);
 
@@ -179,9 +183,38 @@ export default function Chess() {
     };
   }, []);
 
+  const [promotionMove, setPromotionMove] = useState<Move | null>(null);
+  function promotePiece(piece: PromotionPiece | null, move: Move) {
+    setPromotionPosition({ x: -1, y: -1 });
+    setPromotionPieceId(-1);
+
+    console.log(piece);
+    if (piece === null) return;
+
+    // The reason I set isPromotion to false, is because it's only to check if you should show the promotion select
+    // element, and it's already been shown, so it's not needed anymore
+    handleMakeMove({
+      move: { ...move, promotionPiece: piece, isPromotion: false },
+      board,
+      setBoard,
+      setAvailableMoves,
+      setCurrentTurn,
+      setMoveHistory,
+      setBoardHistory,
+      ANIMATION_TIME_MS,
+      squareSize,
+      boardLeft,
+      boardTop,
+      setPromotionPieceId,
+      setPromotionPosition,
+      setPromotionMove,
+    });
+  }
+
   // --------------------------------------------------
   return (
     <div>
+      <PromotionSelect position={promotionPosition} board={board} team={currentTurn} promotePiece={promotePiece} move={promotionMove} />
       <Arrow />
       {pieceElements}
 

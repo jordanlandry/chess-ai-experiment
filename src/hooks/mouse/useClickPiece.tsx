@@ -9,13 +9,15 @@ type Props = {
   makeMove: (move: Move) => void;
   currentTurn: Team;
   aiThinking: boolean;
+  promotionPieceId: number;
 };
 
-export default function useClickPiece({ board, availableMoves, makeMove, currentTurn, aiThinking }: Props) {
+export default function useClickPiece({ board, availableMoves, makeMove, currentTurn, aiThinking, promotionPieceId }: Props) {
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
 
   useEffect(() => {
     if (aiThinking) return;
+    if (promotionPieceId !== -1) return;
 
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return; // 0 = left click

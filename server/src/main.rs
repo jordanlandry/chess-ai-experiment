@@ -1,6 +1,7 @@
 use bitboard::{Bitboard};
 use minimax::get_best_move;
 
+use moves::get_white_moves;
 use rocket::{*, fairing::{Fairing, Info, Kind}, http::{ Header},};
 use ::serde::Serialize;
 use serde_json::Value;
@@ -60,14 +61,14 @@ struct MinimaxMove {
 fn best_move(b: String, max_time: String) -> String {
     let white_pawns: u64; let white_rooks: u64; let white_knights: u64; let white_bishops: u64; let white_queens: u64; let white_king: u64;
     let black_pawns: u64; let black_rooks: u64; let black_knights: u64; let black_bishops: u64; let black_queens: u64; let black_king: u64;
-
+    
     let mut readable_board: Vec<Vec<char>> = vec![vec![' '; 8]; 8];
-
+    
     let parsed_array: Value = serde_json::from_str(&b).unwrap();
     for i in 0..64 {
         let x = i % 8;
         let y = i / 8;
-
+        
         let piece = &parsed_array[i];
         if piece == 1 { readable_board[y][x] = 'R'; } 
         else if piece == 2 { readable_board[y][x] = 'N'; }
@@ -82,12 +83,20 @@ fn best_move(b: String, max_time: String) -> String {
         else if piece == -16 { readable_board[y][x] = 'k'; }
         else if piece == -32 { readable_board[y][x] = 'p'; }
         else { readable_board[y][x] = ' '; }
+        
     }
     
     (white_pawns, white_rooks, white_knights,white_bishops,white_queens,white_king,black_pawns,black_rooks,black_knights,black_bishops,black_queens,black_king) 
     = set_bitboard(readable_board);
     
     let bitboard = Bitboard { white_pawns, white_rooks, white_knights, white_bishops, white_queens, white_king, black_pawns, black_rooks, black_knights, black_bishops, black_queens, black_king};
+
+    // Print white moves
+    let a = get_white_moves(bitboard, true);
+    for i in 0..a.len() {
+        println!("{} {}", a[i].from, a[i].to,);
+    }
+
     
     // let parsed_depth = depth.parse::<u8>().unwrap();
     let best_move = get_best_move(bitboard, false, max_time.parse::<u64>().unwrap() as u128);

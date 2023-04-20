@@ -20,6 +20,7 @@ export type Move = {
   to: Position;
   capture?: boolean;
   castle?: { rookFrom: Position; rookTo: Position };
+  isPromotion?: boolean;
   promotionPiece?: PromotionPiece;
   enPassant?: Position;
   team?: Team;

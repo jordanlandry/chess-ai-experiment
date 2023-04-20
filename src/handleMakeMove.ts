@@ -12,6 +12,10 @@ type Props = {
   squareSize: number;
   boardLeft: number;
   boardTop: number;
+
+  setPromotionPieceId: React.Dispatch<React.SetStateAction<number>>;
+  setPromotionPosition: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
+  setPromotionMove: React.Dispatch<React.SetStateAction<Move | null>>;
 };
 
 type TypeOfMove = "capture" | "castle" | "normal" | "check" | "checkmate" | "draw";
@@ -35,6 +39,9 @@ export default function handleMakeMove({
   squareSize,
   boardLeft,
   boardTop,
+  setPromotionPieceId,
+  setPromotionPosition,
+  setPromotionMove,
 }: Props) {
   function playAudio(move: Move) {
     // TODO - Add check, checkmate, and draw sounds
@@ -81,6 +88,14 @@ export default function handleMakeMove({
   playAudio(move);
   animatePiece(move);
 
+  // Promotions
+  if (move.isPromotion) {
+    setPromotionPosition({ x: move.to.x, y: move.to.y });
+    setPromotionPieceId(board[move.from.y][move.from.x].id);
+    setPromotionMove(move);
+    return;
+  }
+
   setBoard((prevBoard) => {
     if (prevBoard[move.to.y][move.to.x].piece !== " ") {
       const piece = document.getElementById(prevBoard[move.to.y][move.to.x].id.toString());
@@ -103,6 +118,11 @@ export default function handleMakeMove({
     newBoard[move.to.y][move.to.x] = newBoard[move.from.y][move.from.x];
     newBoard[move.to.y][move.to.x].hasMoved = true;
     newBoard[move.from.y][move.from.x] = { piece: " ", id: -1, hasMoved: true };
+
+    if (move.promotionPiece) {
+      newBoard[move.to.y][move.to.x].piece = move.promotionPiece;
+    }
+
     return newBoard;
   });
 

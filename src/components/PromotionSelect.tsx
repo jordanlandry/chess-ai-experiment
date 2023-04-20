@@ -1,97 +1,72 @@
-// import React, { useContext } from "react";
-// import { Store } from "../App";
-// import { Bishop, Knight, Queen, Rook } from "../board";
-// import clamp from "../helpers/clamp";
-// import useBoardBound from "../hooks/useBoardBound";
-// import { Teams } from "../properties";
+import React, { useContext, useEffect, useState } from "react";
+import { Board, IPiece, Move, Position, PromotionPiece, Team } from "../types";
+import useBoardBound from "../hooks/useBoardBound";
+import { Store } from "../App";
+import Modal from "./Modal";
 
-// type Props = {
-//   index: number;
-//   team: Teams;
-//   setPromotionPosition: React.Dispatch<React.SetStateAction<number>>;
-//   setPromotionPiece: React.Dispatch<React.SetStateAction<number>>;
-// };
+type Props = {
+  position: Position;
+  board: Board;
+  team: Team;
+  promotePiece: (piece: PromotionPiece | null, move: Move) => void;
+  move: Move | null;
+};
 
-// export default function PromotionSelect({ index, team, setPromotionPiece, setPromotionPosition }: Props) {
-//   const { pieceStyle } = useContext(Store);
+export default function PromotionSelect({ position, board, team, promotePiece, move }: Props) {
+  const { boardLeft, boardTop, squareSize } = useBoardBound();
+  const { pieceStyle } = useContext(Store);
+  const [highlightedPiece, setHighlightedPiece] = useState<number>(-1);
+  const promotionPieces = team === "black" ? (["r", "n", "b", "q"] as PromotionPiece[]) : (["R", "N", "B", "Q"] as PromotionPiece[]);
 
-//   const c = team === Teams.White ? "0" : "1";
-//   const base = `./assets/images/styles/${pieceStyle}`;
+  const HIGHLIGHTED_STYLE: React.CSSProperties = {
+    backgroundColor: "rgb(200, 200, 200)",
+    outline: "2px solid black",
+    outlineOffset: "-2px",
+  };
 
-//   const { squareSize, boardTop, boardLeft } = useBoardBound();
+  const c = team === "white" ? "0" : "1";
 
-//   const y = clamp(Math.floor(index / 8), 0, 4);
-//   const x = clamp(index % 8, 0, 7);
+  const onClick = (piece: PromotionPiece | null) => {
+    promotePiece(piece, move!);
+    setHighlightedPiece(-1);
+  };
 
-//   const top = boardTop + squareSize * y;
-//   const left = boardLeft + squareSize * x;
-
-//   const X_STYLES: React.CSSProperties = {
-//     width: squareSize + "px",
-//     backgroundColor: "rgb(200, 200, 200)",
-//     color: "black",
-//     display: "flex",
-//     justifyContent: "center",
-//     alignItems: "center",
-//     height: squareSize / 2 + "px",
-//   };
-
-//   const pieces = [
-//     { name: "q", val: Queen },
-//     { name: "r", val: Rook },
-//     { name: "b", val: Bishop },
-//     { name: "n", val: Knight },
-//   ];
-
-//   const handleCancel = () => {
-//     setPromotionPosition(-1);
-//   };
-
-//   const handleSelect = (piece: number) => {
-//     setPromotionPiece(piece);
-//     setPromotionPosition(-1);
-//   };
-
-//   if (index === -1) return null;
-//   return (
-//     <div
-//       style={{
-//         position: "absolute",
-//         backgroundColor: "white",
-//         display: "flex",
-//         flexDirection: "column",
-//         alignItems: "center",
-//         justifyContent: "center",
-//         top: top - (y === 4 ? squareSize / 2 : 0) + "px",
-//         left: left,
-//         zIndex: 500,
-//       }}
-//     >
-//       {y === 4 ? <CancelButton styles={X_STYLES} onClick={handleCancel} /> : null}
-
-//       {pieces.map((piece, i) => (
-//         <img
-//           key={i}
-//           className="promote-img"
-//           src={`${base}/${piece.name}${c}.png`}
-//           alt={piece.name}
-//           width={squareSize}
-//           id={i + ""}
-//           draggable={false}
-//           style={{ width: squareSize + "px", height: squareSize + "px" }}
-//           onClick={() => handleSelect(piece.val)}
-//         />
-//       ))}
-
-//       {y === 0 ? <CancelButton styles={X_STYLES} onClick={handleCancel} /> : null}
-//     </div>
-//   );
-// }
-
-// function CancelButton({ styles, onClick }: { styles: React.CSSProperties; onClick: () => void }) {
-//   return (
-//     <div className="promote-img" style={styles} onClick={onClick}>
-//       X
-//     </div>
-//   );
-// }
+  return (
+    <Modal open={position.x !== -1} onClose={() => onClick(null)}>
+      <div
+        style={{
+          display: "flex",
+          left: boardLeft + position.x * squareSize + "px",
+          top: boardTop + position.y * squareSize + "px",
+          width: squareSize * 4 + "px",
+          height: squareSize + "px",
+          zIndex: 500,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {promotionPieces.map((piece, i) => {
+          const img = `./assets/images/styles/${pieceStyle}/${piece.toLowerCase()}${c}.png`;
+          return (
+            <button
+              onClick={() => onClick(piece)}
+              key={piece}
+              className="unstyled-button"
+              onMouseEnter={() => setHighlightedPiece(i)}
+              onMouseLeave={() => setHighlightedPiece(-1)}
+            >
+              <img
+                src={img}
+                alt={piece}
+                width={squareSize}
+                height={squareSize}
+                draggable={false}
+                style={highlightedPiece === i ? HIGHLIGHTED_STYLE : {}}
+              />
+            </button>
+          );
+        })}
+      </div>
+    </Modal>
+  );
+}

@@ -10,12 +10,14 @@ type Props = {
   currentTurn: Team;
   makeMove: (move: Move) => void;
   aiThinking: boolean;
+  promotionPieceId: number;
 };
-export default function useDragPiece({ board, availableMoves, setSelectedPosition, makeMove, aiThinking }: Props) {
+export default function useDragPiece({ board, availableMoves, setSelectedPosition, makeMove, aiThinking, promotionPieceId }: Props) {
   const [clickPosition, setClickPosition] = useState<Position | null>(null);
 
   function revertPiece() {
     if (!clickPosition) return;
+    if (promotionPieceId !== -1) return;
     const piece = document.getElementById(board[clickPosition!.y][clickPosition!.x].id.toString());
     if (!piece) {
       setClickPosition(null);
@@ -30,7 +32,7 @@ export default function useDragPiece({ board, availableMoves, setSelectedPositio
   }
 
   useEffect(() => {
-    if (aiThinking) {
+    if (aiThinking || promotionPieceId !== -1) {
       setClickPosition(null);
       return;
     }
@@ -54,7 +56,7 @@ export default function useDragPiece({ board, availableMoves, setSelectedPositio
     };
 
     const handleUp = (e: MouseEvent) => {
-      if (e.button !== 0) return; // 0 = left click
+      if (e.button !== 0 || promotionPieceId !== -1) return; // 0 = left click
       const position = getMouseSpot(e);
       if (!position) {
         setClickPosition(null);
