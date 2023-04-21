@@ -22,6 +22,7 @@ import MoveHistory from "./MoveHistory";
 import PromotionSelect from "./PromotionSelect";
 import Arrow from "./board/Arrow";
 import HighlightedSquare from "./overlays/HighlightedSquare";
+import useHighlightSquare from "../hooks/useHighlightSquare";
 
 export default function Chess() {
   const ANIMATION_TIME_MS = 100;
@@ -30,7 +31,7 @@ export default function Chess() {
   const { setScore, score } = useContext(Store);
 
   // AI
-  const [usingAi, setUsingAi] = useState(false);
+  const [usingAi, setUsingAi] = useState(true);
   const [aiTeam, setAiTeam] = useState<Team>("black");
   const [depth, setDepth] = useState(0);
   const [mateIn, setMateIn] = useState(-1);
@@ -42,25 +43,15 @@ export default function Chess() {
   const [moveHistory, setMoveHistory] = useState<Move[]>([]);
 
   // prettier-ignore
-  // const STARTING_BOARD: Board = [
-  //   [{ piece: 'r', id: 0, hasMoved: false}, { piece: 'n', id: 1, hasMoved: false}, { piece: 'b', id: 2, hasMoved: false}, { piece: 'q', id: 3, hasMoved: false}, { piece: 'k', id: 4, hasMoved: false,}, { piece: 'b', id: 5, hasMoved: false}, { piece: 'n', id: 6, hasMoved: false}, { piece: 'r', id: 7, hasMoved: false}],
-  //   [{ piece: 'p', id: 8, hasMoved: false}, { piece: 'p', id: 9, hasMoved: false}, { piece: 'p', id: 10, hasMoved: false}, { piece: 'p', id: 11, hasMoved: false}, { piece: 'p', id: 12, hasMoved: false,}, { piece: 'p', id: 13, hasMoved: false}, { piece: 'p', id: 14, hasMoved: false}, { piece: 'p', id: 15, hasMoved: false},],
-  //   [{ piece: ' ', id: 16, hasMoved: false}, { piece: ' ', id: 17, hasMoved: false}, { piece: ' ', id: 18, hasMoved: false}, { piece: ' ', id: 19, hasMoved: false}, { piece: ' ', id: 20, hasMoved: false,}, { piece: ' ', id: 21, hasMoved: false}, { piece: ' ', id: 22, hasMoved: false}, { piece: ' ', id: 23, hasMoved: false},],
-  //   [{ piece: ' ', id: 24, hasMoved: false}, { piece: ' ', id: 25, hasMoved: false}, { piece: ' ', id: 26, hasMoved: false}, { piece: ' ', id: 27, hasMoved: false}, { piece: ' ', id: 28, hasMoved: false,}, { piece: ' ', id: 29, hasMoved: false}, { piece: ' ', id: 30, hasMoved: false}, { piece: ' ', id: 31, hasMoved: false},],
-  //   [{ piece: ' ', id: 32, hasMoved: false}, { piece: ' ', id: 33, hasMoved: false}, { piece: ' ', id: 34, hasMoved: false}, { piece: ' ', id: 35, hasMoved: false}, { piece: ' ', id: 36, hasMoved: false,}, { piece: ' ', id: 37, hasMoved: false}, { piece: ' ', id: 38, hasMoved: false}, { piece: ' ', id: 39, hasMoved: false},],
-  //   [{ piece: ' ', id: 40, hasMoved: false}, { piece: ' ', id: 41, hasMoved: false}, { piece: ' ', id: 42, hasMoved: false}, { piece: ' ', id: 43, hasMoved: false}, { piece: ' ', id: 44, hasMoved: false,}, { piece: ' ', id: 45, hasMoved: false}, { piece: ' ', id: 46, hasMoved: false}, { piece: ' ', id: 47, hasMoved: false},],
-  //   [{ piece: 'P', id: 48, hasMoved: false}, { piece: 'P', id: 49, hasMoved: false}, { piece: 'P', id: 50, hasMoved: false}, { piece: 'P', id: 51, hasMoved: false}, { piece: 'P', id: 52, hasMoved: false,}, { piece: 'P', id: 53, hasMoved: false}, { piece: 'P', id: 54, hasMoved: false}, { piece: 'P', id: 55, hasMoved: false},],
-  //   [{ piece: 'R', id: 56, hasMoved: false}, { piece: 'N', id: 57, hasMoved: false}, { piece: 'B', id: 58, hasMoved: false}, { piece: 'Q', id: 59, hasMoved: false}, { piece: 'K', id: 60, hasMoved: false,}, { piece: 'B', id: 61, hasMoved: false}, { piece: 'N', id: 62, hasMoved: false}, { piece: 'R', id: 63, hasMoved: false},]
-  // ];
   const STARTING_BOARD: Board = [
-    [{ piece: ' ', id: 0, hasMoved: false}, { piece: 'n', id: 1, hasMoved: false}, { piece: ' ', id: 2, hasMoved: false}, { piece: ' ', id: 3, hasMoved: false}, { piece: 'k', id: 4, hasMoved: false,}, { piece: 'b', id: 5, hasMoved: false}, { piece: 'n', id: 6, hasMoved: false}, { piece: 'r', id: 7, hasMoved: false}],
-    [{ piece: 'P', id: 8, hasMoved: false}, { piece: ' ', id: 9, hasMoved: false}, { piece: ' ', id: 10, hasMoved: false}, { piece: ' ', id: 11, hasMoved: false}, { piece: ' ', id: 12, hasMoved: false,}, { piece: ' ', id: 13, hasMoved: false}, { piece: ' ', id: 14, hasMoved: false}, { piece: 'p', id: 15, hasMoved: false},],
-    [{ piece: ' ', id: 16, hasMoved: false}, { piece: 'p', id: 17, hasMoved: false}, { piece: 'p', id: 18, hasMoved: false}, { piece: 'b', id: 19, hasMoved: false}, { piece: 'p', id: 20, hasMoved: false,}, { piece: ' ', id: 21, hasMoved: false}, { piece: 'p', id: 22, hasMoved: false}, { piece: ' ', id: 23, hasMoved: false},],
-    [{ piece: ' ', id: 24, hasMoved: false}, { piece: ' ', id: 25, hasMoved: false}, { piece: ' ', id: 26, hasMoved: false}, { piece: ' ', id: 27, hasMoved: false}, { piece: ' ', id: 28, hasMoved: false,}, { piece: 'p', id: 29, hasMoved: false}, { piece: ' ', id: 30, hasMoved: false}, { piece: ' ', id: 31, hasMoved: false},],
-    [{ piece: ' ', id: 32, hasMoved: false}, { piece: ' ', id: 33, hasMoved: false}, { piece: 'B', id: 34, hasMoved: false}, { piece: ' ', id: 35, hasMoved: false}, { piece: 'P', id: 36, hasMoved: false,}, { piece: ' ', id: 37, hasMoved: false}, { piece: ' ', id: 38, hasMoved: false}, { piece: ' ', id: 39, hasMoved: false},],
-    [{ piece: ' ', id: 40, hasMoved: false}, { piece: ' ', id: 41, hasMoved: false}, { piece: ' ', id: 42, hasMoved: false}, { piece: 'P', id: 43, hasMoved: false}, { piece: ' ', id: 44, hasMoved: false,}, { piece: 'P', id: 45, hasMoved: false}, { piece: ' ', id: 46, hasMoved: false}, { piece: ' ', id: 47, hasMoved: false},],
-    [{ piece: 'P', id: 48, hasMoved: false}, { piece: 'P', id: 49, hasMoved: false}, { piece: 'P', id: 50, hasMoved: false}, { piece: ' ', id: 51, hasMoved: false}, { piece: ' ', id: 52, hasMoved: false,}, { piece: ' ', id: 53, hasMoved: false}, { piece: 'P', id: 54, hasMoved: false}, { piece: 'P', id: 55, hasMoved: false},],
-    [{ piece: 'R', id: 56, hasMoved: false}, { piece: 'N', id: 57, hasMoved: false}, { piece: ' ', id: 58, hasMoved: false}, { piece: ' ', id: 59, hasMoved: false}, { piece: ' ', id: 60, hasMoved: false,}, { piece: ' ', id: 61, hasMoved: false}, { piece: 'K', id: 62, hasMoved: false}, { piece: ' ', id: 63, hasMoved: false},]
+    [{ piece: 'r', id: 0, hasMoved: false}, { piece: 'n', id: 1, hasMoved: false}, { piece: 'b', id: 2, hasMoved: false}, { piece: 'q', id: 3, hasMoved: false}, { piece: 'k', id: 4, hasMoved: false,}, { piece: 'b', id: 5, hasMoved: false}, { piece: 'n', id: 6, hasMoved: false}, { piece: 'r', id: 7, hasMoved: false}],
+    [{ piece: 'p', id: 8, hasMoved: false}, { piece: 'p', id: 9, hasMoved: false}, { piece: 'p', id: 10, hasMoved: false}, { piece: 'p', id: 11, hasMoved: false}, { piece: 'p', id: 12, hasMoved: false,}, { piece: 'p', id: 13, hasMoved: false}, { piece: 'p', id: 14, hasMoved: false}, { piece: 'p', id: 15, hasMoved: false},],
+    [{ piece: ' ', id: 16, hasMoved: false}, { piece: ' ', id: 17, hasMoved: false}, { piece: ' ', id: 18, hasMoved: false}, { piece: ' ', id: 19, hasMoved: false}, { piece: ' ', id: 20, hasMoved: false,}, { piece: ' ', id: 21, hasMoved: false}, { piece: ' ', id: 22, hasMoved: false}, { piece: ' ', id: 23, hasMoved: false},],
+    [{ piece: ' ', id: 24, hasMoved: false}, { piece: ' ', id: 25, hasMoved: false}, { piece: ' ', id: 26, hasMoved: false}, { piece: ' ', id: 27, hasMoved: false}, { piece: ' ', id: 28, hasMoved: false,}, { piece: ' ', id: 29, hasMoved: false}, { piece: ' ', id: 30, hasMoved: false}, { piece: ' ', id: 31, hasMoved: false},],
+    [{ piece: ' ', id: 32, hasMoved: false}, { piece: ' ', id: 33, hasMoved: false}, { piece: ' ', id: 34, hasMoved: false}, { piece: ' ', id: 35, hasMoved: false}, { piece: ' ', id: 36, hasMoved: false,}, { piece: ' ', id: 37, hasMoved: false}, { piece: ' ', id: 38, hasMoved: false}, { piece: ' ', id: 39, hasMoved: false},],
+    [{ piece: ' ', id: 40, hasMoved: false}, { piece: ' ', id: 41, hasMoved: false}, { piece: ' ', id: 42, hasMoved: false}, { piece: ' ', id: 43, hasMoved: false}, { piece: ' ', id: 44, hasMoved: false,}, { piece: ' ', id: 45, hasMoved: false}, { piece: ' ', id: 46, hasMoved: false}, { piece: ' ', id: 47, hasMoved: false},],
+    [{ piece: 'P', id: 48, hasMoved: false}, { piece: 'P', id: 49, hasMoved: false}, { piece: 'P', id: 50, hasMoved: false}, { piece: 'P', id: 51, hasMoved: false}, { piece: 'P', id: 52, hasMoved: false,}, { piece: 'P', id: 53, hasMoved: false}, { piece: 'P', id: 54, hasMoved: false}, { piece: 'P', id: 55, hasMoved: false},],
+    [{ piece: 'R', id: 56, hasMoved: false}, { piece: 'N', id: 57, hasMoved: false}, { piece: 'B', id: 58, hasMoved: false}, { piece: 'Q', id: 59, hasMoved: false}, { piece: 'K', id: 60, hasMoved: false,}, { piece: 'B', id: 61, hasMoved: false}, { piece: 'N', id: 62, hasMoved: false}, { piece: 'R', id: 63, hasMoved: false},]
   ];
 
   // prettier-ignore
@@ -74,14 +65,21 @@ export default function Chess() {
 
   // Promotion
   const [promotionPosition, setPromotionPosition] = useState<Position>({ x: -1, y: -1 });
-  const [promotionPiece, setPromotionPiece] = useState<PromotionPiece | null>(null);
-  // const [promotion, setPromotion] = useState<Move | null>(null);
+  const [promotionPieceId, setPromotionPieceId] = useState(-1);
+  const [promotionMove, setPromotionMove] = useState<Move | null>(null);
+  function promotePiece(piece: PromotionPiece | null, move: Move) {
+    setPromotionPosition({ x: -1, y: -1 });
+    setPromotionPieceId(-1);
+
+    if (piece === null) return;
+
+    // The reason I set isPromotion to false, is because it's only to check if you should show the promotion select
+    // element, and it's already been shown, so it's not needed anymore.
+    makeMove({ ...move, promotionPiece: piece, isPromotion: false });
+  }
 
   // Mouse hooks
   const [hoveredPosition, setHoveredPosition] = useState<{ x: number; y: number } | null>(null);
-
-  const [promotionPieceId, setPromotionPieceId] = useState(-1);
-
   const makeMove = (move: Move) => {
     handleMakeMove({
       move,
@@ -141,75 +139,7 @@ export default function Chess() {
   }, [moveHistory]);
 
   // Get highlighted squares on right click
-  const [highlightedSquares, setHighlightedSquares] = useState<Position[]>([]);
-  useEffect(() => {
-    let mouseDownPos: Position;
-    const onMouseUp = (e: MouseEvent) => {
-      if (e.button === 0) {
-        setHighlightedSquares([]);
-        return;
-      }
-
-      if (e.button !== 2) return;
-      const position = getMouseSpot(e);
-      if (!position) return;
-
-      const { x, y } = position;
-
-      if (position.x !== mouseDownPos.x || position.y !== mouseDownPos.y) return;
-
-      setHighlightedSquares((prev) => {
-        const newSquares = [...prev];
-        const index = newSquares.findIndex((s) => s.x === x && s.y === y);
-        if (index === -1) newSquares.push({ x, y });
-        else newSquares.splice(index, 1);
-        return newSquares;
-      });
-    };
-
-    const onMouseDown = (e: MouseEvent) => {
-      if (e.button !== 2) return;
-
-      const position = getMouseSpot(e);
-      if (position) mouseDownPos = position;
-    };
-
-    window.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("mouseup", onMouseUp);
-
-    return () => {
-      window.removeEventListener("mouseup", onMouseUp);
-      window.removeEventListener("mousedown", onMouseDown);
-    };
-  }, []);
-
-  const [promotionMove, setPromotionMove] = useState<Move | null>(null);
-  function promotePiece(piece: PromotionPiece | null, move: Move) {
-    setPromotionPosition({ x: -1, y: -1 });
-    setPromotionPieceId(-1);
-
-    console.log(piece);
-    if (piece === null) return;
-
-    // The reason I set isPromotion to false, is because it's only to check if you should show the promotion select
-    // element, and it's already been shown, so it's not needed anymore
-    handleMakeMove({
-      move: { ...move, promotionPiece: piece, isPromotion: false },
-      board,
-      setBoard,
-      setAvailableMoves,
-      setCurrentTurn,
-      setMoveHistory,
-      setBoardHistory,
-      ANIMATION_TIME_MS,
-      squareSize,
-      boardLeft,
-      boardTop,
-      setPromotionPieceId,
-      setPromotionPosition,
-      setPromotionMove,
-    });
-  }
+  const highlightedSquares = useHighlightSquare();
 
   // --------------------------------------------------
   return (

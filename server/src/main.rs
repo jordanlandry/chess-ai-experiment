@@ -91,13 +91,6 @@ fn best_move(b: String, max_time: String) -> String {
     
     let bitboard = Bitboard { white_pawns, white_rooks, white_knights, white_bishops, white_queens, white_king, black_pawns, black_rooks, black_knights, black_bishops, black_queens, black_king};
 
-    // Print white moves
-    let a = get_white_moves(bitboard, true);
-    for i in 0..a.len() {
-        println!("{} {}", a[i].from, a[i].to,);
-    }
-
-    
     // let parsed_depth = depth.parse::<u8>().unwrap();
     let best_move = get_best_move(bitboard, false, max_time.parse::<u64>().unwrap() as u128);
     let mv = MinimaxMove {
