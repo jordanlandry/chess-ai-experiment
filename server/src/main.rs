@@ -1,6 +1,8 @@
 use bitboard::{Bitboard};
 use minimax::get_best_move;
 
+use generate_moves::generate_white_pawn_moves;
+
 use moves::get_white_moves;
 use rocket::{*, fairing::{Fairing, Info, Kind}, http::{ Header},};
 use ::serde::Serialize;
@@ -10,6 +12,7 @@ use serde_json::Value;
 pub mod moves;
 pub mod minimax;
 pub mod bitboard;
+pub mod generate_moves;
 
 fn set_bitboard(board: Vec<Vec<char>>) -> (u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64) {
     let mut white_pawns: u64 = 0; let mut white_rooks: u64 = 0; let mut white_knights: u64 = 0; let mut white_bishops: u64 = 0; let mut white_queens: u64 = 0; let mut white_king: u64 = 0;
@@ -123,10 +126,33 @@ impl Fairing for CORS {
     }
 }
 
-#[launch]
-fn rocket() -> _ {
-    // let occupancy: u64 = 0;
-    // init_rook_moves();
-    // print_bitboard(rook_moves(occupancy, 1));
-    rocket::build().mount("/", routes![best_move]).attach(CORS)
+// #[launch]
+// fn rocket() -> _ {
+//     // let occupancy: u64 = 0;
+//     // init_rook_moves();
+//     // print_bitboard(rook_moves(occupancy, 1));
+//     rocket::build().mount("/", routes![best_move]).attach(CORS)
+// }
+
+fn main() {
+    let readable_board = vec![
+        vec!['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+        vec!['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+        vec![' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        vec![' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        vec![' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        vec![' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        vec!['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+        vec!['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
+    ];
+
+    let (white_pawns, white_rooks, white_knights,white_bishops,white_queens,white_king,black_pawns,black_rooks,black_knights,black_bishops,black_queens,black_king)
+    = set_bitboard(readable_board);
+
+    let bitboard = Bitboard { white_pawns, white_rooks, white_knights, white_bishops, white_queens, white_king, black_pawns, black_rooks, black_knights, black_bishops, black_queens, black_king};
+
+
+    generate_white_pawn_moves(bitboard);
+    
+
 }

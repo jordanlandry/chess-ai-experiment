@@ -100,13 +100,16 @@ export default async function useAI({
       });
     };
 
+    const getScore = async () => {
+      fetch(`http://127.0.0.1:5000/get_score`)
+        .then((response) => response.json())
+        .then((data) => console.log(data))
+        .catch((error) => console.error(error));
+    };
+
     setAiThinking(true);
     setSelectedPosition(null);
 
-    const getEvaluation = async () => fetchData(evaluationTime, true);
-    const getBestMove = async () => fetchData(maxTime, false);
-
-    getEvaluation();
-    getBestMove();
+    getScore();
   }, [currentTurn]);
 }

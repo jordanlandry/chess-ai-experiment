@@ -11,8 +11,17 @@ type Props = {
   makeMove: (move: Move) => void;
   aiThinking: boolean;
   promotionPieceId: number;
+  setHoveredPosition: React.Dispatch<React.SetStateAction<Position | null>>;
 };
-export default function useDragPiece({ board, availableMoves, setSelectedPosition, makeMove, aiThinking, promotionPieceId }: Props) {
+export default function useDragPiece({
+  board,
+  availableMoves,
+  setSelectedPosition,
+  makeMove,
+  aiThinking,
+  promotionPieceId,
+  setHoveredPosition,
+}: Props) {
   const [clickPosition, setClickPosition] = useState<Position | null>(null);
 
   function revertPiece() {
@@ -39,6 +48,10 @@ export default function useDragPiece({ board, availableMoves, setSelectedPositio
 
     const handleMove = (e: MouseEvent) => {
       if (!clickPosition) return;
+
+      // set the hovered square when you mouse over
+      const position = getMouseSpot(e);
+      if (position) setHoveredPosition(position);
 
       const { x, y } = clickPosition;
       const piece = document.getElementById(board[y][x].id.toString());
@@ -73,6 +86,7 @@ export default function useDragPiece({ board, availableMoves, setSelectedPositio
       } else revertPiece();
 
       setClickPosition(null);
+      setHoveredPosition(null);
     };
 
     window.addEventListener("mousemove", handleMove);

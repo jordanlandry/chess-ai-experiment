@@ -101,7 +101,7 @@ export default function Chess() {
 
   const { selectedPosition, setSelectedPosition } = useClickPiece({ board, availableMoves, makeMove, currentTurn, aiThinking, promotionPieceId });
   useGetAvailableMoves({ board, selectedPosition, setAvailableMoves, boardHistory });
-  useDragPiece({ board, availableMoves, setSelectedPosition, makeMove, currentTurn, aiThinking, promotionPieceId });
+  useDragPiece({ board, availableMoves, setSelectedPosition, makeMove, currentTurn, aiThinking, promotionPieceId, setHoveredPosition });
 
   useAI({
     board,
