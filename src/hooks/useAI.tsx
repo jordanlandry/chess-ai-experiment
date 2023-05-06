@@ -1,6 +1,7 @@
 import { useContext, useEffect } from "react";
 import { Board, Move, MoveEvaluation, Position, Team } from "../types";
 import evaluateMove from "../helpers/evaluateMove";
+import boardToFen from "../helpers/boardToFen";
 
 type Props = {
   board: Board;
@@ -100,16 +101,20 @@ export default async function useAI({
       });
     };
 
-    const getScore = async () => {
-      fetch(`http://127.0.0.1:5000/get_score`)
-        .then((response) => response.json())
-        .then((data) => console.log(data))
-        .catch((error) => console.error(error));
-    };
+    // const getScore = async () => {
+    //   // console.log(boardToFen(board));
+    //   // fetch(`http://127.0.0.1:5000/get_score/${boardToFen(board)}`)
+    //   //   .then((response) => response.json())
+    //   //   .then((data) => console.log(data))
+    //   //   .catch((error) => console.error(error));
+    // };
+
+    fetchData(evaluationTime, true);
+    fetchData(maxTime, false);
 
     setAiThinking(true);
     setSelectedPosition(null);
 
-    getScore();
+    // getScore();
   }, [currentTurn]);
 }

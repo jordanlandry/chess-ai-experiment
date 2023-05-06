@@ -13,7 +13,9 @@
     "react-bootstrap-icons": "^1.10.2",
     "react-dom": "^18.2.0",
     "react-id-generator": "^3.0.2",
-    "scss": "^0.2.4"
+    "scss": "^0.2.4",
+    "stockfish": "^15.0.0",
+    "stockfish.wasm": "^0.10.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.27",

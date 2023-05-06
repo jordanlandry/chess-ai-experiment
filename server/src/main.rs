@@ -153,6 +153,4 @@ fn main() {
 
 
     generate_white_pawn_moves(bitboard);
-    
-
 }
