@@ -16,13 +16,12 @@ import LastMove from "./overlays/LastMove";
 import SelectedPiece from "./overlays/SelectedPiece";
 
 import { Store } from "../App";
-import getMouseSpot from "../helpers/getMouseSpot";
+import useHighlightSquare from "../hooks/useHighlightSquare";
 import MoveEvaluationComponent from "./MoveEvaluationComponent";
 import MoveHistory from "./MoveHistory";
 import PromotionSelect from "./PromotionSelect";
 import Arrow from "./board/Arrow";
 import HighlightedSquare from "./overlays/HighlightedSquare";
-import useHighlightSquare from "../hooks/useHighlightSquare";
 
 export default function Chess() {
   const ANIMATION_TIME_MS = 100;

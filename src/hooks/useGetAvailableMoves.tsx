@@ -17,9 +17,6 @@ export default function useGetAvailableMoves({ board, selectedPosition, setAvail
       return;
     }
 
-    const piece = board[selectedPosition.y][selectedPosition.x];
-    const team = getTeam(board, selectedPosition);
-
     const moves = getAvailableMoves(board, selectedPosition, boardHistory[boardHistory.length - 1]);
     setAvailableMoves(moves);
   }, [selectedPosition, boardHistory]);
